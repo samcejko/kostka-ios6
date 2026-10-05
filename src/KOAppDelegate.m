@@ -78,8 +78,9 @@
         }
         NSString *bundle = [NSBundle mainBundle].bundlePath;
         NSMutableArray *cp = [NSMutableArray array];
+        // (a path from / is taken as it is: a jar copied onto the device for a test)
         for (NSString *part in [p[@"cp"] ?: @"test/hello.jar" componentsSeparatedByString:@":"]) {
-            if (part.length) [cp addObject:[bundle stringByAppendingPathComponent:part]];
+            if (part.length) [cp addObject:[part hasPrefix:@"/"] ? part : [bundle stringByAppendingPathComponent:part]];
         }
         NSMutableArray *options = [NSMutableArray arrayWithObjects:
             [@"-Xmx" stringByAppendingString:p[@"xmx"] ?: @"96m"],

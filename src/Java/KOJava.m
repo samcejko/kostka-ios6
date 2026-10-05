@@ -93,6 +93,8 @@ static void *KOJavaThread(void *arg)
     @autoreleasepool {
         KOJavaLaunch *l = (__bridge_transfer KOJavaLaunch *)arg;
         KORedirectOutput();
+        // (games keep files next to themselves: the working folder is Kostka's own, not the root of the system)
+        chdir([[KOJava dataPath] fileSystemRepresentation]);
         KOLog(@"java: loading %@", l.libjvm);
         void *h = dlopen([l.libjvm fileSystemRepresentation], RTLD_NOW | RTLD_GLOBAL);
         if (!h) { KOFinish(l, -1, [NSString stringWithFormat:@"dlopen failed: %s", dlerror()]); return NULL; }
