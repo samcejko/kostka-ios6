@@ -93,6 +93,9 @@ static RegisterMap *reg_map;'''),
 # include <objc/objc-auto.h>
 ''',
      ''''''),
+    # (no C++ runtime imported by libjvm, see cxxRuntime_bsd_aarch32.cpp: names in error reports stay mangled)
+    ("hotspot/src/os/bsd/vm/decoder_machO.cpp", "if ((result = abi::__cxa_demangle(symbol, NULL, NULL, &status)) != NULL) {",
+     "if ((result = NULL) != NULL) {"),
     # (macOS headers the iOS SDK lacks: _NSGetEnviron is in iOS's libc, the Objective-C runtime has the iOS names)
     ("jdk/src/solaris/native/java/lang/ProcessEnvironment_md.c", "#include <crt_externs.h>",
      "extern char ***_NSGetEnviron(void);"),

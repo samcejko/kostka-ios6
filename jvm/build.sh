@@ -95,7 +95,8 @@ HS_DEFINES="-DDONT_USE_PRECOMPILED_HEADER -DPRODUCT -DCOMPILER1 -DVM_LITTLE_ENDI
  -DHOTSPOT_RELEASE_VERSION='\"$HS_VERSION\"' -DHOTSPOT_BUILD_TARGET='\"product\"' -DHOTSPOT_BUILD_USER='\"kostka\"' \
  -DHOTSPOT_LIB_ARCH='\"arm\"' -DHOTSPOT_VM_DISTRO='\"OpenJDK\"' -DJRE_RELEASE_VERSION='\"$JRE_VERSION\"' \
  -DDEFAULT_LIBPATH='\"/usr/lib\"'"
-HS_FLAGS="-marm -std=gnu++98 -fno-rtti -fno-exceptions -fno-strict-aliasing -fno-omit-frame-pointer -fwrapv \
+# (-fno-threadsafe-statics: no __cxa_guard_* imported from a C++ runtime, see cxxRuntime_bsd_aarch32.cpp)
+HS_FLAGS="-marm -std=gnu++98 -fno-rtti -fno-exceptions -fno-threadsafe-statics -fno-strict-aliasing -fno-omit-frame-pointer -fwrapv \
  -fno-delete-null-pointer-checks -fPIC -fvisibility=hidden -pthread -O2 -g0 -w"
 
 hotspot_sources() {
@@ -182,6 +183,13 @@ hotspot() {
     grep -v 'built for iOS Simulator' "$LOGS/hotspot-link.log" | head -n 80
     [ $ls -eq 0 ] || return 1
     ls -la "$JRE/lib/client/libjvm.dylib"
+    # What libjvm takes from the system: iOS 6 must have every one of these (dyld refuses the library otherwise)
+    local nm; nm="$(command -v "$TC/nm" || command -v "$TC/llvm-nm" || command -v nm || true)"
+    if [ -n "$nm" ]; then
+        "$nm" -u "$JRE/lib/client/libjvm.dylib" > "$LOGS/libjvm-imports.txt" 2>&1
+        echo "$(wc -l < "$LOGS/libjvm-imports.txt") imported symbols; C++ runtime ones:"
+        grep -E '__Z|___cxa|__Unwind|___gxx' "$LOGS/libjvm-imports.txt" | head -n 40
+    fi
 }
 
 # 5. The Java classes: Amazon Corretto 8 for macOS, the same update (its natives are x86_64: not used)
