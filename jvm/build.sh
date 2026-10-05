@@ -91,7 +91,7 @@ HS_DEFINES="-DDONT_USE_PRECOMPILED_HEADER -DPRODUCT -DCOMPILER1 -DVM_LITTLE_ENDI
  -DAARCH32 -DARM -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
  -DTARGET_OS_FAMILY_bsd -DTARGET_ARCH_aarch32 -DTARGET_ARCH_MODEL_aarch32 -DTARGET_OS_ARCH_bsd_aarch32 \
  -DTARGET_OS_ARCH_MODEL_bsd_aarch32 -DTARGET_COMPILER_gcc \
- -DINCLUDE_JFR=0 -DINCLUDE_ALL_GCS=0 -DINCLUDE_CDS=0 \
+ -DINCLUDE_JFR=0 -DINCLUDE_ALL_GCS=0 -DINCLUDE_CDS=0 -DINCLUDE_VM_STRUCTS=0 \
  -DHOTSPOT_RELEASE_VERSION='\"$HS_VERSION\"' -DHOTSPOT_BUILD_TARGET='\"product\"' -DHOTSPOT_BUILD_USER='\"kostka\"' \
  -DHOTSPOT_LIB_ARCH='\"arm\"' -DHOTSPOT_VM_DISTRO='\"OpenJDK\"' -DJRE_RELEASE_VERSION='\"$JRE_VERSION\"' \
  -DDEFAULT_LIBPATH='\"/usr/lib\"'"
@@ -110,7 +110,7 @@ hotspot_sources() {
 import os, sys, fnmatch
 # hotspot/make/bsd/makefiles/vm.make and make/excludeSrc.make: client VM, INCLUDE_ALL_GCS=0, INCLUDE_CDS=0, INCLUDE_JFR=0
 exclude = ["jsig.c", "jvmtiEnvRecommended.cpp", "jvmtiEnvStub.cpp", "bcEscapeAnalyzer.cpp", "c2_*", "runtime_*",
-           "*zero*", "*shark*", "ciTypeFlow.cpp", "chaitin*", "*x86*", "aarch32Test.cpp", "os_perf_*.cpp",
+           "*zero*", "*shark*", "ciTypeFlow.cpp", "chaitin*", "*x86*", "aarch32Test.cpp", "os_perf_*.cpp", "vmStructs.cpp",
            "filemap.cpp", "metaspaceShared*.cpp", "sharedPathsMiscInfo.cpp", "systemDictionaryShared.cpp",
            "classLoaderExt.cpp", "sharedClassUtil.cpp", "g1MemoryPool.cpp", "psMemoryPool.cpp"]
 gc_keep = ["adaptiveSizePolicy.cpp", "ageTable.cpp", "ageTableTracer.cpp", "collectorCounters.cpp", "cSpaceCounters.cpp",

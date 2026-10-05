@@ -85,11 +85,6 @@
 #define context_cpsr uc_mcontext->__ss.__cpsr
 #define CPSR_THUMB   (1u << 5)
 
-// (the C library's __clear_cache, which ICache uses, is sys_icache_invalidate on Darwin)
-extern "C" void __clear_cache(char* beg, char* end) {
-  sys_icache_invalidate(beg, end - beg);
-}
-
 address os::current_stack_pointer() {
   address sp;
   __asm__ volatile ("mov %0, sp" : "=r" (sp));

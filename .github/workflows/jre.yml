@@ -99,10 +99,10 @@ jobs:
           key: ccache-jre-${{ github.run_id }}
           restore-keys: ccache-jre-
 
-      - name: Build HotSpot
+      - name: Build HotSpot, the JDK's native libraries and the runtime
         run: |
           ccache -z || true
-          bash jvm/build.sh hotspot
+          bash jvm/build.sh all
           status=$?
           ccache -s || true
           exit $status

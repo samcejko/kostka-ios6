@@ -23,9 +23,63 @@ HS = os.path.join(ROOT, "hotspot", "src")
 # argument moves, the interpreter's signature handlers.
 SR = "hotspot/src/cpu/aarch32/vm/sharedRuntime_aarch32.cpp"
 IRT = "hotspot/src/cpu/aarch32/vm/interpreterRT_aarch32.cpp"
+PROPS = "jdk/src/solaris/native/java/lang/java_props_macosx.c"
+
+# (file relative to the tree, exact text, replacement, how many times it is there)
+REPLACE_ALL = [
+    # (pthread_t is a pointer on Darwin; these are debugging helpers that print a thread's number)
+    ("hotspot/src/cpu/aarch32/vm/macroAssembler_aarch32.cpp", "int id = pthread_self();",
+     "int id = (int)(intptr_t)pthread_self();", 3),
+    # (size_t against the overloads of cmp: ambiguous for clang)
+    ("hotspot/src/cpu/aarch32/vm/stubGenerator_aarch32.cpp", "    __ cmp(count, tmp_set_size);",
+     "    __ cmp(count, (int)tmp_set_size);", 2),
+]
 
 # (file relative to the tree, exact text, replacement)
 PATCHES = [
+    # iOS 6 has no thread-local storage for __thread (iOS 8 brought it); these hold the state of a debugging helper
+    ("hotspot/src/cpu/aarch32/vm/frame_aarch32.cpp",
+     '''static __thread unsigned long nextfp;
+static __thread unsigned long nextpc;
+static __thread unsigned long nextsp;
+static __thread RegisterMap *reg_map;''',
+     '''static unsigned long nextfp;
+static unsigned long nextpc;
+static unsigned long nextsp;
+static RegisterMap *reg_map;'''),
+    # The instruction cache: Darwin's call for it (there is no __clear_cache to rely on in iOS 6's libraries)
+    ("hotspot/src/cpu/aarch32/vm/icache_aarch32.hpp",
+     '''  static void invalidate_word(address addr) {
+    __clear_cache((char *)addr, (char *)(addr + 3));
+  }
+  static void invalidate_range(address start, int nbytes) {
+    __clear_cache((char *)start, (char *)(start + nbytes));
+  }''',
+     '''  static void invalidate_word(address addr) {
+    sys_icache_invalidate((void *)addr, 4);
+  }
+  static void invalidate_range(address start, int nbytes) {
+    sys_icache_invalidate((void *)start, nbytes);
+  }'''),
+    ("hotspot/src/cpu/aarch32/vm/icache_aarch32.hpp",
+     '''#define CPU_AARCH32_VM_ICACHE_AARCH32_HPP
+''',
+     '''#define CPU_AARCH32_VM_ICACHE_AARCH32_HPP
+
+#include <libkern/OSCacheControl.h>
+'''),
+    # (not on iOS, and not needed there: it works around x86 stack alignment in lazily bound callbacks)
+    ("hotspot/src/os/bsd/vm/os_bsd.cpp",
+     '''  _dyld_bind_fully_image_containing_address((const void *) &os::init);''',
+     '''#ifndef __arm__
+  _dyld_bind_fully_image_containing_address((const void *) &os::init);
+#endif'''),
+    # (the iOS SDK has no crt_externs.h; the function is in iOS's libc)
+    ("hotspot/src/os/bsd/vm/os_bsd.cpp",
+     '''#include <crt_externs.h>
+#define environ (*_NSGetEnviron())''',
+     '''extern "C" char ***_NSGetEnviron(void);
+#define environ (*_NSGetEnviron())'''),
     # iOS's libc has isfinite, not finite (marked unavailable)
     ("hotspot/src/share/vm/utilities/globalDefinitions_gcc.hpp",
      '''#if defined(LINUX)
@@ -39,6 +93,51 @@ PATCHES = [
 # include <objc/objc-auto.h>
 ''',
      ''''''),
+    # The system properties on iOS: no window server session to ask about (AWT is headless), no SCDynamicStore for
+    # the system's proxy settings (SystemConfiguration has none of that on iOS)
+    (PROPS, '''#include <Security/AuthSession.h>
+''', '''#include <TargetConditionals.h>
+#if !TARGET_OS_IPHONE
+#include <Security/AuthSession.h>
+#endif
+'''),
+    (PROPS, '''#include <SystemConfiguration/SystemConfiguration.h>
+''', '''#if !TARGET_OS_IPHONE
+#include <SystemConfiguration/SystemConfiguration.h>
+#endif
+'''),
+    (PROPS, '''    // Is the WindowServer available?
+    SecuritySessionId session_id;''', '''#if TARGET_OS_IPHONE
+    return 0;
+#else
+    // Is the WindowServer available?
+    SecuritySessionId session_id;'''),
+    (PROPS, '''        if (session_info & sessionHasGraphicAccess) {
+            return 1;
+        }
+    }
+    return 0;
+}''', '''        if (session_info & sessionHasGraphicAccess) {
+            return 1;
+        }
+    }
+    return 0;
+#endif
+}'''),
+    (PROPS, '''    CFDictionaryRef dict = SCDynamicStoreCopyProxies(NULL);
+    if (dict == NULL) return;''', '''#if TARGET_OS_IPHONE
+    return;
+#else
+    CFDictionaryRef dict = SCDynamicStoreCopyProxies(NULL);
+    if (dict == NULL) return;'''),
+    (PROPS, '''#undef CHECK_PROXY
+
+    CFRelease(dict);
+}''', '''#undef CHECK_PROXY
+
+    CFRelease(dict);
+#endif
+}'''),
     (SR,
      '''      case T_LONG:
         assert(sig_bt[i + 1] == T_VOID, "expecting half");
@@ -204,6 +303,15 @@ def add_os_arch_includes():
 
 
 def apply_patches():
+    for rel, old, new, expected in REPLACE_ALL:
+        path = os.path.join(ROOT, rel)
+        with open(path, encoding="latin-1") as f:
+            text = f.read()
+        count = text.count(old)
+        if count != expected:
+            sys.exit("ios_patch: %s: expected the text %d times, found it %d times:\n%s" % (rel, expected, count, old))
+        with open(path, "w", encoding="latin-1") as f:
+            f.write(text.replace(old, new))
     for rel, old, new in PATCHES:
         path = os.path.join(ROOT, rel)
         with open(path, encoding="latin-1") as f:
