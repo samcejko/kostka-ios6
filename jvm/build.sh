@@ -345,6 +345,15 @@ jdklibs() {
     native_lib nio "$srcs" "-I$j/share/native/sun/nio/ch -I$j/share/native/java/io -I$j/share/native/java/net \
  -I$j/solaris/native/java/net -I$j/solaris/native/sun/nio/ch -I$j/solaris/native/sun/nio/fs -I$j/solaris/native/java/io" \
         "-ljava -lnet -ljvm -framework CoreFoundation" || return 1
+
+    # libmanagement (jdk/make/lib/ServiceabilityLibraries.gmk, macosx): java.lang.management - Minecraft asks it for
+    # the VM's arguments and uptime. (Its process statistics want headers the iOS SDK has not: from the same XNU.)
+    mkdir -p "$GEN/ios-include/sys"
+    [ -f "$GEN/ios-include/sys/proc_info.h" ] || curl -sSfL "$xnu/bsd/sys/proc_info.h" -o "$GEN/ios-include/sys/proc_info.h" || return 1
+    [ -f "$GEN/ios-include/libproc.h" ] || curl -sSfL "$xnu/libsyscall/wrappers/libproc/libproc.h" -o "$GEN/ios-include/libproc.h" || return 1
+    srcs="$(ls "$j"/share/native/sun/management/*.c) $j/solaris/native/sun/management/FileSystemImpl.c
+ $j/solaris/native/sun/management/MacosxOperatingSystem.c $j/solaris/native/sun/management/OperatingSystemImpl.c"
+    native_lib management "$srcs" "-I$j/share/native/sun/management" "-ljvm -ljava" || return 1
 }
 
 # 5b. libawt, for now a stub: the image classes (BufferedImage, ImageIO's decoders) and others look up JNI IDs
