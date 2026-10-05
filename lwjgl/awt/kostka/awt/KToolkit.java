@@ -269,6 +269,10 @@ public class KToolkit extends SunToolkit {
 		return null;
 	}
 
+	public sun.awt.datatransfer.DataTransferer getDataTransferer() {
+		return null;
+	}
+
 	public InputMethodDescriptor getInputMethodAdapterDescriptor() throws AWTException {
 		return null;
 	}
