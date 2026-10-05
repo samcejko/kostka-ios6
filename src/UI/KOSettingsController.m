@@ -33,7 +33,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return section == 1 ? 2 : 1;
+    return section == 1 ? 3 : 1;
 }
 
 - (NSString *)titleFor:(NSInteger)section
@@ -94,8 +94,9 @@
         field.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
         cell.accessoryView = field;
     } else if (indexPath.section == 1) {
-        NSString *key = indexPath.row == 0 ? @"KOShowSnapshots" : @"KOTryAll";
-        cell.textLabel.text = indexPath.row == 0 ? L(@"Show snapshots") : L(@"Try the versions that do not run yet");
+        NSString *key = [self switchKey:indexPath.row];
+        cell.textLabel.text = indexPath.row == 0 ? L(@"Show snapshots")
+                            : indexPath.row == 1 ? L(@"Try the versions that do not run yet") : L(@"Download sounds and music (100 MB and more)");
         UISwitch *s = [[UISwitch alloc] init];
         s.on = [[NSUserDefaults standardUserDefaults] boolForKey:key];
         s.onTintColor = [KOStyle barColor];
@@ -119,9 +120,14 @@
     }
 }
 
+- (NSString *)switchKey:(NSInteger)row
+{
+    return row == 0 ? @"KOShowSnapshots" : row == 1 ? @"KOTryAll" : @"KOSounds";
+}
+
 - (void)switchChanged:(UISwitch *)s
 {
-    [[NSUserDefaults standardUserDefaults] setBool:s.on forKey:s.tag == 0 ? @"KOShowSnapshots" : @"KOTryAll"];
+    [[NSUserDefaults standardUserDefaults] setBool:s.on forKey:[self switchKey:s.tag]];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)field

@@ -141,7 +141,10 @@ static BOOL g_running;
         NSFileManager *fm = [NSFileManager defaultManager];
         NSMutableArray *missing = [NSMutableArray array];
         NSMutableArray *names = [NSMutableArray array];
+        // (the sounds and the music are most of it, 100 MB and more: only when asked for in the settings)
+        BOOL sounds = [[NSUserDefaults standardUserDefaults] boolForKey:@"KOSounds"];
         for (NSString *name in objects) {
+            if (!sounds && [[name pathExtension] isEqualToString:@"ogg"]) continue;
             NSDictionary *o = objects[name];
             NSString *hash = o[@"hash"];
             if (![hash isKindOfClass:[NSString class]] || hash.length < 2) continue;
@@ -274,6 +277,16 @@ static BOOL g_running;
    gameAssets:(NSString *)gameAssets status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))failed
 {
     NSArray *args = [self arguments:json version:version gameDir:gameDir gameAssets:gameAssets];
+    // (the first start of 1.6 and newer: settings the iPad can carry - the shortest view, plain graphics - and the
+    // device's language; the game keeps what the player changes later. Each version reads the keys it knows.)
+    NSString *optionsFile = [gameDir stringByAppendingPathComponent:@"options.txt"];
+    if ([args containsObject:@"--username"] && ![[NSFileManager defaultManager] fileExistsAtPath:optionsFile]) {
+        NSArray *languages = [NSLocale preferredLanguages];
+        NSString *lang = languages.count && [languages[0] hasPrefix:@"cs"] ? @"cs_CZ" : @"en_US";
+        NSString *text = [NSString stringWithFormat:@"viewDistance:3\nrenderDistance:2\nfancyGraphics:false\nao:0\nclouds:false\n"
+                          @"renderClouds:false\nparticles:2\nmipmapLevels:0\nuseVbo:true\nlang:%@\n", lang];
+        [text writeToFile:optionsFile atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+    }
     NSString *lwjgl = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"lwjgl"];
     // (the heap: what RubyDung needs, for the others what the iPad's 512 MB leave with the textures and the VM)
     NSArray *options = @[
