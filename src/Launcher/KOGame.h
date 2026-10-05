@@ -8,6 +8,8 @@
 @interface KOGame : NSObject
 
 + (BOOL)isRunning;
+// (tests: LWJGL with a check after every OpenGL call, lwjgl-debug.jar - the game stops at the first call that fails)
++ (void)setDebugGL:(BOOL)on;
 + (NSString *)playerName;
 + (void)setPlayerName:(NSString *)name;
 

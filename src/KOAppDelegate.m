@@ -13,7 +13,8 @@
 //   kostka:probe?test=info|jit|jitwx|vm|mem|gl|cpu      the device test
 //   kostka:java?main=Hello[&cp=a.jar:/var/x.jar][&xmx=96m][&debug=1]   a Java program (jars of the bundle, or from /)
 //   kostka:screenshot                                    the screen into Library/Kostka/screen.png
-//   kostka:play?version=1.7.10                           downloads and starts a version (any, for tests)
+//   kostka:play?version=1.7.10[&gldebug=1]               downloads and starts a version (any, for tests; gldebug: LWJGL
+//                                                        stops the game at the first OpenGL call that fails)
 //   kostka:mouse?x=&y=[&button=] / key?code=[&char=] / text?s=   input for the running game
 @interface KOAppDelegate ()
 @property (nonatomic, strong, readwrite) KOProbeController *probe;
@@ -110,6 +111,7 @@
     }
     // kostka:play?version=1.7.10: downloads and starts a version, whether it runs here or not yet (for tests)
     if ([target isEqualToString:@"play"] && p[@"version"]) {
+        [KOGame setDebugGL:[p[@"gldebug"] isEqualToString:@"1"]];
         [KOVersions load:^(NSArray *versions, NSError *error) {
             for (KOVersion *v in versions) {
                 if (![v.identifier isEqualToString:p[@"version"]]) continue;

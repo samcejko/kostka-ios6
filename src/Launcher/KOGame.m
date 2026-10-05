@@ -4,9 +4,14 @@
 #import "KOJava.h"
 #import "KOCommon.h"
 
-static BOOL g_running;
+static BOOL g_running, g_debugGL;
 
 @implementation KOGame
+
++ (void)setDebugGL:(BOOL)on
+{
+    g_debugGL = on;
+}
 
 + (BOOL)isRunning
 {
@@ -240,7 +245,7 @@ static BOOL g_running;
         }
         [classPath addObject:jar];
         NSString *lwjgl = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"lwjgl"];
-        [classPath addObject:[lwjgl stringByAppendingPathComponent:@"lwjgl.jar"]];
+        [classPath addObject:[lwjgl stringByAppendingPathComponent:g_debugGL ? @"lwjgl-debug.jar" : @"lwjgl.jar"]];
         [classPath addObject:[lwjgl stringByAppendingPathComponent:@"lwjgl_util.jar"]];
 
         NSString *gameDir = [self dir:[@"games" stringByAppendingPathComponent:version.identifier]];

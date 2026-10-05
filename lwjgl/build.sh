@@ -165,10 +165,23 @@ EOF
     ls -la "$DIST"
 }
 
+# 4. lwjgl-debug.jar: the same classes with a check after every OpenGL call (LWJGL's generator, -Ageneratechecks):
+#    a game that makes OpenGL report an error stops at the call that did it - for finding what gl4es does not take.
+#    (After the natives: the generator rewrites the generated sources.)
+lwjgl_debug() {
+    step "lwjgl-debug.jar"
+    (cd "$LW" && JAVA_HOME="$HOST_JAVA_HOME" PATH="$HOST_JAVA_HOME/bin:$PATH" ant -noinput generate-debug compile) > "$LOGS/ant-debug.log" 2>&1
+    if [ $? -ne 0 ]; then echo "ant (debug) failed"; tail -n 40 "$LOGS/ant-debug.log"; return 1; fi
+    printf 'Sealed: true\n' > "$OUT/debug-manifest.txt"
+    (cd "$LW/bin" && "$HOST_JAVA_HOME/bin/jar" cfm "$DIST/lwjgl-debug.jar" "$OUT/debug-manifest.txt" org/lwjgl/*.class \
+        org/lwjgl/opengl org/lwjgl/input org/lwjgl/openal org/lwjgl/opencl org/lwjgl/opengles/ContextAttribs*.class) || return 1
+    ls -la "$DIST/lwjgl-debug.jar"
+}
+
 case "${1:-all}" in
     fetch) fetch ;;
     java) fetch && lwjgl_java ;;
     natives) fetch && natives ;;
-    all) fetch && lwjgl_java && natives ;;
+    all) fetch && lwjgl_java && natives && lwjgl_debug ;;
     *) echo "unknown step $1"; exit 2 ;;
 esac
