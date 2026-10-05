@@ -6,6 +6,7 @@
 "Device test" = "Device test";
 "Downloading the game" = "Downloading the game";
 "Downloading the libraries" = "Downloading the libraries";
+"Downloading the sounds and languages" = "Downloading the sounds and languages";
 "Java has already run since the app was opened: close the app and open it again." = "Java has already run since the app was opened: close the app and open it again.";
 "Jump" = "Jump";
 "Kostka does not run this version yet. Everything up to 1.12.2 is its aim: Classic to 1.5.2 still need Java's window toolkit (AWT), which Kostka does not have yet, the newer ones more memory than Kostka gives the game now." = "Kostka does not run this version yet. Everything up to 1.12.2 is its aim: Classic to 1.5.2 still need Java's window toolkit (AWT), which Kostka does not have yet, the newer ones more memory than Kostka gives the game now.";
@@ -35,6 +36,8 @@
 "The name the old versions show for the player." = "The name the old versions show for the player.";
 "The server answered %ld." = "The server answered %ld.";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.";
+"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another." = "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another.";
 "Too new for iOS 6" = "Too new for iOS 6";
+"Try the versions that do not run yet" = "Try the versions that do not run yet";
 "Versions" = "Versions";
 "What this device allows a Java VM: generated code, memory, graphics, speed." = "What this device allows a Java VM: generated code, memory, graphics, speed.";

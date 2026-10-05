@@ -74,7 +74,8 @@
     CGFloat y = 160 + size.height + 30;
     self.play = [KOStyle bigButton:L(@"Play")];
     self.play.frame = CGRectMake(m, y, 260, 56);
-    self.play.enabled = self.version.support == KOSupportPlays;
+    self.play.enabled = self.version.support == KOSupportPlays ||
+                        (self.version.support == KOSupportSoon && [[NSUserDefaults standardUserDefaults] boolForKey:@"KOTryAll"]);
     [self.play addTarget:self action:@selector(playTapped) forControlEvents:UIControlEventTouchUpInside];
     [v addSubview:self.play];
 

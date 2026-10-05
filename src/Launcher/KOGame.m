@@ -1,3 +1,4 @@
+#import <UIKit/UIKit.h>
 #import "KOGame.h"
 #import "KONet.h"
 #import "KOJava.h"
@@ -61,7 +62,7 @@ static BOOL g_running;
     return list;
 }
 
-+ (NSArray *)arguments:(NSDictionary *)json version:(KOVersion *)version gameDir:(NSString *)gameDir
++ (NSArray *)arguments:(NSDictionary *)json version:(KOVersion *)version gameDir:(NSString *)gameDir gameAssets:(NSString *)gameAssets
 {
     NSArray *words;
     if ([json[@"minecraftArguments"] isKindOfClass:[NSString class]]) {
@@ -82,7 +83,7 @@ static BOOL g_running;
         @"version_name": version.identifier,
         @"version_type": version.type ?: @"release",
         @"game_directory": gameDir,
-        @"game_assets": assets,
+        @"game_assets": gameAssets ?: assets,
         @"assets_root": assets,
         @"assets_index_name": json[@"assets"] ?: @"legacy",
     };
@@ -96,7 +97,108 @@ static BOOL g_running;
             [args addObject:w];
         }
     }
+    // (1.6 and newer take the window's size: the whole screen, in pixels)
+    if ([args containsObject:@"--username"]) {
+        CGSize s = [UIScreen mainScreen].bounds.size;
+        CGFloat scale = [UIScreen mainScreen].scale;
+        [args addObjectsFromArray:@[ @"--width", [NSString stringWithFormat:@"%d", (int)(MAX(s.width, s.height) * scale)],
+                                     @"--height", [NSString stringWithFormat:@"%d", (int)(MIN(s.width, s.height) * scale)] ]];
+    }
     return args;
+}
+
++ (BOOL)isRubyDung:(NSDictionary *)json
+{
+    return [json[@"mainClass"] hasSuffix:@"RubyDung"];
+}
+
+// The assets (sounds, languages: 1.6 and newer read them from outside the jar): Mojang's index of them, then each
+// file by its hash into assets/objects, four at a time. The old indexes want them under their names too: "legacy"
+// in assets/virtual/legacy, "pre-1.6" in the game's resources folder. `done` gets the folder the game reads them from.
++ (void)assets:(NSDictionary *)json gameDir:(NSString *)gameDir status:(void (^)(NSString *, float))status
+          done:(void (^)(NSString *gameAssets, NSError *error))done
+{
+    NSDictionary *index = json[@"assetIndex"];
+    NSString *assets = [self dir:@"assets"];
+    if (![index isKindOfClass:[NSDictionary class]] || !index[@"url"] || !index[@"id"] || [self isRubyDung:json]) {
+        done(assets, nil);
+        return;
+    }
+    NSString *indexPath = [[self dir:@"assets/indexes"] stringByAppendingPathComponent:[index[@"id"] stringByAppendingPathExtension:@"json"]];
+    status(L(@"Downloading the sounds and languages"), -1);
+    [KONet download:[NSURL URLWithString:index[@"url"]] to:indexPath sha1:index[@"sha1"] progress:nil done:^(NSError *error) {
+        if (error) { done(nil, error); return; }
+        NSData *data = [NSData dataWithContentsOfFile:indexPath];
+        NSDictionary *list = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL] : nil;
+        NSDictionary *objects = [list isKindOfClass:[NSDictionary class]] ? list[@"objects"] : nil;
+        if (![objects isKindOfClass:[NSDictionary class]]) {
+            done(nil, [KONet errorWithText:L(@"Mojang's description of the version is not readable.")]);
+            return;
+        }
+        NSString *named = nil;
+        if ([list[@"virtual"] boolValue]) named = [self dir:[@"assets/virtual" stringByAppendingPathComponent:index[@"id"]]];
+        else if ([list[@"map_to_resources"] boolValue]) named = [gameDir stringByAppendingPathComponent:@"resources"];
+        NSFileManager *fm = [NSFileManager defaultManager];
+        NSMutableArray *missing = [NSMutableArray array];
+        NSMutableArray *names = [NSMutableArray array];
+        for (NSString *name in objects) {
+            NSDictionary *o = objects[name];
+            NSString *hash = o[@"hash"];
+            if (![hash isKindOfClass:[NSString class]] || hash.length < 2) continue;
+            NSString *path = [NSString stringWithFormat:@"%@/objects/%@/%@", assets, [hash substringToIndex:2], hash];
+            NSDictionary *attrs = [fm attributesOfItemAtPath:path error:NULL];
+            if (!attrs || [attrs fileSize] != [o[@"size"] unsignedLongLongValue]) {
+                NSString *url = [NSString stringWithFormat:@"https://resources.download.minecraft.net/%@/%@", [hash substringToIndex:2], hash];
+                [missing addObject:@{ @"url": url, @"sha1": hash, @"to": path }];
+            }
+            if (named) [names addObject:@[ path, [named stringByAppendingPathComponent:name] ]];
+        }
+        [self fetchMany:missing what:L(@"Downloading the sounds and languages") status:status done:^(NSError *e) {
+            if (e) { done(nil, e); return; }
+            for (NSArray *pair in names) {
+                if ([fm fileExistsAtPath:pair[1]]) continue;
+                [fm createDirectoryAtPath:[pair[1] stringByDeletingLastPathComponent] withIntermediateDirectories:YES attributes:nil error:NULL];
+                if (![fm linkItemAtPath:pair[0] toPath:pair[1] error:NULL]) [fm copyItemAtPath:pair[0] toPath:pair[1] error:NULL];
+            }
+            done(named ?: assets, nil);
+        }];
+    }];
+}
+
+// Many files, four at a time
++ (void)fetchMany:(NSArray *)files what:(NSString *)what status:(void (^)(NSString *, float))status done:(void (^)(NSError *))done
+{
+    NSUInteger total = files.count;
+    if (!total) {
+        done(nil);
+        return;
+    }
+    __block NSUInteger next = 0, finished = 0;
+    __block BOOL over = NO;
+    __block void (^one)(void);
+    one = ^{
+        if (over || next >= total) return;
+        NSDictionary *f = files[next++];
+        [KONet download:[NSURL URLWithString:f[@"url"]] to:f[@"to"] sha1:f[@"sha1"] progress:nil done:^(NSError *e) {
+            if (over) return;
+            if (e) {
+                over = YES;
+                one = nil;   // (the block held itself: let it go)
+                done(e);
+                return;
+            }
+            finished++;
+            status(what, (float)finished / total);
+            if (finished == total) {
+                over = YES;
+                one = nil;
+                done(nil);
+                return;
+            }
+            if (one) one();
+        }];
+    };
+    for (int i = 0; i < 4; i++) one();
 }
 
 + (void)play:(KOVersion *)version status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))failed
@@ -138,9 +240,13 @@ static BOOL g_running;
         [classPath addObject:[lwjgl stringByAppendingPathComponent:@"lwjgl.jar"]];
         [classPath addObject:[lwjgl stringByAppendingPathComponent:@"lwjgl_util.jar"]];
 
+        NSString *gameDir = [self dir:[@"games" stringByAppendingPathComponent:version.identifier]];
         [self fetch:files index:0 status:status done:^(NSError *e) {
             if (e) { fail(e); return; }
-            [self start:version json:json classPath:classPath status:status failed:fail];
+            [self assets:json gameDir:gameDir status:status done:^(NSString *gameAssets, NSError *e2) {
+                if (e2) { fail(e2); return; }
+                [self start:version json:json classPath:classPath gameDir:gameDir gameAssets:gameAssets status:status failed:fail];
+            }];
         }];
     }];
 }
@@ -164,14 +270,14 @@ static BOOL g_running;
            }];
 }
 
-+ (void)start:(KOVersion *)version json:(NSDictionary *)json classPath:(NSArray *)classPath
-       status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))failed
++ (void)start:(KOVersion *)version json:(NSDictionary *)json classPath:(NSArray *)classPath gameDir:(NSString *)gameDir
+   gameAssets:(NSString *)gameAssets status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))failed
 {
-    NSString *gameDir = [self dir:[@"games" stringByAppendingPathComponent:version.identifier]];
-    NSArray *args = [self arguments:json version:version gameDir:gameDir];
+    NSArray *args = [self arguments:json version:version gameDir:gameDir gameAssets:gameAssets];
     NSString *lwjgl = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"lwjgl"];
+    // (the heap: what RubyDung needs, for the others what the iPad's 512 MB leave with the textures and the VM)
     NSArray *options = @[
-        @"-Xmx160m",
+        [self isRubyDung:json] ? @"-Xmx128m" : @"-Xmx192m",
         [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:lwjgl],
         @"-Dminecraft.launcher.brand=Kostka",
     ];

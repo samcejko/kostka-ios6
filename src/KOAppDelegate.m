@@ -1,6 +1,8 @@
 #import "KOAppDelegate.h"
 #import "KOVersionListController.h"
 #import "KOProbeController.h"
+#import "KOVersions.h"
+#import "KOGame.h"
 #import "KOStyle.h"
 #import "KOJava.h"
 #import "KOCommon.h"
@@ -11,6 +13,7 @@
 //   kostka:probe?test=info|jit|jitwx|vm|mem|gl|cpu      the device test
 //   kostka:java?main=Hello[&cp=a.jar:/var/x.jar][&xmx=96m][&debug=1]   a Java program (jars of the bundle, or from /)
 //   kostka:screenshot                                    the screen into Library/Kostka/screen.png
+//   kostka:play?version=1.7.10                           downloads and starts a version (any, for tests)
 @interface KOAppDelegate ()
 @property (nonatomic, strong, readwrite) KOProbeController *probe;
 @end
@@ -75,6 +78,21 @@
     }
     if ([target isEqualToString:@"probe"]) {
         [self.probe enqueue:p[@"test"] ?: @"info"];
+    }
+    // kostka:play?version=1.7.10: downloads and starts a version, whether it runs here or not yet (for tests)
+    if ([target isEqualToString:@"play"] && p[@"version"]) {
+        [KOVersions load:^(NSArray *versions, NSError *error) {
+            for (KOVersion *v in versions) {
+                if (![v.identifier isEqualToString:p[@"version"]]) continue;
+                [KOGame play:v status:^(NSString *text, float progress) {
+                    KOLog(@"play %@: %@ %.0f%%", v.identifier, text, progress * 100);
+                } failed:^(NSError *e) {
+                    KOLog(@"play %@ failed: %@", v.identifier, e.localizedDescription);
+                }];
+                return;
+            }
+            KOLog(@"play: no version %@ (%@)", p[@"version"], error.localizedDescription ?: @"");
+        }];
     }
     return YES;
 }

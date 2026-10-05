@@ -33,7 +33,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 1;
+    return section == 1 ? 2 : 1;
 }
 
 - (NSString *)titleFor:(NSInteger)section
@@ -54,6 +54,7 @@
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
     NSString *text = section == 0 ? L(@"The name the old versions show for the player.")
+                   : section == 1 ? L(@"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another.")
                    : section == 2 ? L(@"Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).")
                                   : nil;
     if (!text) return nil;
@@ -93,11 +94,13 @@
         field.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
         cell.accessoryView = field;
     } else if (indexPath.section == 1) {
-        cell.textLabel.text = L(@"Show snapshots");
+        NSString *key = indexPath.row == 0 ? @"KOShowSnapshots" : @"KOTryAll";
+        cell.textLabel.text = indexPath.row == 0 ? L(@"Show snapshots") : L(@"Try the versions that do not run yet");
         UISwitch *s = [[UISwitch alloc] init];
-        s.on = [[NSUserDefaults standardUserDefaults] boolForKey:@"KOShowSnapshots"];
+        s.on = [[NSUserDefaults standardUserDefaults] boolForKey:key];
         s.onTintColor = [KOStyle barColor];
-        [s addTarget:self action:@selector(snapshotsChanged:) forControlEvents:UIControlEventValueChanged];
+        s.tag = indexPath.row;
+        [s addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
         cell.accessoryView = s;
     } else {
         cell.textLabel.text = L(@"Device test");
@@ -116,9 +119,9 @@
     }
 }
 
-- (void)snapshotsChanged:(UISwitch *)s
+- (void)switchChanged:(UISwitch *)s
 {
-    [[NSUserDefaults standardUserDefaults] setBool:s.on forKey:@"KOShowSnapshots"];
+    [[NSUserDefaults standardUserDefaults] setBool:s.on forKey:s.tag == 0 ? @"KOShowSnapshots" : @"KOTryAll"];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)field

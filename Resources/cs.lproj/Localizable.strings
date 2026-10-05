@@ -6,6 +6,7 @@
 "Device test" = "Test zařízení";
 "Downloading the game" = "Stahuji hru";
 "Downloading the libraries" = "Stahuji knihovny";
+"Downloading the sounds and languages" = "Stahuji zvuky a jazyky";
 "Java has already run since the app was opened: close the app and open it again." = "Java už od otevření aplikace běžela: zavři aplikaci a otevři ji znovu.";
 "Jump" = "Skok";
 "Kostka does not run this version yet. Everything up to 1.12.2 is its aim: Classic to 1.5.2 still need Java's window toolkit (AWT), which Kostka does not have yet, the newer ones more memory than Kostka gives the game now." = "Tuhle verzi Kostka zatím nespustí. Cílem jsou všechny verze až po 1.12.2: Classic až 1.5.2 ještě potřebují okna Javy (AWT), která Kostka zatím nemá, a novější víc paměti, než jim Kostka teď dává.";
@@ -35,6 +36,8 @@
 "The name the old versions show for the player." = "Jméno, které staré verze ukazují u hráče.";
 "The server answered %ld." = "Server odpověděl %ld.";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "Tahle verze potřebuje LWJGL 3 a novější OpenGL i Javu, než Kostka má: víc, než iOS 6 a tento iPad dokážou dát.";
+"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another." = "Verze, které zatím nejdou, se nemusí spustit, nebo brzy skončí: Kostka se k nim dostává krok za krokem.";
 "Too new for iOS 6" = "Na iOS 6 příliš nová";
+"Try the versions that do not run yet" = "Zkoušet i verze, které zatím nejdou";
 "Versions" = "Verze";
 "What this device allows a Java VM: generated code, memory, graphics, speed." = "Co toto zařízení dovolí Javě: generovaný kód, paměť, grafika, rychlost.";
