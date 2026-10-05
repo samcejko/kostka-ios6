@@ -22,13 +22,42 @@
 #include <jni.h>
 #include <stddef.h>
 
-// (used by PlainDatagramSocketImpl.c)
+// (the globals OpenJDK's NetworkInterface.c defines and the rest of libnet uses, net_util.h)
+jclass ni_class;
+jfieldID ni_nameID;
+jfieldID ni_indexID;
+jfieldID ni_descID;
 jfieldID ni_addrsID;
+jfieldID ni_bindsID;
+jfieldID ni_virutalID;
+jfieldID ni_childsID;
+jfieldID ni_parentID;
+jfieldID ni_defaultIndexID;
+jmethodID ni_ctrID;
+
+static jfieldID KOField(JNIEnv *env, jclass cls, const char *name, const char *sig)
+{
+    jfieldID f = (*env)->GetFieldID(env, cls, name, sig);
+    if (f == NULL) (*env)->ExceptionClear(env);
+    return f;
+}
 
 JNIEXPORT void JNICALL
 Java_java_net_NetworkInterface_init(JNIEnv *env, jclass cls)
 {
-    ni_addrsID = (*env)->GetFieldID(env, cls, "addrs", "[Ljava/net/InetAddress;");
+    ni_class = (*env)->NewGlobalRef(env, cls);
+    ni_nameID = KOField(env, cls, "name", "Ljava/lang/String;");
+    ni_indexID = KOField(env, cls, "index", "I");
+    ni_addrsID = KOField(env, cls, "addrs", "[Ljava/net/InetAddress;");
+    ni_bindsID = KOField(env, cls, "bindings", "[Ljava/net/InterfaceAddress;");
+    ni_descID = KOField(env, cls, "displayName", "Ljava/lang/String;");
+    ni_virutalID = KOField(env, cls, "virtual", "Z");
+    ni_childsID = KOField(env, cls, "childs", "[Ljava/net/NetworkInterface;");
+    ni_parentID = KOField(env, cls, "parent", "Ljava/net/NetworkInterface;");
+    ni_ctrID = (*env)->GetMethodID(env, cls, "<init>", "()V");
+    if (ni_ctrID == NULL) (*env)->ExceptionClear(env);
+    ni_defaultIndexID = (*env)->GetStaticFieldID(env, cls, "defaultIndex", "I");
+    if (ni_defaultIndexID == NULL) (*env)->ExceptionClear(env);
 }
 
 JNIEXPORT jobjectArray JNICALL
