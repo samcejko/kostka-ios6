@@ -104,23 +104,31 @@ objects() {
 # 3. The native side: gl4es (static, its symbols hidden) and LWJGL's natives with the iOS ones, one library
 natives() {
     step "gl4es"
-    # (iOS 6 has no thread-local storage: gl4es's once-per-thread loading flags become plain statics)
-    python3 - "$G4/src/gl/loader.h" <<'EOF' || return 1
-import sys
-p = sys.argv[1]
-s = open(p).read()
-old = "#if defined(_WIN32) || defined(_WIN64)\n  #define THREAD_LOCAL __declspec(thread)"
-new = "#if defined(__APPLE__) && defined(__arm__)\n  #define THREAD_LOCAL\n#elif defined(_WIN32) || defined(_WIN64)\n  #define THREAD_LOCAL __declspec(thread)"
-if old in s:
-    open(p, "w").write(s.replace(old, new, 1))
-elif new not in s:
-    sys.exit("loader.h: the THREAD_LOCAL definitions were not found")
+    # Two things gl4es does that Darwin cannot: thread-local storage (none on iOS 6: gl4es's once-per-thread
+    # loading flags become plain statics) and symbol aliases (two become small functions)
+    python3 - "$G4/src/gl" <<'EOF' || return 1
+import os, sys
+d = sys.argv[1]
+def patch(name, old, new):
+    p = os.path.join(d, name)
+    s = open(p).read()
+    if old in s:
+        open(p, "w").write(s.replace(old, new, 1))
+    elif new not in s:
+        sys.exit("%s: not found: %s" % (name, old.splitlines()[0]))
+patch("loader.h", "#if defined(_WIN32) || defined(_WIN64)\n  #define THREAD_LOCAL __declspec(thread)",
+      "#if defined(__APPLE__) && defined(__arm__)\n  #define THREAD_LOCAL\n#elif defined(_WIN32) || defined(_WIN64)\n  #define THREAD_LOCAL __declspec(thread)")
+for f in ("Enable", "Disable"):
+    patch("directstate.c",
+          "AliasDecl(void,gl4es_gl%sClientStatei,(GLenum array, GLuint index),gl4es_gl%sClientStateIndexed);" % (f, f),
+          "void APIENTRY_GL4ES gl4es_gl%sClientStatei(GLenum array, GLuint index) { gl4es_gl%sClientStateIndexed(array, index); }" % (f, f))
 EOF
     local g4flags="-std=gnu11 -O2 -fPIC -fvisibility=hidden -funwind-tables -fno-strict-aliasing -w
  -DNOX11 -DNOEGL -DNO_GBM -DNO_LOADER -DNO_INIT_CONSTRUCTOR -DSTATICLIB -DEGL_NO_X11 -DDEFAULT_ES=2
  -I$G4/include -I$G4/src -I$G4/src/util -I$G4/src/glx -I$HERE/native"
+    # (the library is everything in src/gl, as gl4es's CMakeLists lists it, and hardext.c)
     local srcs
-    srcs=$(sed -n 's#.*${CMAKE_CURRENT_SOURCE_DIR}/\(gl/[^ )]*\.c\).*#\1#p' "$G4/src/CMakeLists.txt" | sort -u | sed "s#^#$G4/src/#")
+    srcs=$(find "$G4/src/gl" -name '*.c' | sort)
     [ -n "$srcs" ] || { echo "no gl4es sources found"; return 1; }
     objects "$OBJ/gl4es" "$(echo $g4flags)" $srcs "$G4/src/glx/hardext.c" "$HERE/native/ios_gl4es.c" || return 1
 
