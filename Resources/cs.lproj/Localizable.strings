@@ -1,0 +1,4 @@
+/* Kostka - čeština */
+"Device test" = "Test zařízení";
+"Run the tests" = "Spustit testy";
+"What this device allows a Java VM: generated code, memory, graphics, speed." = "Co toto zařízení dovolí Javě: generovaný kód, paměť, grafika, rychlost.";

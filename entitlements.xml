@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Entitlements for the ldid pseudo-signature. dynamic-codesigning and get-task-allow ask the (jailbroken) kernel
+	     to let the app run code it generated itself: the Java VM's JIT. -->
+	<key>application-identifier</key>
+	<string>com.samcejko.kostka</string>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>com.samcejko.kostka</string>
+	</array>
+	<key>get-task-allow</key>
+	<true/>
+	<key>dynamic-codesigning</key>
+	<true/>
+</dict>
+</plist>

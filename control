@@ -1,0 +1,9 @@
+Package: com.samcejko.kostka
+Name: Kostka
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: Launcher of Minecraft: Java Edition for iOS 6 (the game's own files from Mojang, run by a Java VM ported to 32-bit iOS). Unofficial, not affiliated with Mojang or Microsoft.
+Maintainer: samcejko
+Author: samcejko
+Section: Games
+Depends: firmware (>= 6.0)
