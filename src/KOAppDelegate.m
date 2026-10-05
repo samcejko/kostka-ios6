@@ -2,6 +2,7 @@
 #import "KOProbe.h"
 #import "KOJava.h"
 #import "KOCommon.h"
+#include <dlfcn.h>
 
 // For now the app is the device test of the first milestone: what this iPad allows a Java VM. The tests run from
 // the screen's button (all of them but the memory test, which ends with the app killed) or one by one from a link:
@@ -92,6 +93,19 @@
                         done:^(int code, NSString *error) {
             [weakSelf append:[NSString stringWithFormat:@"java: exit %d %@", code, error ?: @""]];
         }];
+        return YES;
+    }
+    // kostka:screenshot: what the screen shows (the game's OpenGL too) into Library/Kostka/screen.png, for tests
+    // run from a computer. (UIGetScreenImage: a private UIKit function, looked up at run time)
+    if ([target isEqualToString:@"screenshot"]) {
+        CGImageRef (*grab)(void) = (CGImageRef (*)(void))dlsym(RTLD_DEFAULT, "UIGetScreenImage");
+        CGImageRef image = grab ? grab() : NULL;
+        if (image) {
+            NSData *png = UIImagePNGRepresentation([UIImage imageWithCGImage:image]);
+            [png writeToFile:[[KOJava dataPath] stringByAppendingPathComponent:@"screen.png"] atomically:YES];
+            CGImageRelease(image);
+        }
+        KOLog(@"screenshot %@", image ? @"saved" : @"not available");
         return YES;
     }
     if ([target isEqualToString:@"probe"]) {

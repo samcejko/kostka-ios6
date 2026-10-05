@@ -21,7 +21,7 @@ void *extgl_GetProcAddress(const char *name)
 {
     void *p = ko_gl4es_proc_address(name);
     if (p == NULL && strncmp(name, "gl", 2) == 0 && strncmp(name, "glX", 3) != 0) {
-        fprintf(stderr, "[LWJGL] gl4es has no %s: it does nothing\n", name);
+        if (isDebugEnabled()) fprintf(stderr, "[LWJGL] gl4es has no %s: it does nothing\n", name);
         p = (void *)ko_gl_missing;
     }
     return p;

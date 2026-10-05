@@ -120,6 +120,9 @@ JNIEXPORT void JNICALL Java_org_lwjgl_opengl_MacOSXContextImplementation_nSwapBu
         ko_gl4es_pre_swap();
         glBindRenderbuffer(GL_RENDERBUFFER, c->color);
         [c->context presentRenderbuffer:GL_RENDERBUFFER];
+        // (the game's thread has no run loop to commit Core Animation's transaction: without this the frame
+        // reaches the screen only when the next present gives up waiting for it, once a second)
+        [CATransaction flush];
         glBindRenderbuffer(GL_RENDERBUFFER, ko_gl4es_current_renderbuffer());
         ko_gl4es_post_swap();
         ko_wait_while_inactive();
