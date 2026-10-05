@@ -462,9 +462,27 @@ static void ko_set_inactive(int inactive)
     }
 }
 
+// Minecraft's hotbar, while playing: a tap on one of its nine slots is the slot's number key. Where it is follows the
+// game's own arithmetic: the largest GUI scale that keeps 320 x 240 units, the bar 182 x 22 units at the bottom.
+- (int)hotbarSlotAt:(CGPoint)p
+{
+    int scale = 1;
+    while (fbWidth / (scale + 1) >= 320 && fbHeight / (scale + 1) >= 240) scale++;
+    CGFloat left = (fbWidth / scale / 2 - 91) * scale, top = (fbHeight / scale - 22) * scale;
+    if (p.y < top || p.x < left || p.x >= left + 182 * scale) return -1;
+    return MIN(8, (int)((p.x - left) / (20 * scale)));
+}
+
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
     for (UITouch *t in touches) {
+        if (g_grabbed) {
+            int slot = [self hotbarSlotAt:[self framebufferPoint:t]];
+            if (slot >= 0) {
+                ko_post_key(2 + slot, '1' + slot);   // (KEY_1 is 2)
+                continue;
+            }
+        }
         if (pointer) break;   // (one finger is the mouse)
         pointer = t;
         pointerGrabbed = g_grabbed;
