@@ -62,11 +62,14 @@
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
     if (![[url.scheme lowercaseString] isEqualToString:@"kostka"]) return NO;
-    NSString *target = url.host.length ? url.host : [url.resourceSpecifier stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
-    target = [[target componentsSeparatedByString:@"?"].firstObject lowercaseString];
+    // ("kostka:probe?test=jit" has no host and, for NSURL, no query: both are read from what follows the scheme)
+    NSString *rest = [url.resourceSpecifier stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
+    NSRange q = [rest rangeOfString:@"?"];
+    NSString *target = [(q.location == NSNotFound ? rest : [rest substringToIndex:q.location]) lowercaseString];
+    NSString *query = q.location == NSNotFound ? @"" : [rest substringFromIndex:q.location + 1];
     if ([target isEqualToString:@"probe"]) {
         NSString *test = @"info";
-        for (NSString *pair in [url.query componentsSeparatedByString:@"&"]) {
+        for (NSString *pair in [query componentsSeparatedByString:@"&"]) {
             NSArray *kv = [pair componentsSeparatedByString:@"="];
             if (kv.count == 2 && [kv[0] isEqualToString:@"test"]) test = kv[1];
         }
