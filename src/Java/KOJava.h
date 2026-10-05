@@ -18,4 +18,12 @@
                 args:(NSArray *)args
                 done:(void (^)(int exitCode, NSString *error))done;
 
+// The same, in a working folder of its own (games keep their files in it; without one: dataPath)
++ (void)runMainClass:(NSString *)mainClass
+           classPath:(NSArray *)classPath
+             options:(NSArray *)options
+                args:(NSArray *)args
+    workingDirectory:(NSString *)workingDirectory
+                done:(void (^)(int exitCode, NSString *error))done;
+
 @end

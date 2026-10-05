@@ -162,6 +162,8 @@ static void ko_set_inactive(int inactive)
 @public
     int key;
     NSString *label;
+    int arrow;   // 0, or a triangle drawn instead of the label: 1 up, 2 left, 3 down, 4 right (iOS 6 draws the
+                 // arrow characters as emoji)
 }
 @end
 
@@ -224,6 +226,21 @@ static void ko_set_inactive(int inactive)
     [[UIColor colorWithWhite:1 alpha:0.5] setStroke];
     p.lineWidth = 1.5;
     [p stroke];
+    if (arrow) {
+        CGFloat cx = CGRectGetMidX(self.bounds), cy = CGRectGetMidY(self.bounds), s = MIN(r.size.width, r.size.height) * 0.22;
+        CGContextSaveGState(c);
+        CGContextTranslateCTM(c, cx, cy);
+        CGContextRotateCTM(c, (arrow - 1) * -M_PI_2);   // (drawn pointing up, turned)
+        CGContextMoveToPoint(c, 0, -s);
+        CGContextAddLineToPoint(c, s * 1.1, s * 0.8);
+        CGContextAddLineToPoint(c, -s * 1.1, s * 0.8);
+        CGContextClosePath(c);
+        CGContextSetShadowWithColor(c, CGSizeMake(0, 1), 0, [UIColor colorWithWhite:0 alpha:0.6].CGColor);
+        CGContextSetRGBFillColor(c, 1, 1, 1, 0.92);
+        CGContextFillPath(c);
+        CGContextRestoreGState(c);
+        return;
+    }
     UIFont *font = [UIFont boldSystemFontOfSize:label.length > 2 ? 15 : 22];
     CGSize size = [label sizeWithFont:font];
     [[UIColor colorWithWhite:0 alpha:0.6] set];
@@ -335,10 +352,10 @@ static void ko_set_inactive(int inactive)
     UIViewAutoresizing topRight = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin;
     // the cross: forwards, left, backwards, right
     CGFloat x0 = m, y0 = s.height - m - 3 * k - 2 * gap;
-    [self key:KO_KEY_W label:@"▲" frame:CGRectMake(x0 + k + gap, y0, k, k) in:moveControls mask:bottomLeft];
-    [self key:KO_KEY_A label:@"◀" frame:CGRectMake(x0, y0 + k + gap, k, k) in:moveControls mask:bottomLeft];
-    [self key:KO_KEY_S label:@"▼" frame:CGRectMake(x0 + k + gap, y0 + 2 * (k + gap), k, k) in:moveControls mask:bottomLeft];
-    [self key:KO_KEY_D label:@"▶" frame:CGRectMake(x0 + 2 * (k + gap), y0 + k + gap, k, k) in:moveControls mask:bottomLeft];
+    [self key:KO_KEY_W label:@"" frame:CGRectMake(x0 + k + gap, y0, k, k) in:moveControls mask:bottomLeft]->arrow = 1;
+    [self key:KO_KEY_A label:@"" frame:CGRectMake(x0, y0 + k + gap, k, k) in:moveControls mask:bottomLeft]->arrow = 2;
+    [self key:KO_KEY_S label:@"" frame:CGRectMake(x0 + k + gap, y0 + 2 * (k + gap), k, k) in:moveControls mask:bottomLeft]->arrow = 3;
+    [self key:KO_KEY_D label:@"" frame:CGRectMake(x0 + 2 * (k + gap), y0 + k + gap, k, k) in:moveControls mask:bottomLeft]->arrow = 4;
     // jump and sneak
     CGFloat big = 92;
     [self key:KO_KEY_SPACE label:KOText(@"Jump") frame:CGRectMake(s.width - m - big, s.height - m - big, big, big) in:moveControls mask:bottomRight];

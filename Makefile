@@ -16,7 +16,7 @@ Kostka_FILES := $(wildcard src/*.m) $(wildcard src/*/*.m) $(wildcard src/*/*.c)
 
 Kostka_FRAMEWORKS := UIKit Foundation CoreGraphics QuartzCore OpenGLES
 
-Kostka_CFLAGS := -Isrc -Isrc/Probe -Isrc/Java -Isrc/UI -Isrc/Util -Ivendor/fetched/jni \
+Kostka_CFLAGS := -Isrc -Isrc/Probe -Isrc/Java -Isrc/UI -Isrc/Util -Isrc/Launcher -Ivendor/fetched/jni \
                  -Os -fvisibility=hidden \
                  -Wall -Wno-unused-variable -Wno-unused-function -Wno-unused-but-set-variable \
                  -Wno-deprecated-declarations -Wno-unknown-warning-option -Wno-unused-parameter -Wno-sign-compare \

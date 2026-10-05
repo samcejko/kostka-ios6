@@ -13,7 +13,7 @@ static int g_logFd = -1;
 
 // Everything a start needs, handed to the VM's thread
 @interface KOJavaLaunch : NSObject
-@property (nonatomic, copy) NSString *libjvm, *mainClass;
+@property (nonatomic, copy) NSString *libjvm, *mainClass, *workingDirectory;
 @property (nonatomic, strong) NSArray *options, *args;
 @property (nonatomic, copy) void (^done)(int, NSString *);
 @end
@@ -93,8 +93,8 @@ static void *KOJavaThread(void *arg)
     @autoreleasepool {
         KOJavaLaunch *l = (__bridge_transfer KOJavaLaunch *)arg;
         KORedirectOutput();
-        // (games keep files next to themselves: the working folder is Kostka's own, not the root of the system)
-        chdir([[KOJava dataPath] fileSystemRepresentation]);
+        // (games keep files next to themselves: the working folder is the game's own, not the root of the system)
+        chdir([(l.workingDirectory ?: [KOJava dataPath]) fileSystemRepresentation]);
         KOLog(@"java: loading %@", l.libjvm);
         void *h = dlopen([l.libjvm fileSystemRepresentation], RTLD_NOW | RTLD_GLOBAL);
         if (!h) { KOFinish(l, -1, [NSString stringWithFormat:@"dlopen failed: %s", dlerror()]); return NULL; }
@@ -154,6 +154,12 @@ static void *KOJavaThread(void *arg)
 + (void)runMainClass:(NSString *)mainClass classPath:(NSArray *)classPath options:(NSArray *)options args:(NSArray *)args
                 done:(void (^)(int, NSString *))done
 {
+    [self runMainClass:mainClass classPath:classPath options:options args:args workingDirectory:nil done:done];
+}
+
++ (void)runMainClass:(NSString *)mainClass classPath:(NSArray *)classPath options:(NSArray *)options args:(NSArray *)args
+    workingDirectory:(NSString *)workingDirectory done:(void (^)(int, NSString *))done
+{
     if (g_started) {
         if (done) done(-1, L(@"Java has already run since the app was opened: close the app and open it again."));
         return;
@@ -163,6 +169,7 @@ static void *KOJavaThread(void *arg)
     KOJavaLaunch *l = [[KOJavaLaunch alloc] init];
     l.libjvm = [jre stringByAppendingPathComponent:@"lib/client/libjvm.dylib"];
     l.mainClass = mainClass;
+    l.workingDirectory = workingDirectory;
     NSString *data = [self dataPath];
     NSString *tmp = [data stringByAppendingPathComponent:@"tmp"];
     [[NSFileManager defaultManager] createDirectoryAtPath:tmp withIntermediateDirectories:YES attributes:nil error:NULL];
