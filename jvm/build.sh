@@ -210,14 +210,28 @@ jni_headers() {
     home="$(corretto_home)"
     cp="$home/jre/lib/rt.jar:$(ls "$home"/jre/lib/ext/*.jar | tr '\n' ':')"
     mkdir -p "$GEN/jni"
-    classes=$(python3 - "$GEN/jni" "$@" <<'PY'
+    classes=$(python3 - "$GEN/jni" "$SRC/jdk/src" "$@" <<'PY'
 import os, re, sys
-out, names = sys.argv[1], set()
-for f in sys.argv[2:]:
+out, jdk, names = sys.argv[1], sys.argv[2], set()
+# (the JDK's own headers by name: a class header may be included by one of them, "nio.h" -> "sun_nio_ch_IOStatus.h")
+headers = {}
+for d in ("share", "solaris", "macosx"):
+    for root, _, files in os.walk(os.path.join(jdk, d, "native")):
+        for h in files:
+            if h.endswith(".h"):
+                headers.setdefault(h, os.path.join(root, h))
+seen, todo = set(), list(sys.argv[3:])
+while todo:
+    f = todo.pop()
+    if f in seen or not os.path.exists(f):
+        continue
+    seen.add(f)
     for m in re.finditer(r'#\s*include\s*"([A-Za-z0-9_]+)\.h"', open(f, encoding="latin-1").read()):
         n = m.group(1)
         if n.split("_")[0] in ("java", "javax", "sun", "jdk", "com", "apple") and "_" in n:
             names.add(n)
+        elif n + ".h" in headers:
+            todo.append(headers[n + ".h"])
 for n in sorted(names):
     if not os.path.exists(os.path.join(out, n + ".h")):
         print(n.replace("_00024", "$").replace("_1", "\x01").replace("_", ".").replace("\x01", "_"))
