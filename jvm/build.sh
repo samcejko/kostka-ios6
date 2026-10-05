@@ -299,13 +299,19 @@ runtime() {
     local home; home="$(corretto_home)"
     rsync -a --exclude '*.dylib' --exclude 'jli' --exclude 'server' --exclude '*.jsa' --exclude 'jspawnhelper' \
         --exclude 'nashorn.jar' --exclude 'cldrdata.jar' --exclude 'jfr*' --exclude 'deploy*' --exclude 'javafx*' \
-        --exclude 'ant-javafx.jar' --exclude 'jexec' "$home/jre/lib/" "$JRE/lib/" || return 1
+        --exclude 'ant-javafx.jar' --exclude 'jexec' --exclude '*.framework' --exclude 'applet' \
+        "$home/jre/lib/" "$JRE/lib/" || return 1
     # (the runtime's licenses: GPL v2 with the Classpath exception, and the third parties' notices)
     local f
     for f in LICENSE ASSEMBLY_EXCEPTION THIRD_PARTY_README; do
         [ -f "$home/$f" ] && cp "$home/$f" "$JRE/$f"
     done
     cp "$HERE/README.md" "$JRE/README-Kostka.md" 2>/dev/null || true
+    # (iOS loads no code without a signature: the pseudo-signature of ldid, as for the app itself)
+    local lib
+    for lib in $(find "$JRE" -name '*.dylib'); do
+        "$TC/ldid" -S "$lib" || return 1
+    done
     du -sh "$JRE"
     find "$JRE" -maxdepth 2 | sort | head -n 80
 }
