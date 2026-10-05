@@ -312,7 +312,8 @@ jdklibs() {
     inc=""
     for d in $dirs solaris/native/sun/net/dns solaris/native/sun/net/spi solaris/native/sun/net/sdp; do inc="$inc -I$j/$d"; done
     srcs=$(for d in $dirs; do find "$j/$d" -name '*.c'; done | sort -u |
-        grep -vE '/(linux_close|TwoStacksPlainSocketImpl|DualStackPlainSocketImpl|TwoStacksPlainDatagramSocketImpl|DualStackPlainDatagramSocketImpl|NTLMAuthSequence|NetworkInterface_winXP)\.c$')
+        grep -vE '/(linux_close|TwoStacksPlainSocketImpl|DualStackPlainSocketImpl|TwoStacksPlainDatagramSocketImpl|DualStackPlainDatagramSocketImpl|NTLMAuthSequence|NetworkInterface_winXP|NetworkInterface)\.c$')
+    # (NetworkInterface.c - listing the network interfaces - wants kernel headers iOS has not; nothing needs it yet)
     native_lib net "$srcs" "$inc -I$j/share/native/java/io -I$j/solaris/native/java/io" "-ljvm -ljava" || return 1
 
     # libnio (jdk/make/lib/NioLibraries.gmk, macosx: only the files listed there)

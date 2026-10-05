@@ -81,7 +81,7 @@ if ($Trigger) {
         $prev = Invoke-GH GET "/actions/runs?branch=$Branch&per_page=1"
         if ($prev.workflow_runs) { $AfterRunId = [long]$prev.workflow_runs[0].id }
     }
-    Invoke-GH POST "/actions/workflows/build.yml/dispatches" @{ ref = $Branch } | Out-Null
+    Invoke-GH POST "/actions/workflows/$Workflow/dispatches" @{ ref = $Branch } | Out-Null
     Write-Host "Triggered workflow_dispatch on $Branch"
     Start-Sleep -Seconds 8
 }
