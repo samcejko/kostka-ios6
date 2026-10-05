@@ -347,10 +347,12 @@ jdklibs() {
         "-ljava -lnet -ljvm -framework CoreFoundation" || return 1
 
     # libmanagement (jdk/make/lib/ServiceabilityLibraries.gmk, macosx): java.lang.management - Minecraft asks it for
-    # the VM's arguments and uptime. (Its process statistics want headers the iOS SDK has not: from the same XNU.)
+    # the VM's arguments and uptime. (Its process statistics want headers the iOS SDK has not: from the same XNU, and
+    # libproc.h from Apple's Libc of the time)
     mkdir -p "$GEN/ios-include/sys"
     [ -f "$GEN/ios-include/sys/proc_info.h" ] || curl -sSfL "$xnu/bsd/sys/proc_info.h" -o "$GEN/ios-include/sys/proc_info.h" || return 1
-    [ -f "$GEN/ios-include/libproc.h" ] || curl -sSfL "$xnu/libsyscall/wrappers/libproc/libproc.h" -o "$GEN/ios-include/libproc.h" || return 1
+    [ -f "$GEN/ios-include/libproc.h" ] || curl -sSfL "https://raw.githubusercontent.com/apple-oss-distributions/Libc/Libc-825.26/darwin/libproc.h" \
+        -o "$GEN/ios-include/libproc.h" || return 1
     srcs="$(ls "$j"/share/native/sun/management/*.c) $j/solaris/native/sun/management/FileSystemImpl.c
  $j/solaris/native/sun/management/MacosxOperatingSystem.c $j/solaris/native/sun/management/OperatingSystemImpl.c"
     native_lib management "$srcs" "-I$j/share/native/sun/management" "-ljvm -ljava" || return 1
