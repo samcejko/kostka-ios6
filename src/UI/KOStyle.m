@@ -12,6 +12,11 @@
     return [UIColor colorWithRed:0.20 green:0.55 blue:0.15 alpha:1];
 }
 
++ (UIColor *)tryColor
+{
+    return [UIColor colorWithRed:0.85 green:0.48 blue:0.08 alpha:1];
+}
+
 + (UIColor *)soonColor
 {
     return [UIColor colorWithWhite:0.45 alpha:1];

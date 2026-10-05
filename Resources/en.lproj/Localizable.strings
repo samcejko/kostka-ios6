@@ -8,7 +8,8 @@
 "Downloading the game" = "Downloading the game";
 "Downloading the libraries" = "Downloading the libraries";
 "Downloading the sounds and languages" = "Downloading the sounds and languages";
-"Java has already run since the app was opened: close the app and open it again." = "Java has already run since the app was opened: close the app and open it again.";
+"From 1.6 on Minecraft starts without Java's window toolkit, the way Kostka runs it: 1.6.4 plays. A new world takes about a minute, and saving it when you leave takes a while. The newer the version, the more memory and speed it wants of the iPad: it may not start, or end soon after. In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item." = "From 1.6 on Minecraft starts without Java's window toolkit, the way Kostka runs it: 1.6.4 plays. A new world takes about a minute, and saving it when you leave takes a while. The newer the version, the more memory and speed it wants of the iPad: it may not start, or end soon after. In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item.";
+"Java has already run since the app was opened: close the app and open it again." ="Java has already run since the app was opened: close the app and open it again.";
 "Jump" = "Jump";
 "Kostka does not run this version yet. Everything up to 1.12.2 is its aim: Classic to 1.5.2 still need Java's window toolkit (AWT), which Kostka does not have yet, the newer ones more memory than Kostka gives the game now." = "Kostka does not run this version yet. Everything up to 1.12.2 is its aim: Classic to 1.5.2 still need Java's window toolkit (AWT), which Kostka does not have yet, the newer ones more memory than Kostka gives the game now.";
 "Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license)." = "Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).";
@@ -38,6 +39,7 @@
 "The server answered %ld." = "The server answered %ld.";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.";
 "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another." = "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another.";
+"To try" = "To try";
 "Too new for iOS 6" = "Too new for iOS 6";
 "Try the versions that do not run yet" = "Try the versions that do not run yet";
 "Versions" = "Versions";

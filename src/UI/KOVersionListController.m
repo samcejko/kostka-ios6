@@ -129,6 +129,7 @@
     cell.textLabel.text = v.identifier;
     cell.detailTextLabel.text = v.localizedSupport;
     cell.detailTextLabel.textColor = v.support == KOSupportPlays ? [KOStyle playsColor]
+                                   : v.support == KOSupportTry ? [KOStyle tryColor]
                                    : v.support == KOSupportSoon ? [KOStyle soonColor] : [KOStyle neverColor];
     return cell;
 }

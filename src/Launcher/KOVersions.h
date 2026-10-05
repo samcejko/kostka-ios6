@@ -4,6 +4,7 @@
 // Library/Kostka/versions for when the network is away. And what Kostka can do with each.
 typedef NS_ENUM(NSInteger, KOSupport) {
     KOSupportPlays,   // runs on this device
+    KOSupportTry,     // runs, as far as tried: 1.6 to 1.12.2 (1.6.4 plays; the newer ones want more of the iPad)
     KOSupportSoon,    // a version of the LWJGL 2 era: Kostka does not run it yet
     KOSupportNever    // LWJGL 3, newer OpenGL and Java: more than iOS 6 gives
 };

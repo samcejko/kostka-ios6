@@ -27,6 +27,8 @@
     switch (v.support) {
         case KOSupportPlays:
             return L(@"RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes Kostka: open it again to play once more).");
+        case KOSupportTry:
+            return L(@"From 1.6 on Minecraft starts without Java's window toolkit, the way Kostka runs it: 1.6.4 plays. A new world takes about a minute, and saving it when you leave takes a while. The newer the version, the more memory and speed it wants of the iPad: it may not start, or end soon after. In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item.");
         case KOSupportSoon:
             return L(@"Kostka does not run this version yet. Everything up to 1.12.2 is its aim: Classic to 1.5.2 still need Java's window toolkit (AWT), which Kostka does not have yet, the newer ones more memory than Kostka gives the game now.");
         default:
@@ -59,6 +61,7 @@
     support.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     support.text = self.version.localizedSupport;
     support.textColor = self.version.support == KOSupportPlays ? [UIColor colorWithRed:0.6 green:1 blue:0.45 alpha:1]
+                      : self.version.support == KOSupportTry ? [UIColor colorWithRed:1 green:0.75 blue:0.3 alpha:1]
                       : self.version.support == KOSupportSoon ? [UIColor colorWithWhite:0.8 alpha:1]
                                                               : [UIColor colorWithRed:1 green:0.55 blue:0.45 alpha:1];
     [v addSubview:support];
@@ -74,7 +77,7 @@
     CGFloat y = 160 + size.height + 30;
     self.play = [KOStyle bigButton:L(@"Play")];
     self.play.frame = CGRectMake(m, y, 260, 56);
-    self.play.enabled = self.version.support == KOSupportPlays ||
+    self.play.enabled = self.version.support == KOSupportPlays || self.version.support == KOSupportTry ||
                         (self.version.support == KOSupportSoon && [[NSUserDefaults standardUserDefaults] boolForKey:@"KOTryAll"]);
     [self.play addTarget:self action:@selector(playTapped) forControlEvents:UIControlEventTouchUpInside];
     [v addSubview:self.play];

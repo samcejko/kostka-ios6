@@ -7,6 +7,7 @@
 + (UIColor *)barColor;
 + (UIColor *)dirtColor;          // a pattern
 + (UIColor *)playsColor;         // "Plays"
++ (UIColor *)tryColor;           // "To try"
 + (UIColor *)soonColor;          // "Not yet"
 + (UIColor *)neverColor;         // "Too new"
 

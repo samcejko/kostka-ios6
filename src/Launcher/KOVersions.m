@@ -13,14 +13,22 @@ static NSString *const KOManifestURL = @"https://piston-meta.mojang.com/mc/game/
     // Java 8 (17w43a, the first 1.13 snapshot of October 2017, moved to LWJGL 3); Classic to 1.5.2 open an AWT
     // window first, 1.6 and newer want more memory: not yet.
     if ([self.identifier hasPrefix:@"rd-"]) return KOSupportPlays;
-    if ([self.released compare:@"2017-10-25"] == NSOrderedAscending) return KOSupportSoon;
-    return KOSupportNever;
+    if ([self.released compare:@"2017-10-25"] != NSOrderedAscending) return KOSupportNever;
+    // 1.6 started the game without an AWT window (1.6.4 plays). By number for the releases: 1.5.2 came out after
+    // the first 1.6 snapshot (13w16a, 21 April 2013), and still opens one.
+    if ([self.type isEqualToString:@"release"]) {
+        NSArray *parts = [self.identifier componentsSeparatedByString:@"."];
+        return parts.count > 1 && [parts[0] isEqualToString:@"1"] && [parts[1] intValue] >= 6 ? KOSupportTry : KOSupportSoon;
+    }
+    if ([self.type isEqualToString:@"snapshot"] && [self.released compare:@"2013-04-21"] != NSOrderedAscending) return KOSupportTry;
+    return KOSupportSoon;
 }
 
 - (NSString *)localizedSupport
 {
     switch (self.support) {
         case KOSupportPlays: return L(@"Plays");
+        case KOSupportTry: return L(@"To try");
         case KOSupportSoon: return L(@"Not yet");
         default: return L(@"Too new for iOS 6");
     }
