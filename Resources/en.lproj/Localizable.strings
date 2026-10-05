@@ -1,5 +1,8 @@
 /* Kostka - English (the keys are the English texts) */
 "Device test" = "Device test";
 "Java has already run since the app was opened: close the app and open it again." = "Java has already run since the app was opened: close the app and open it again.";
+"Jump" = "Jump";
+"OK" = "OK";
 "Run the tests" = "Run the tests";
+"Sneak" = "Sneak";
 "What this device allows a Java VM: generated code, memory, graphics, speed." = "What this device allows a Java VM: generated code, memory, graphics, speed.";

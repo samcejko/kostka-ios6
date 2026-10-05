@@ -134,6 +134,19 @@ jobs:
             echo "no runtime built yet: the app is built without one"
           fi
 
+      - name: LWJGL with gl4es (the latest successful build of lwjgl.yml)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow lwjgl.yml --status success --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || true)
+          if [ -n "$RUN" ]; then
+            echo "LWJGL from run $RUN"
+            gh run download "$RUN" --repo "$GITHUB_REPOSITORY" -n lwjgl-ios-armv7 -D Resources/lwjgl
+            ls -la Resources/lwjgl
+          else
+            echo "no LWJGL built yet: the app is built without it"
+          fi
+
       - name: Syntax check (every error of our own sources in one go)
         run: |
           export PATH="$THEOS/toolchain/linux/iphone/bin:$THEOS/bin:$PATH"

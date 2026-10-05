@@ -3,6 +3,10 @@ obj/
 packages/
 vendor/fetched/
 jvm/out/
+lwjgl/out/
+Resources/jre/
+Resources/lwjgl/
+Resources/test/
 tools/local.json
 Resources/Icon*.png
 Resources/Default*.png

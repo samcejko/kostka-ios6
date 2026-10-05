@@ -68,18 +68,26 @@
     NSRange q = [rest rangeOfString:@"?"];
     NSString *target = [(q.location == NSNotFound ? rest : [rest substringToIndex:q.location]) lowercaseString];
     NSString *query = q.location == NSNotFound ? @"" : [rest substringFromIndex:q.location + 1];
-    // kostka:java?main=Hello[&cp=test/hello.jar][&xmx=96m]: a Java program from the bundle
+    // kostka:java?main=Hello[&cp=test/hello.jar:...][&xmx=96m][&debug=1]: a Java program from the bundle
+    // (LWJGL's native library is the bundle's, lwjgl/; debug=1 turns on LWJGL's log)
     if ([target isEqualToString:@"java"]) {
         NSMutableDictionary *p = [NSMutableDictionary dictionary];
         for (NSString *pair in [query componentsSeparatedByString:@"&"]) {
             NSArray *kv = [pair componentsSeparatedByString:@"="];
             if (kv.count == 2) p[kv[0]] = [kv[1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         }
-        NSString *cp = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:p[@"cp"] ?: @"test/hello.jar"];
+        NSString *bundle = [NSBundle mainBundle].bundlePath;
+        NSMutableArray *cp = [NSMutableArray array];
+        for (NSString *part in [p[@"cp"] ?: @"test/hello.jar" componentsSeparatedByString:@":"]) {
+            if (part.length) [cp addObject:[bundle stringByAppendingPathComponent:part]];
+        }
+        NSMutableArray *options = [NSMutableArray arrayWithObjects:
+            [@"-Xmx" stringByAppendingString:p[@"xmx"] ?: @"96m"],
+            [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:[bundle stringByAppendingPathComponent:@"lwjgl"]], nil];
+        if ([p[@"debug"] isEqualToString:@"1"]) [options addObject:@"-Dorg.lwjgl.util.Debug=true"];
         [self append:[NSString stringWithFormat:@"> java %@", p[@"main"] ?: @"Hello"]];
         __weak KOAppDelegate *weakSelf = self;
-        [KOJava runMainClass:p[@"main"] ?: @"Hello" classPath:@[ cp ]
-                     options:@[ [@"-Xmx" stringByAppendingString:p[@"xmx"] ?: @"96m"] ] args:@[]
+        [KOJava runMainClass:p[@"main"] ?: @"Hello" classPath:cp options:options args:@[]
                         done:^(int code, NSString *error) {
             [weakSelf append:[NSString stringWithFormat:@"java: exit %d %@", code, error ?: @""]];
         }];

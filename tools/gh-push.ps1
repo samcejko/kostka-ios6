@@ -55,7 +55,8 @@ function Invoke-GH {
 
 function Test-Ignored([string]$rel) {
     $r = $rel -replace '\\', '/'
-    if ($r -like '.theos/*' -or $r -like 'obj/*' -or $r -like 'packages/*' -or $r -like 'vendor/fetched/*' -or $r -like 'jvm/out/*' -or $r -like '.git/*') { return $true }
+    if ($r -like '.theos/*' -or $r -like 'obj/*' -or $r -like 'packages/*' -or $r -like 'vendor/fetched/*' -or $r -like 'jvm/out/*' -or $r -like 'lwjgl/out/*' -or $r -like '.git/*') { return $true }
+    if ($r -like 'Resources/jre/*' -or $r -like 'Resources/lwjgl/*' -or $r -like 'Resources/test/*') { return $true }
     if ($r -like 'Resources/Icon*.png' -or $r -like 'Resources/Default*.png' -or $r -eq 'Resources/cacert.pem' -or $r -like 'Resources/licenses/*') { return $true }
     if ($r -like '*.ipa' -or $r -like '*.deb' -or $r -like '*.DS_Store' -or $r -like '*.log') { return $true }
     # Local settings with the token, wherever they are; .env files of any name never leave the machine either

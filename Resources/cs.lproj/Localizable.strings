@@ -1,5 +1,8 @@
 /* Kostka - čeština */
 "Device test" = "Test zařízení";
 "Java has already run since the app was opened: close the app and open it again." = "Java už od otevření aplikace běžela: zavři aplikaci a otevři ji znovu.";
+"Jump" = "Skok";
+"OK" = "OK";
 "Run the tests" = "Spustit testy";
+"Sneak" = "Plížit";
 "What this device allows a Java VM: generated code, memory, graphics, speed." = "Co toto zařízení dovolí Javě: generovaný kód, paměť, grafika, rychlost.";
