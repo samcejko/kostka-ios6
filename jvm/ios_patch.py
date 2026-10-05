@@ -47,7 +47,9 @@ static __thread RegisterMap *reg_map;''',
 static unsigned long nextpc;
 static unsigned long nextsp;
 static RegisterMap *reg_map;'''),
-    # The instruction cache: Darwin's call for it (there is no __clear_cache to rely on in iOS 6's libraries)
+    # The instruction cache: Darwin's call for it (there is no __clear_cache to rely on in iOS 6's libraries). iOS 6's
+    # sys_icache_invalidate does not take an empty range (it runs on through memory to a fault): HotSpot asks for one
+    # when C1 patches code that has nothing to copy.
     ("hotspot/src/cpu/aarch32/vm/icache_aarch32.hpp",
      '''  static void invalidate_word(address addr) {
     __clear_cache((char *)addr, (char *)(addr + 3));
@@ -59,7 +61,7 @@ static RegisterMap *reg_map;'''),
     sys_icache_invalidate((void *)addr, 4);
   }
   static void invalidate_range(address start, int nbytes) {
-    sys_icache_invalidate((void *)start, nbytes);
+    if (nbytes > 0) sys_icache_invalidate((void *)start, nbytes);
   }'''),
     ("hotspot/src/cpu/aarch32/vm/icache_aarch32.hpp",
      '''#define CPU_AARCH32_VM_ICACHE_AARCH32_HPP
