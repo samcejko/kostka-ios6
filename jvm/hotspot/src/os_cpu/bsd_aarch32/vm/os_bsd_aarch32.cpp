@@ -75,6 +75,7 @@
 # include <poll.h>
 # include <sys/ucontext.h>
 # include <libkern/OSCacheControl.h>
+# include <libkern/OSAtomic.h>
 
 // The registers in a signal's context (Darwin armv7). The frame pointer is HotSpot's (rfp, r11): C code on Darwin keeps
 // its frame chain in r7, which only matters for walking native frames in error reports.
@@ -84,6 +85,9 @@
 #define context_fp   uc_mcontext->__ss.__r[11]
 #define context_cpsr uc_mcontext->__ss.__cpsr
 #define CPSR_THUMB   (1u << 5)
+
+// The locks of the 64-bit atomics on values that are not 8-byte aligned (atomic_bsd_aarch32.inline.hpp)
+OSSpinLock kostka_atomic64_locks[32];
 
 address os::current_stack_pointer() {
   address sp;
