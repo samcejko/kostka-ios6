@@ -299,6 +299,28 @@ jdklibs() {
     srcs=$(find "$j/share/native/java/util/zip" -name zlib -prune -o -name '*.c' -print)
     native_lib zip "$srcs" "-DUSE_MMAP -I$j/share/native/java/util/zip -I$j/share/native/java/io -I$j/solaris/native/java/io" \
         "-ljava -ljvm -lz" || return 1
+
+    # libnet (jdk/make/lib/NetworkingLibraries.gmk, macosx)
+    dirs="share/native/java/net solaris/native/java/net solaris/native/sun/net"
+    inc=""
+    for d in $dirs solaris/native/sun/net/dns solaris/native/sun/net/spi solaris/native/sun/net/sdp; do inc="$inc -I$j/$d"; done
+    srcs=$(for d in $dirs; do find "$j/$d" -name '*.c'; done | sort -u |
+        grep -vE '/(linux_close|TwoStacksPlainSocketImpl|DualStackPlainSocketImpl|TwoStacksPlainDatagramSocketImpl|DualStackPlainDatagramSocketImpl|NTLMAuthSequence|NetworkInterface_winXP)\.c$')
+    native_lib net "$srcs" "$inc -I$j/share/native/java/io -I$j/solaris/native/java/io" "-ljvm -ljava" || return 1
+
+    # libnio (jdk/make/lib/NioLibraries.gmk, macosx: only the files listed there)
+    local f files="DatagramChannelImpl DatagramDispatcher FileChannelImpl FileDispatcherImpl FileKey IOUtil MappedByteBuffer Net
+ ServerSocketChannelImpl SocketChannelImpl SocketDispatcher InheritedChannel NativeThread PollArrayWrapper
+ UnixAsynchronousServerSocketChannelImpl UnixAsynchronousSocketChannelImpl BsdNativeDispatcher MacOSXNativeDispatcher
+ UnixCopyFile UnixNativeDispatcher KQueue KQueuePort KQueueArrayWrapper"
+    srcs=""
+    for f in $files; do
+        srcs="$srcs $(find "$j/solaris/native/java/nio" "$j/solaris/native/sun/nio/ch" "$j/solaris/native/sun/nio/fs" \
+            "$j/macosx/native/sun/nio/ch" -name "$f.c" | head -n1)"
+    done
+    native_lib nio "$srcs" "-I$j/share/native/sun/nio/ch -I$j/share/native/java/io -I$j/share/native/java/net \
+ -I$j/solaris/native/java/net -I$j/solaris/native/sun/nio/ch -I$j/solaris/native/sun/nio/fs -I$j/solaris/native/java/io" \
+        "-ljava -lnet -ljvm -framework CoreFoundation" || return 1
 }
 
 # 6. The runtime's other files: Corretto's lib folder without its (x86_64) native code and what an iPad has no use for
