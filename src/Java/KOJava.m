@@ -161,12 +161,20 @@ static void *KOJavaThread(void *arg)
     KOJavaLaunch *l = [[KOJavaLaunch alloc] init];
     l.libjvm = [jre stringByAppendingPathComponent:@"lib/client/libjvm.dylib"];
     l.mainClass = mainClass;
+    NSString *data = [self dataPath];
+    NSString *tmp = [data stringByAppendingPathComponent:@"tmp"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:tmp withIntermediateDirectories:YES attributes:nil error:NULL];
     NSMutableArray *all = [NSMutableArray arrayWithArray:@[
         [@"-Djava.class.path=" stringByAppendingString:[classPath componentsJoinedByString:@":"]],
         @"-Djava.awt.headless=true",
+        [@"-Djava.io.tmpdir=" stringByAppendingString:tmp],
+        @"-Dfile.encoding=UTF-8",
         @"-XX:+UseSerialGC",
         @"-XX:ReservedCodeCacheSize=24m",
         @"-Xss512k",
+        // (no performance data file in /tmp; a crash report of the VM where it can be written and read)
+        @"-XX:-UsePerfData",
+        [NSString stringWithFormat:@"-XX:ErrorFile=%@/hs_err_%%p.log", data],
     ]];
     [all addObjectsFromArray:options ?: @[]];
     l.options = all;
