@@ -235,7 +235,7 @@ JDK_CFLAGS() {
  -DARCH='\"arm\"' -DRELEASE='\"$JRE_VERSION\"' -DARCHPROPNAME='\"arm\"' \
  -DJDK_MAJOR_VERSION='\"1\"' -DJDK_MINOR_VERSION='\"8\"' -DJDK_MICRO_VERSION='\"0\"' -DJDK_UPDATE_VERSION='\"504\"' \
  -DJDK_BUILD_NUMBER='\"b01\"' \
- -I$GEN/jni -I$j/share/javavm/export -I$j/macosx/javavm/export -I$j/solaris/javavm/export \
+ -I$GEN/jni -I$j/share/javavm/export -I$j/macosx/javavm/export -I$j/solaris/javavm/export -idirafter $GEN/ios-include \
  -I$j/share/native/common -I$j/solaris/native/common"
 }
 
@@ -299,6 +299,13 @@ jdklibs() {
     srcs=$(find "$j/share/native/java/util/zip" -name zlib -prune -o -name '*.c' -print)
     native_lib zip "$srcs" "-DUSE_MMAP -I$j/share/native/java/util/zip -I$j/share/native/java/io -I$j/solaris/native/java/io" \
         "-ljava -ljvm -lz" || return 1
+
+    # (network headers the iOS SDK leaves out and the macOS one has: from Apple's open source XNU of the iOS 6 era)
+    local xnu="https://raw.githubusercontent.com/apple-oss-distributions/xnu/xnu-2050.48.11" hdr
+    for hdr in netinet/ip_icmp.h netinet/icmp6.h net/if_arp.h; do
+        mkdir -p "$GEN/ios-include/$(dirname "$hdr")"
+        [ -f "$GEN/ios-include/$hdr" ] || curl -sSfL "$xnu/bsd/$hdr" -o "$GEN/ios-include/$hdr" || return 1
+    done
 
     # libnet (jdk/make/lib/NetworkingLibraries.gmk, macosx)
     dirs="share/native/java/net solaris/native/java/net solaris/native/sun/net"
