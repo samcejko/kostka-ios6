@@ -280,6 +280,22 @@ static RegisterMap *reg_map;'''),
 #endif
 
     if (_num_int_reg_args < Argument::n_int_register_parameters_c-2) {'''),
+    # libmanagement: the count of open files reads the process table with libproc, whose headers (and their kernel
+    # headers) the iOS SDK has not; on iOS it answers as on the other BSDs
+    ("jdk/src/solaris/native/sun/management/OperatingSystemImpl.c",
+     '''#include <mach/mach.h>
+#include <sys/proc_info.h>
+#include <libproc.h>''',
+     '''#include <mach/mach.h>
+#ifndef __arm__
+#include <sys/proc_info.h>
+#include <libproc.h>
+#endif'''),
+    ("jdk/src/solaris/native/sun/management/OperatingSystemImpl.c",
+     '''#ifdef __APPLE__
+    // This code is influenced by the darwin lsof source''',
+     '''#if defined(__APPLE__) && !defined(__arm__)
+    // This code is influenced by the darwin lsof source'''),
 ]
 
 
