@@ -1,5 +1,6 @@
 #import "KOAppDelegate.h"
 #import "KOProbe.h"
+#import "KOJava.h"
 #import "KOCommon.h"
 
 // For now the app is the device test of the first milestone: what this iPad allows a Java VM. The tests run from
@@ -67,6 +68,23 @@
     NSRange q = [rest rangeOfString:@"?"];
     NSString *target = [(q.location == NSNotFound ? rest : [rest substringToIndex:q.location]) lowercaseString];
     NSString *query = q.location == NSNotFound ? @"" : [rest substringFromIndex:q.location + 1];
+    // kostka:java?main=Hello[&cp=test/hello.jar][&xmx=96m]: a Java program from the bundle
+    if ([target isEqualToString:@"java"]) {
+        NSMutableDictionary *p = [NSMutableDictionary dictionary];
+        for (NSString *pair in [query componentsSeparatedByString:@"&"]) {
+            NSArray *kv = [pair componentsSeparatedByString:@"="];
+            if (kv.count == 2) p[kv[0]] = [kv[1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        }
+        NSString *cp = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:p[@"cp"] ?: @"test/hello.jar"];
+        [self append:[NSString stringWithFormat:@"> java %@", p[@"main"] ?: @"Hello"]];
+        __weak KOAppDelegate *weakSelf = self;
+        [KOJava runMainClass:p[@"main"] ?: @"Hello" classPath:@[ cp ]
+                     options:@[ [@"-Xmx" stringByAppendingString:p[@"xmx"] ?: @"96m"] ] args:@[]
+                        done:^(int code, NSString *error) {
+            [weakSelf append:[NSString stringWithFormat:@"java: exit %d %@", code, error ?: @""]];
+        }];
+        return YES;
+    }
     if ([target isEqualToString:@"probe"]) {
         NSString *test = @"info";
         for (NSString *pair in [query componentsSeparatedByString:@"&"]) {

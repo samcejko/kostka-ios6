@@ -76,6 +76,13 @@ jvmti() {
     $gen -XSL "$prims/jvmtiHpp.xsl" -OUT "$out/jvmtiEnv.hpp" || return 1
     $gen -XSL "$prims/jvmtiH.xsl" -OUT "$out/jvmti.h" || return 1
     ls -la "$out"
+    # JFR's event classes: needed even with JFR left out (they are then empty)
+    local jfr="$SRC/hotspot/src/share/vm/jfr" jout="$GEN/jfrfiles" jtools="$GEN/tools/jfr"
+    mkdir -p "$jout" "$jtools"
+    "$HOST_JAVA_HOME/bin/javac" -d "$jtools" "$jfr/GenerateJfrFiles.java" || return 1
+    "$HOST_JAVA_HOME/bin/java" -cp "$jtools" build.tools.jfr.GenerateJfrFiles "$jfr/metadata/metadata.xml" \
+        "$jfr/metadata/metadata.xsd" "$jout" || return 1
+    ls -la "$jout"
 }
 
 # 4. HotSpot: the client VM (template interpreter and C1), serial GC only, no JFR/CDS
@@ -103,7 +110,7 @@ hotspot_sources() {
 import os, sys, fnmatch
 # hotspot/make/bsd/makefiles/vm.make and make/excludeSrc.make: client VM, INCLUDE_ALL_GCS=0, INCLUDE_CDS=0, INCLUDE_JFR=0
 exclude = ["jsig.c", "jvmtiEnvRecommended.cpp", "jvmtiEnvStub.cpp", "bcEscapeAnalyzer.cpp", "c2_*", "runtime_*",
-           "*zero*", "*shark*", "ciTypeFlow.cpp", "chaitin*", "*x86*", "aarch32Test.cpp",
+           "*zero*", "*shark*", "ciTypeFlow.cpp", "chaitin*", "*x86*", "aarch32Test.cpp", "os_perf_*.cpp",
            "filemap.cpp", "metaspaceShared*.cpp", "sharedPathsMiscInfo.cpp", "systemDictionaryShared.cpp",
            "classLoaderExt.cpp", "sharedClassUtil.cpp", "g1MemoryPool.cpp", "psMemoryPool.cpp"]
 gc_keep = ["adaptiveSizePolicy.cpp", "ageTable.cpp", "ageTableTracer.cpp", "collectorCounters.cpp", "cSpaceCounters.cpp",
@@ -164,14 +171,136 @@ hotspot() {
         grep -B2 -A6 -m 25 ' error: ' "$LOGS/hotspot-compile.log" | head -n 250
         return 1
     fi
+    # (the macOS layout, which os_bsd.cpp expects on Darwin: <java.home>/lib/client/libjvm.dylib, the JDK's
+    # libraries in <java.home>/lib)
     step "linking libjvm.dylib"
-    mkdir -p "$JRE/lib/arm/client"
+    mkdir -p "$JRE/lib/client"
     $TC/clang++ $TARGET -dynamiclib -install_name @rpath/libjvm.dylib -compatibility_version 1.0.0 -current_version 1.0.0 \
-        -o "$JRE/lib/arm/client/libjvm.dylib" "$objdir"/*.o -lc++ -lm > "$LOGS/hotspot-link.log" 2>&1
+        -o "$JRE/lib/client/libjvm.dylib" "$objdir"/*.o -lc++ -lm > "$LOGS/hotspot-link.log" 2>&1
     local ls=$?
     cat "$LOGS/hotspot-link.log" | head -n 80
     [ $ls -eq 0 ] || return 1
-    ls -la "$JRE/lib/arm/client/libjvm.dylib"
+    ls -la "$JRE/lib/client/libjvm.dylib"
+}
+
+# 5. The Java classes: Amazon Corretto 8 for macOS, the same update (its natives are x86_64: not used)
+CORRETTO="${CORRETTO:-8.504.04.1}"
+corretto() {
+    local dir="$OUT/corretto"
+    if [ -f "$dir/.done-$CORRETTO" ]; then echo "Corretto $CORRETTO: cached"; return 0; fi
+    step "fetching Corretto $CORRETTO (macOS)"
+    rm -rf "$dir"; mkdir -p "$dir"
+    curl -sSfL "https://corretto.aws/downloads/resources/$CORRETTO/amazon-corretto-$CORRETTO-macosx-x64.tar.gz" | tar -xz -C "$dir" || return 1
+    touch "$dir/.done-$CORRETTO"
+}
+corretto_home() { find "$OUT/corretto" -maxdepth 4 -type d -name Home | head -n1; }
+
+# The JNI headers the given sources include ("java_lang_Float.h"), made by javah from Corretto's classes
+jni_headers() {
+    local home cp classes c
+    home="$(corretto_home)"
+    cp="$home/jre/lib/rt.jar:$(ls "$home"/jre/lib/ext/*.jar | tr '\n' ':')"
+    mkdir -p "$GEN/jni"
+    classes=$(python3 - "$GEN/jni" "$@" <<'PY'
+import os, re, sys
+out, names = sys.argv[1], set()
+for f in sys.argv[2:]:
+    for m in re.finditer(r'#\s*include\s*"([A-Za-z0-9_]+)\.h"', open(f, encoding="latin-1").read()):
+        n = m.group(1)
+        if n.split("_")[0] in ("java", "javax", "sun", "jdk", "com", "apple") and "_" in n:
+            names.add(n)
+for n in sorted(names):
+    if not os.path.exists(os.path.join(out, n + ".h")):
+        print(n.replace("_00024", "$").replace("_1", "\x01").replace("_", ".").replace("\x01", "_"))
+PY
+)
+    for c in $classes; do
+        "$HOST_JAVA_HOME/bin/javah" -bootclasspath "$cp" -d "$GEN/jni" "$c" 2>/dev/null || echo "javah: no class $c"
+    done
+}
+
+J_SRC() { echo "$SRC/jdk/src"; }
+JDK_CFLAGS() {
+    local j; j="$(J_SRC)"
+    echo "-O2 -fPIC -fno-strict-aliasing -w -D_ALLBSD_SOURCE -DMACOSX -D_DARWIN_UNLIMITED_SELECT -D_LITTLE_ENDIAN \
+ -DARCH='\"arm\"' -DRELEASE='\"$JRE_VERSION\"' -DARCHPROPNAME='\"arm\"' \
+ -DJDK_MAJOR_VERSION='\"1\"' -DJDK_MINOR_VERSION='\"8\"' -DJDK_MICRO_VERSION='\"0\"' -DJDK_UPDATE_VERSION='\"504\"' \
+ -DJDK_BUILD_NUMBER='\"b01\"' \
+ -I$GEN/jni -I$j/share/javavm/export -I$j/macosx/javavm/export -I$j/solaris/javavm/export \
+ -I$j/share/native/common -I$j/solaris/native/common"
+}
+
+# native_lib <name> "<sources>" "<cflags>" "<ldflags>": lib<name>.dylib in <java.home>/lib
+native_lib() {
+    local name="$1" srcs="$2" cflags="$3" ldflags="$4"
+    local objdir="$OBJ/lib$name" mk="$OUT/lib$name.mk" s o
+    step "lib$name ($(echo $srcs | wc -w) sources)"
+    mkdir -p "$objdir" "$JRE/lib"
+    jni_headers $srcs
+    {
+        echo "CC := $CC"
+        echo "CFLAGS := $(JDK_CFLAGS) $cflags"
+        printf 'OBJS :='
+        for s in $srcs; do o="${s#$SRC/}"; printf ' %s/%s.o' "$objdir" "${o//\//_}"; done
+        echo
+        echo 'all: $(OBJS)'
+        for s in $srcs; do
+            o="${s#$SRC/}"
+            local lang=""
+            case "$s" in *.m|*/java_props_md.c|*/java_props_macosx.c) lang="-x objective-c" ;; esac
+            printf '%s/%s.o: %s\n\t@$(CC) $(CFLAGS) %s -c $< -o $@ 2> $@.err || { cat $@.err; exit 1; }\n' "$objdir" "${o//\//_}" "$s" "$lang"
+        done
+    } > "$mk"
+    make -k -j"$JOBS" -f "$mk" all > "$LOGS/lib$name-compile.log" 2>&1
+    if [ $? -ne 0 ]; then
+        echo "lib$name: compile errors"
+        grep -B2 -A6 -m 30 ' error: ' "$LOGS/lib$name-compile.log" | head -n 200
+        return 1
+    fi
+    $TC/clang $TARGET -dynamiclib -install_name "@rpath/lib$name.dylib" -compatibility_version 1.0.0 -current_version 1.0.0 \
+        -o "$JRE/lib/lib$name.dylib" "$objdir"/*.o -L"$JRE/lib" -L"$JRE/lib/client" \
+        -Wl,-rpath,@loader_path -Wl,-rpath,@loader_path/client $ldflags > "$LOGS/lib$name-link.log" 2>&1
+    if [ $? -ne 0 ]; then echo "lib$name: link errors"; head -n 80 "$LOGS/lib$name-link.log"; return 1; fi
+    ls -la "$JRE/lib/lib$name.dylib"
+}
+
+jdklibs() {
+    local j; j="$(J_SRC)"
+    # fdlibm (StrictMath), not optimized (as the JDK builds it), linked into libjava
+    local fd="$OBJ/fdlibm" s
+    mkdir -p "$fd"
+    for s in "$j"/share/native/java/lang/fdlibm/src/*.c; do
+        # (eval: the flags hold quoted string defines, as a Makefile's shell would read them)
+        eval "$CC $(JDK_CFLAGS) -O0 -I'$j/share/native/java/lang/fdlibm/include' -c '$s' -o '$fd/$(basename "${s%.c}").o'" || return 1
+    done
+
+    native_lib verify "$j/share/native/common/check_code.c $j/share/native/common/check_format.c" "" "-ljvm" || return 1
+
+    local dirs="solaris/native/java/lang share/native/java/lang share/native/java/lang/reflect share/native/java/io
+ solaris/native/java/io share/native/java/nio share/native/java/security share/native/common share/native/sun/misc
+ share/native/sun/reflect share/native/java/util share/native/java/util/concurrent/atomic solaris/native/common
+ solaris/native/java/util macosx/native/sun/util/locale/provider"
+    local d inc="" srcs
+    for d in $dirs; do inc="$inc -I$j/$d"; done
+    srcs=$(for d in $dirs; do find "$j/$d" \( -path '*/fdlibm/src' -o -name zip \) -prune -o \( -name '*.c' -o -name '*.m' \) -print; done | sort -u |
+        grep -vE '/(check_code|check_format|jspawnhelper|ProcessImpl_md|WinNTFileSystem_md|dirent_md|WindowsPreferences|WinCAPISeedGenerator|Win32ErrorMode)\.c$')
+    native_lib java "$srcs" "$inc -I$j/share/native/java/lang/fdlibm/include" \
+        "$fd/*.o -ljvm -lverify -framework CoreFoundation -framework Foundation -framework Security -framework SystemConfiguration" || return 1
+
+    srcs=$(find "$j/share/native/java/util/zip" -name zlib -prune -o -name '*.c' -print)
+    native_lib zip "$srcs" "-DUSE_MMAP -I$j/share/native/java/util/zip -I$j/share/native/java/io -I$j/solaris/native/java/io" \
+        "-ljava -ljvm -lz" || return 1
+}
+
+# 6. The runtime's other files: Corretto's lib folder without its (x86_64) native code and what an iPad has no use for
+runtime() {
+    step "assembling the runtime"
+    local home; home="$(corretto_home)"
+    rsync -a --exclude '*.dylib' --exclude 'jli' --exclude 'server' --exclude '*.jsa' --exclude 'jspawnhelper' \
+        --exclude 'nashorn.jar' --exclude 'cldrdata.jar' --exclude 'jfr*' --exclude 'deploy*' --exclude 'javafx*' \
+        --exclude 'ant-javafx.jar' --exclude 'jexec' "$home/jre/lib/" "$JRE/lib/" || return 1
+    du -sh "$JRE"
+    find "$JRE" -maxdepth 2 | sort | head -n 80
 }
 
 case "${1:-all}" in
@@ -179,6 +308,7 @@ case "${1:-all}" in
     prepare) fetch && prepare ;;
     jvmti) jvmti ;;
     hotspot) fetch && prepare && jvmti && hotspot ;;
-    all) fetch && prepare && jvmti && hotspot ;;
+    jdk) corretto && jdklibs && runtime ;;
+    all) fetch && prepare && jvmti && hotspot && corretto && jdklibs && runtime ;;
     *) echo "unknown step $1"; exit 2 ;;
 esac
