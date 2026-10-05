@@ -176,7 +176,7 @@ hotspot() {
     # libraries in <java.home>/lib)
     step "linking libjvm.dylib"
     mkdir -p "$JRE/lib/client"
-    $TC/clang++ $TARGET -dynamiclib -install_name @rpath/libjvm.dylib -compatibility_version 1.0.0 -current_version 1.0.0 \
+    $TC/clang++ $TARGET -dynamiclib -install_name @loader_path/client/libjvm.dylib -compatibility_version 1.0.0 -current_version 1.0.0 \
         -o "$JRE/lib/client/libjvm.dylib" "$objdir"/*.o -lc++ -lc++abi -lm > "$LOGS/hotspot-link.log" 2>&1
     local ls=$?
     # (the SDK's .tbd files make ld warn about the simulator on every line: only the rest is worth showing)
@@ -280,9 +280,10 @@ native_lib() {
         grep -B2 -A6 -m 30 ' error: ' "$LOGS/lib$name-compile.log" | head -n 200
         return 1
     fi
-    $TC/clang $TARGET -dynamiclib -install_name "@rpath/lib$name.dylib" -compatibility_version 1.0.0 -current_version 1.0.0 \
-        -o "$JRE/lib/lib$name.dylib" "$objdir"/*.o -L"$JRE/lib" -L"$JRE/lib/client" \
-        -Wl,-rpath,@loader_path -Wl,-rpath,@loader_path/client $ldflags > "$LOGS/lib$name-link.log" 2>&1
+    # (iOS 6's dyld has no @rpath - it came with iOS 8 - but knows @loader_path: the libraries find each other in
+    # <java.home>/lib, libjvm in <java.home>/lib/client)
+    $TC/clang $TARGET -dynamiclib -install_name "@loader_path/lib$name.dylib" -compatibility_version 1.0.0 -current_version 1.0.0 \
+        -o "$JRE/lib/lib$name.dylib" "$objdir"/*.o -L"$JRE/lib" -L"$JRE/lib/client" $ldflags > "$LOGS/lib$name-link.log" 2>&1
     if [ $? -ne 0 ]; then echo "lib$name: link errors"; head -n 80 "$LOGS/lib$name-link.log"; return 1; fi
     ls -la "$JRE/lib/lib$name.dylib"
 }
