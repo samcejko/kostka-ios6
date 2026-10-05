@@ -1,0 +1,123 @@
+name: Build the Java runtime (iOS 6, armv7)
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'jvm/**'
+      - '.github/workflows/jre.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  THEOS: /home/runner/theos
+  THEOS_CACHE_KEY: theos-linux-clang11-sdk93-v1
+  JDK_TAG: jdk8u504-ga-aarch32-20260819
+  CCACHE_DIR: /home/runner/.ccache
+  CCACHE_MAXSIZE: 2G
+
+jobs:
+  jre:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential ccache curl git xz-utils libplist-utils libtinfo5 || \
+          sudo apt-get install -y --no-install-recommends build-essential ccache curl git xz-utils libplist-utils
+
+      - name: Restore Theos cache
+        id: theos-cache
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/theos
+          key: ${{ env.THEOS_CACHE_KEY }}
+
+      - name: Install Theos, toolchain and iOS 9.3 SDK
+        if: steps.theos-cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          mkdir -p "$THEOS/toolchain" "$THEOS/sdks"
+          curl -sSL https://github.com/L1ghtmann/llvm-project/releases/latest/download/iOSToolchain-x86_64.tar.xz | tar -xJ -C "$THEOS/toolchain/"
+          if [ ! -x "$THEOS/toolchain/linux/iphone/bin/clang" ]; then
+            CLANG=$(find "$THEOS/toolchain" -type f -name clang -path '*/bin/*' | head -n1)
+            ROOT=$(dirname "$(dirname "$CLANG")")
+            mkdir -p "$THEOS/toolchain/linux"
+            ln -sfn "$ROOT" "$THEOS/toolchain/linux/iphone"
+          fi
+          SDK_URL=$(curl -sS https://api.github.com/repos/theos/sdks/releases/latest | grep -o 'https://[^"]*iPhoneOS9\.3\.sdk[^"]*' | head -n1 || true)
+          if [ -n "$SDK_URL" ]; then
+            curl -sSL "$SDK_URL" -o /tmp/sdk.archive
+            (tar -xJf /tmp/sdk.archive -C "$THEOS/sdks/" 2>/dev/null || tar -xzf /tmp/sdk.archive -C "$THEOS/sdks/" 2>/dev/null || unzip -q /tmp/sdk.archive -d "$THEOS/sdks/")
+          fi
+          if [ ! -d "$THEOS/sdks/iPhoneOS9.3.sdk" ]; then
+            git clone --depth=1 --filter=blob:none --sparse https://github.com/theos/sdks.git /tmp/sdks
+            (cd /tmp/sdks && git sparse-checkout set iPhoneOS9.3.sdk)
+            mv /tmp/sdks/iPhoneOS9.3.sdk "$THEOS/sdks/"
+          fi
+
+      - name: Patch SDK (stub re-exported libraries missing from theos/sdks)
+        run: |
+          set -e
+          TBIN="$THEOS/toolchain/linux/iphone/bin"
+          if [ -x /usr/bin/plistutil ]; then ln -sf /usr/bin/plistutil "$TBIN/plistutil"; fi
+          SDK="$THEOS/sdks/iPhoneOS9.3.sdk"
+          LIBSYS="$SDK/usr/lib/libSystem.tbd"
+          for lib in $(grep -o "/usr/lib/system/lib[A-Za-z0-9_]*\.dylib" "$LIBSYS" | sort -u); do
+            base="${lib%.dylib}"
+            if [ ! -f "$SDK$base.tbd" ] && [ ! -f "$SDK$lib" ]; then
+              mkdir -p "$(dirname "$SDK$base.tbd")"
+              printf -- '---\narchs:           [ armv7, armv7s, arm64 ]\nplatform:        ios\ninstall-name:    %s\ncurrent-version: 1.0\ncompatibility-version: 1.0\nexports:\n  - archs:           [ armv7, armv7s, arm64 ]\n    symbols:         [ ]\n...\n' "$lib" > "$SDK$base.tbd"
+            fi
+          done
+          LIBC="$SDK/usr/lib/system/libsystem_c.tbd"
+          ADD=""
+          for sym in _memcpy _memset _memmove _memcmp _memchr _strchr _strcmp _strncmp _strlen _strnlen _bzero \
+                     _strcpy _strncpy _strcat _strlcpy _strlcat _strstr _strrchr _strdup _memset_s _memset_pattern4 \
+                     _memset_pattern8 _memset_pattern16 _strncasecmp _strcasecmp; do
+            if ! grep -Eq "[[ ,]${sym}[], ]" "$LIBC" "$SDK/usr/lib/system/libsystem_platform.tbd"; then ADD="${ADD}${sym}, "; fi
+          done
+          if [ -n "$ADD" ]; then sed -i "0,/symbols:            \[ /s//symbols:            [ ${ADD}/" "$LIBC"; fi
+
+      - name: Restore the OpenJDK sources
+        uses: actions/cache@v4
+        with:
+          path: jvm/out/src
+          key: jdk-src-${{ env.JDK_TAG }}-v1
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.ccache
+          key: ccache-jre-${{ github.run_id }}
+          restore-keys: ccache-jre-
+
+      - name: Build HotSpot
+        run: |
+          ccache -z || true
+          bash jvm/build.sh hotspot
+          status=$?
+          ccache -s || true
+          exit $status
+
+      - name: Upload the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jre-logs
+          path: jvm/out/logs
+          if-no-files-found: ignore
+
+      - name: Upload the runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: jre-ios-armv7
+          path: jvm/out/jre
+          if-no-files-found: error

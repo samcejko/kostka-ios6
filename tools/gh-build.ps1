@@ -13,7 +13,10 @@ param(
     [string]$OutDir = '',
     [int]$TimeoutSec = 1800,
     [long]$AfterRunId = 0,
-    [string]$HeadSha = ''
+    [string]$HeadSha = '',
+    # build.yml (the app) or jre.yml (the Java runtime)
+    [string]$Workflow = 'build.yml',
+    [string]$Artifact = 'Kostka-packages'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -87,7 +90,7 @@ if ($Trigger) {
 $run = $null
 $deadline = (Get-Date).AddSeconds($TimeoutSec)
 while ($true) {
-    $runs = Invoke-GH GET "/actions/runs?branch=$Branch&per_page=5"
+    $runs = Invoke-GH GET "/actions/workflows/$Workflow/runs?branch=$Branch&per_page=5"
     $candidates = $runs.workflow_runs | Where-Object { $_.id -gt $AfterRunId }
     if ($HeadSha) { $candidates = $candidates | Where-Object { $_.head_sha -like "$HeadSha*" } }
     $run = $candidates | Sort-Object -Property id -Descending | Select-Object -First 1
@@ -128,9 +131,9 @@ if ($run.conclusion -ne 'success') {
 if (-not $Download -and -not $Install) { exit 0 }
 
 $arts = Invoke-GH GET "/actions/runs/$($run.id)/artifacts"
-$pkg = $arts.artifacts | Where-Object { $_.name -eq 'Kostka-packages' } | Select-Object -First 1
-if (-not $pkg) { throw "No Kostka-packages artifact" }
-$zip = Join-Path $OutDir "Kostka-packages-$($run.id).zip"
+$pkg = $arts.artifacts | Where-Object { $_.name -eq $Artifact } | Select-Object -First 1
+if (-not $pkg) { throw "No $Artifact artifact" }
+$zip = Join-Path $OutDir "$Artifact-$($run.id).zip"
 Download-GH "$Api/actions/artifacts/$($pkg.id)/zip" $zip
 $extract = Join-Path $OutDir "run-$($run.id)"
 if (Test-Path $extract) { Remove-Item -Recurse -Force $extract }
