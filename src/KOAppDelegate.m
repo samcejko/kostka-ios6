@@ -14,6 +14,7 @@
 //   kostka:java?main=Hello[&cp=a.jar:/var/x.jar][&xmx=96m][&debug=1]   a Java program (jars of the bundle, or from /)
 //   kostka:screenshot                                    the screen into Library/Kostka/screen.png
 //   kostka:play?version=1.7.10                           downloads and starts a version (any, for tests)
+//   kostka:mouse?x=&y=[&button=] / key?code=[&char=] / text?s=   input for the running game
 @interface KOAppDelegate ()
 @property (nonatomic, strong, readwrite) KOProbeController *probe;
 @end
@@ -78,6 +79,34 @@
     }
     if ([target isEqualToString:@"probe"]) {
         [self.probe enqueue:p[@"test"] ?: @"info"];
+    }
+    // Input for the running game, as touches and keys would give it (LWJGL's events, ios_display.m):
+    //   kostka:mouse?x=512&y=400[&button=0]   moves the mouse (from the bottom left), clicks if a button is given
+    //   kostka:key?code=28[&char=13]           a key down and up (LWJGL's key codes)
+    //   kostka:text?s=Svet                     characters, as typed
+    if ([target isEqualToString:@"mouse"] || [target isEqualToString:@"key"] || [target isEqualToString:@"text"]) {
+        void (*post)(int, int, int, int) = (void (*)(int, int, int, int))dlsym(RTLD_DEFAULT, "ko_post_event");
+        if (!post) {
+            KOLog(@"input: no game running");
+            return YES;
+        }
+        if ([target isEqualToString:@"mouse"]) {
+            post(1, [p[@"x"] intValue], [p[@"y"] intValue], 0);
+            if (p[@"button"]) {
+                post(3, [p[@"button"] intValue], 1, 0);
+                post(3, [p[@"button"] intValue], 0, 0);
+            }
+        } else if ([target isEqualToString:@"key"]) {
+            post(5, [p[@"code"] intValue], 1, [p[@"char"] intValue]);
+            post(5, [p[@"code"] intValue], 0, 0);
+        } else {
+            NSString *s = p[@"s"] ?: @"";
+            for (NSUInteger i = 0; i < s.length; i++) {
+                post(5, 0, 1, [s characterAtIndex:i]);
+                post(5, 0, 0, 0);
+            }
+        }
+        return YES;
     }
     // kostka:play?version=1.7.10: downloads and starts a version, whether it runs here or not yet (for tests)
     if ([target isEqualToString:@"play"] && p[@"version"]) {

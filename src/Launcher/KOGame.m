@@ -288,11 +288,22 @@ static BOOL g_running;
         [text writeToFile:optionsFile atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     }
     NSString *lwjgl = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"lwjgl"];
-    // (the heap: what RubyDung needs, for the others what the iPad's 512 MB leave with the textures and the VM)
+    CGSize screen = [UIScreen mainScreen].bounds.size;
+    CGFloat scale = [UIScreen mainScreen].scale;
+    // (the heap: what RubyDung needs, for the others what the iPad's 512 MB leave with the textures and the VM.
+    // AWT is Kostka's (lwjgl/awt): windows that exist without being drawn - Classic to 1.5.2 put the game in an
+    // applet in a frame - and pictures drawn in Java. Swing, which launchwrapper touches, with its own look.)
     NSArray *options = @[
         [self isRubyDung:json] ? @"-Xmx128m" : @"-Xmx192m",
         [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:lwjgl],
         @"-Dminecraft.launcher.brand=Kostka",
+        [@"-Xbootclasspath/a:" stringByAppendingString:[lwjgl stringByAppendingPathComponent:@"kostka-awt.jar"]],
+        @"-Djava.awt.headless=false",
+        @"-Dawt.toolkit=kostka.awt.KToolkit",
+        @"-Djava.awt.graphicsenv=kostka.awt.KGraphicsEnvironment",
+        @"-Dswing.defaultlaf=javax.swing.plaf.metal.MetalLookAndFeel",
+        [NSString stringWithFormat:@"-Dkostka.screen.width=%d", (int)(MAX(screen.width, screen.height) * scale)],
+        [NSString stringWithFormat:@"-Dkostka.screen.height=%d", (int)(MIN(screen.width, screen.height) * scale)],
     ];
     status(L(@"Starting Java"), -1);
     KOLog(@"play %@: %@ %@", version.identifier, json[@"mainClass"], [args componentsJoinedByString:@" "]);

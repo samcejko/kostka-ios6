@@ -71,6 +71,13 @@ lwjgl_java() {
     rm -rf "$OUT/test" && mkdir -p "$OUT/test"
     "$HOST_JAVA_HOME/bin/javac" -source 1.6 -target 1.6 -nowarn -cp "$DIST/lwjgl.jar" -d "$OUT/test" "$HERE"/test/*.java || return 1
     (cd "$OUT/test" && "$HOST_JAVA_HOME/bin/jar" cf "$DIST/gltest.jar" .) || return 1
+
+    # Kostka's AWT (windows that exist without being drawn, drawing on pictures in Java): it extends the JDK's own
+    # AWT classes, so it is compiled against them (-XDignore.symbol.file: javac's list of public classes leaves sun.* out)
+    rm -rf "$OUT/awt" && mkdir -p "$OUT/awt"
+    "$HOST_JAVA_HOME/bin/javac" -source 1.6 -target 1.6 -nowarn -XDignore.symbol.file -d "$OUT/awt" \
+        "$HERE"/awt/kostka/awt/*.java > "$LOGS/awt-javac.log" 2>&1 || { cat "$LOGS/awt-javac.log"; return 1; }
+    (cd "$OUT/awt" && "$HOST_JAVA_HOME/bin/jar" cf "$DIST/kostka-awt.jar" .) || return 1
     ls -la "$DIST"
 }
 

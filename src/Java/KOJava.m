@@ -42,20 +42,33 @@ static int g_logFd = -1;
     return [[self dataPath] stringByAppendingPathComponent:@"java.log"];
 }
 
-// What Java writes to stdout and stderr goes through a pipe: into java.log, and each line into the system log
+// What Java writes to stdout and stderr goes through a pipe: into java.log, and each line into the system log - at
+// most 30 lines a second there (a game that logs every frame would slow itself down; java.log keeps everything)
 static void *KOJavaLogReader(void *arg)
 {
     int fd = (int)(intptr_t)arg;
     char buf[4096];
     NSMutableData *line = [NSMutableData data];
     ssize_t n;
+    time_t second = 0;
+    int inSecond = 0, skipped = 0;
     while ((n = read(fd, buf, sizeof buf)) > 0) {
         if (g_logFd >= 0) write(g_logFd, buf, n);
         for (ssize_t i = 0; i < n; i++) {
             if (buf[i] == '\n') {
-                @autoreleasepool {
-                    NSString *s = [[NSString alloc] initWithData:line encoding:NSUTF8StringEncoding] ?: @"(binary)";
-                    NSLog(@"[Kostka] java: %@", s);
+                time_t now = time(NULL);
+                if (now != second) {
+                    if (skipped) NSLog(@"[Kostka] java: (%d more lines in java.log)", skipped);
+                    second = now;
+                    inSecond = skipped = 0;
+                }
+                if (++inSecond <= 30) {
+                    @autoreleasepool {
+                        NSString *s = [[NSString alloc] initWithData:line encoding:NSUTF8StringEncoding] ?: @"(binary)";
+                        NSLog(@"[Kostka] java: %@", s);
+                    }
+                } else {
+                    skipped++;
                 }
                 [line setLength:0];
             } else {
