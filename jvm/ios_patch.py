@@ -93,6 +93,12 @@ static RegisterMap *reg_map;'''),
 # include <objc/objc-auto.h>
 ''',
      ''''''),
+    # (macOS headers the iOS SDK lacks: _NSGetEnviron is in iOS's libc, the Objective-C runtime has the iOS names)
+    ("jdk/src/solaris/native/java/lang/ProcessEnvironment_md.c", "#include <crt_externs.h>",
+     "extern char ***_NSGetEnviron(void);"),
+    ("jdk/src/solaris/native/java/lang/childproc.h", "#include <crt_externs.h>",
+     "extern char ***_NSGetEnviron(void);"),
+    (PROPS, "#include <objc/objc-runtime.h>", "#include <objc/runtime.h>\n#include <objc/message.h>"),
     # The system properties on iOS: no window server session to ask about (AWT is headless), no SCDynamicStore for
     # the system's proxy settings (SystemConfiguration has none of that on iOS)
     (PROPS, '''#include <Security/AuthSession.h>
