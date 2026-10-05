@@ -11,6 +11,9 @@ static BOOL g_running, g_debugGL;
 + (void)setDebugGL:(BOOL)on
 {
     g_debugGL = on;
+    // (and the swap of LWJGL's iOS side says which of its steps leaves an OpenGL error: ios_context.m)
+    if (on) setenv("KOSTKA_GLDEBUG", "1", 1);
+    else unsetenv("KOSTKA_GLDEBUG");
 }
 
 + (BOOL)isRunning

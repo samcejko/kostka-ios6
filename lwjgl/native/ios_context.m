@@ -112,19 +112,46 @@ JNIEXPORT void JNICALL Java_org_lwjgl_opengl_MacOSXContextImplementation_nMakeCu
     }
 }
 
+// (tests, KOSTKA_GLDEBUG in the environment: which step of the swap leaves an OpenGL error, the first ones)
+static int ko_gl_debug(void)
+{
+    static int on = -1;
+    if (on < 0) on = getenv("KOSTKA_GLDEBUG") != NULL;
+    return on;
+}
+
+static void ko_check(const char *where)
+{
+    static int told;
+    GLenum e;
+    while ((e = glGetError()) != GL_NO_ERROR) {
+        if (told < 12) {
+            told++;
+            fprintf(stderr, "[LWJGL] OpenGL error 0x%x %s\n", e, where);
+        }
+    }
+}
+
 JNIEXPORT void JNICALL Java_org_lwjgl_opengl_MacOSXContextImplementation_nSwapBuffers(JNIEnv *env, jclass clazz, jobject handle)
 {
     @autoreleasepool {
         KOContext *c = ko_context(env, handle);
         if (!c || !c->window) return;
+        int debug = ko_gl_debug();
+        if (debug) ko_check("left by the frame");
         ko_gl4es_pre_swap();
+        if (debug) ko_check("from gl4es before the swap");
         glBindRenderbuffer(GL_RENDERBUFFER, c->color);
+        if (debug) ko_check("binding the window's renderbuffer");
         [c->context presentRenderbuffer:GL_RENDERBUFFER];
+        if (debug) ko_check("presenting");
         // (the game's thread has no run loop to commit Core Animation's transaction: without this the frame
         // reaches the screen only when the next present gives up waiting for it, once a second)
         [CATransaction flush];
         glBindRenderbuffer(GL_RENDERBUFFER, ko_gl4es_current_renderbuffer());
+        if (debug) ko_check("binding gl4es's renderbuffer back");
         ko_gl4es_post_swap();
+        if (debug) ko_check("from gl4es after the swap");
         ko_wait_while_inactive();
     }
 }
