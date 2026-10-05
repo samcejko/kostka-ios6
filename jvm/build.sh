@@ -110,7 +110,7 @@ hotspot_sources() {
 import os, sys, fnmatch
 # hotspot/make/bsd/makefiles/vm.make and make/excludeSrc.make: client VM, INCLUDE_ALL_GCS=0, INCLUDE_CDS=0, INCLUDE_JFR=0
 exclude = ["jsig.c", "jvmtiEnvRecommended.cpp", "jvmtiEnvStub.cpp", "bcEscapeAnalyzer.cpp", "c2_*", "runtime_*",
-           "*zero*", "*shark*", "ciTypeFlow.cpp", "chaitin*", "*x86*", "aarch32Test.cpp", "os_perf_*.cpp", "vmStructs.cpp",
+           "*zero*", "*shark*", "ciTypeFlow.cpp", "chaitin*", "*x86*", "os_perf_*.cpp", "vmStructs.cpp",
            "filemap.cpp", "metaspaceShared*.cpp", "sharedPathsMiscInfo.cpp", "systemDictionaryShared.cpp",
            "classLoaderExt.cpp", "sharedClassUtil.cpp", "g1MemoryPool.cpp", "psMemoryPool.cpp"]
 gc_keep = ["adaptiveSizePolicy.cpp", "ageTable.cpp", "ageTableTracer.cpp", "collectorCounters.cpp", "cSpaceCounters.cpp",
@@ -176,9 +176,10 @@ hotspot() {
     step "linking libjvm.dylib"
     mkdir -p "$JRE/lib/client"
     $TC/clang++ $TARGET -dynamiclib -install_name @rpath/libjvm.dylib -compatibility_version 1.0.0 -current_version 1.0.0 \
-        -o "$JRE/lib/client/libjvm.dylib" "$objdir"/*.o -lc++ -lm > "$LOGS/hotspot-link.log" 2>&1
+        -o "$JRE/lib/client/libjvm.dylib" "$objdir"/*.o -lc++ -lc++abi -lm > "$LOGS/hotspot-link.log" 2>&1
     local ls=$?
-    cat "$LOGS/hotspot-link.log" | head -n 80
+    # (the SDK's .tbd files make ld warn about the simulator on every line: only the rest is worth showing)
+    grep -v 'built for iOS Simulator' "$LOGS/hotspot-link.log" | head -n 80
     [ $ls -eq 0 ] || return 1
     ls -la "$JRE/lib/client/libjvm.dylib"
 }
@@ -299,6 +300,12 @@ runtime() {
     rsync -a --exclude '*.dylib' --exclude 'jli' --exclude 'server' --exclude '*.jsa' --exclude 'jspawnhelper' \
         --exclude 'nashorn.jar' --exclude 'cldrdata.jar' --exclude 'jfr*' --exclude 'deploy*' --exclude 'javafx*' \
         --exclude 'ant-javafx.jar' --exclude 'jexec' "$home/jre/lib/" "$JRE/lib/" || return 1
+    # (the runtime's licenses: GPL v2 with the Classpath exception, and the third parties' notices)
+    local f
+    for f in LICENSE ASSEMBLY_EXCEPTION THIRD_PARTY_README; do
+        [ -f "$home/$f" ] && cp "$home/$f" "$JRE/$f"
+    done
+    cp "$HERE/README.md" "$JRE/README-Kostka.md" 2>/dev/null || true
     du -sh "$JRE"
     find "$JRE" -maxdepth 2 | sort | head -n 80
 }
