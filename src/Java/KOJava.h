@@ -6,6 +6,7 @@
 // One VM per process: a second start is refused (HotSpot cannot be started twice).
 @interface KOJava : NSObject
 
++ (NSString *)dataPath;       // Library/Kostka: Kostka's files, and the folder Java works in
 + (NSString *)runtimePath;    // the jre folder: in the app bundle, or a downloaded one in Documents
 + (NSString *)logPath;
 
