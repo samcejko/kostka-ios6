@@ -28,7 +28,8 @@ Mojang's jars are not patched: the pieces under them are made to do what each er
 - **Java** (`jvm/`): HotSpot from the AArch32 port of OpenJDK 8 (client VM: template interpreter + C1 JIT, serial
   GC) ported to Darwin/armv7 - the Darwin calling convention, 4-byte aligned `long`s in structures, iOS 6's
   missing pieces, direct buffers that take memory only where they are written - with the JDK's native libraries
-  (java, zip, net, nio, management, a stub of awt); the class library is Amazon Corretto 8's. It calls itself
+  (java, zip, net, nio, management, sunec for TLS's elliptic curves, a stub of awt); the class library is Amazon
+  Corretto 8's. It calls itself
   "iPhone OS X": games that see a Mac load Mac libraries. Cross-compiled on Linux with Theos' toolchain.
 - **LWJGL 2** (`lwjgl/`): an iOS backend in place of the Mac OS X one - a UIKit view on an EAGL layer, touches as
   the mouse, on-screen keys, the iOS keyboard - with **gl4es** turning the game's desktop OpenGL into OpenGL ES 2.0.

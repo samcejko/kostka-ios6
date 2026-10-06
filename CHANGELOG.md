@@ -12,3 +12,4 @@
 - Direct buffers take memory only where they are written (old versions' sound asked for 160 MB and ran out)
 - Java calls the system "iPhone OS X" (1.12's narrator loaded a Mac library and stopped the game)
 - The app's memory in the log while a game runs
+- Java's HTTPS with elliptic curves (libsunec): TLS 1.3 to Mojang's servers from the game (profiles, skins)
