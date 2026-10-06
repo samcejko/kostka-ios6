@@ -85,14 +85,15 @@ static void KOWatchMemory(void)
             logged = mb;
             KOLog(@"memory: %d MB", mb);
         }
-        static int *frames, *width, *height;
+        static int *frames, *width, *height, *grabbed;
         if (!frames) {
             frames = (int *)dlsym(RTLD_DEFAULT, "ko_game_frames");
             width = (int *)dlsym(RTLD_DEFAULT, "ko_game_width");
             height = (int *)dlsym(RTLD_DEFAULT, "ko_game_height");
+            grabbed = (int *)dlsym(RTLD_DEFAULT, "ko_game_grabbed");
         }
-        [KOJava note:@"progress frames=%d window=%dx%d memory=%d", frames ? *frames : 0, width ? *width : 0,
-            height ? *height : 0, mb];
+        [KOJava note:@"progress frames=%d window=%dx%d memory=%d grabbed=%d", frames ? *frames : 0, width ? *width : 0,
+            height ? *height : 0, mb, grabbed ? *grabbed : 0];
     });
     dispatch_resume(timer);
 }

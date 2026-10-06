@@ -46,7 +46,7 @@ static void ko_on_main(void (^block)(void))
 
 #pragma mark - Events
 
-int ko_game_frames, ko_game_width, ko_game_height;
+int ko_game_frames, ko_game_width, ko_game_height, ko_game_grabbed;
 
 #define KO_MAX_EVENTS 1024
 static KOEvent g_events[KO_MAX_EVENTS];
@@ -725,6 +725,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_opengl_MacOSXDisplay_nSetGrabbed(JNIEnv *e
 {
     @autoreleasepool {
         g_grabbed = grabbed ? 1 : 0;
+        ko_game_grabbed = g_grabbed;
         KOWindow *window = ko_window(env, handle);
         if (!window) return;
         KOGameView *view = window->view;

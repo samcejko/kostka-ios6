@@ -11,7 +11,7 @@
 + (NSString *)logPath;
 + (int)memoryInUse;           // the app's memory in use (resident), in MB
 // (tests: a line into Library/Kostka/run.txt, which each process starts anew - what a run did, for a computer to read
-// over SSH; while Java runs, "progress frames= window= memory=" every 2 seconds)
+// over SSH; while Java runs, "progress frames= window= memory= grabbed=" every 2 seconds)
 + (void)note:(NSString *)format, ... NS_FORMAT_FUNCTION(1, 2);
 
 // Starts the VM with `options` ("-Xmx96m", "-Dfoo=bar") and the class path, then runs `mainClass`.main(args).
