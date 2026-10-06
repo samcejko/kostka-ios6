@@ -11,7 +11,8 @@
 // The launcher: the versions of Minecraft from Mojang's list (KOVersionListController), each one's screen with the
 // button that downloads and starts it. For tests from a computer, links:
 //   kostka:probe?test=info|jit|jitwx|vm|mem|gl|cpu      the device test
-//   kostka:java?main=Hello[&cp=a.jar:/var/x.jar][&xmx=96m][&debug=1]   a Java program (jars of the bundle, or from /)
+//   kostka:java?main=Hello[&cp=a.jar:/var/x.jar][&xmx=96m][&debug=1][&args=a,b]   a Java program (jars of the bundle,
+//                                                        or from /; args: its arguments)
 //   kostka:screenshot                                    the screen into Library/Kostka/screen.png
 //   kostka:play?version=1.7.10[&gldebug=1]               downloads and starts a version (any, for tests; gldebug: LWJGL
 //                                                        stops the game at the first OpenGL call that fails)
@@ -60,7 +61,8 @@
         if ([p[@"debug"] isEqualToString:@"1"]) [options addObject:@"-Dorg.lwjgl.util.Debug=true"];
         [self.probe append:[NSString stringWithFormat:@"> java %@", p[@"main"] ?: @"Hello"]];
         __weak KOAppDelegate *weakSelf = self;
-        [KOJava runMainClass:p[@"main"] ?: @"Hello" classPath:cp options:options args:@[]
+        NSArray *args = p[@"args"] ? [p[@"args"] componentsSeparatedByString:@","] : @[];
+        [KOJava runMainClass:p[@"main"] ?: @"Hello" classPath:cp options:options args:args
                         done:^(int code, NSString *error) {
             [weakSelf.probe append:[NSString stringWithFormat:@"java: exit %d %@", code, error ?: @""]];
         }];
