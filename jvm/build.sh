@@ -390,6 +390,8 @@ with open(sys.argv[2], "w") as f:
     f.write("#include <jni.h>\n\nJNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) { return JNI_VERSION_1_4; }\n\n")
     for c in sorted(found):
         f.write("JNIEXPORT void JNICALL Java_%s_initIDs(JNIEnv *env, jclass cls) {}\n" % mangle(c))
+    # (and what windows do on the way, with nothing to do on iOS: the first one shown closes the splash screen)
+    f.write("\nJNIEXPORT void JNICALL Java_sun_awt_SunToolkit_closeSplashScreen(JNIEnv *env, jclass cls) {}\n")
 print("libawt stub: %d classes" % len(found))
 PY
     native_lib awt "$GEN/awt/awt_stub.c" "" "" || return 1
