@@ -307,6 +307,8 @@ static void ko_set_inactive(int inactive)
         NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
         [nc addObserver:self selector:@selector(willResignActive:) name:UIApplicationWillResignActiveNotification object:nil];
         [nc addObserver:self selector:@selector(didBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:nil];
+        [nc addObserver:self selector:@selector(didEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+        [nc addObserver:self selector:@selector(willEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
     }
     return self;
 }
@@ -567,14 +569,32 @@ static void ko_set_inactive(int inactive)
 
 #pragma mark The app in the background
 
+// (tests, KOSTKA_NOPAUSE in the environment: the game goes on under a system alert - one left on the screen by iOS
+// would hold up a run of tests for hours; the app still stops drawing in the background, where iOS would end it)
 - (void)willResignActive:(NSNotification *)n
 {
+    if (getenv("KOSTKA_NOPAUSE")) return;
     ko_post_event(KO_EVENT_FOCUS, 0, 0, 0);
     ko_set_inactive(1);
 }
 
 - (void)didBecomeActive:(NSNotification *)n
 {
+    if (getenv("KOSTKA_NOPAUSE")) return;
+    ko_set_inactive(0);
+    ko_post_event(KO_EVENT_FOCUS, 1, 0, 0);
+}
+
+- (void)didEnterBackground:(NSNotification *)n
+{
+    if (!getenv("KOSTKA_NOPAUSE")) return;
+    ko_post_event(KO_EVENT_FOCUS, 0, 0, 0);
+    ko_set_inactive(1);
+}
+
+- (void)willEnterForeground:(NSNotification *)n
+{
+    if (!getenv("KOSTKA_NOPAUSE")) return;
     ko_set_inactive(0);
     ko_post_event(KO_EVENT_FOCUS, 1, 0, 0);
 }
