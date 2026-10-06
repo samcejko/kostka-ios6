@@ -123,14 +123,17 @@
         [KOVersions load:^(NSArray *versions, NSError *error) {
             for (KOVersion *v in versions) {
                 if (![v.identifier isEqualToString:p[@"version"]]) continue;
+                [KOJava note:@"play %@", v.identifier];
                 [KOGame play:v status:^(NSString *text, float progress) {
                     KOLog(@"play %@: %@ %.0f%%", v.identifier, text, progress * 100);
                 } failed:^(NSError *e) {
                     KOLog(@"play %@ failed: %@", v.identifier, e.localizedDescription);
+                    [KOJava note:@"failed %@", e.localizedDescription];
                 }];
                 return;
             }
             KOLog(@"play: no version %@ (%@)", p[@"version"], error.localizedDescription ?: @"");
+            [KOJava note:@"failed no version %@", p[@"version"]];
         }];
     }
     return YES;

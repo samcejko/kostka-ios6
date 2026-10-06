@@ -155,6 +155,7 @@ JNIEXPORT void JNICALL Java_org_lwjgl_opengl_MacOSXContextImplementation_nSwapBu
         if (debug) ko_check("binding gl4es's renderbuffer back");
         ko_gl4es_post_swap();
         if (debug) ko_check("from gl4es after the swap");
+        ko_game_frames++;
         ko_wait_while_inactive();
     }
 }

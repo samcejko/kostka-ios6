@@ -46,6 +46,8 @@ static void ko_on_main(void (^block)(void))
 
 #pragma mark - Events
 
+int ko_game_frames, ko_game_width, ko_game_height;
+
 #define KO_MAX_EVENTS 1024
 static KOEvent g_events[KO_MAX_EVENTS];
 static int g_event_head, g_event_count;
@@ -670,6 +672,8 @@ JNIEXPORT jobject JNICALL Java_org_lwjgl_opengl_MacOSXDisplay_nCreateWindow(JNIE
         pthread_mutex_lock(&g_pause_lock);
         g_windows++;
         pthread_mutex_unlock(&g_pause_lock);
+        ko_game_width = width;
+        ko_game_height = height;
         printfDebugJava(env, "Window %dx%d", (int)width, (int)height);
         return (*env)->NewDirectByteBuffer(env, window, sizeof(KOWindow));
     }

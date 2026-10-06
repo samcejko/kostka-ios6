@@ -51,8 +51,28 @@ static int g_logFd = -1;
     return (int)(info.resident_size >> 20);
 }
 
++ (void)note:(NSString *)format, ...
+{
+    static FILE *f;
+    static CFAbsoluteTime t0;
+    va_list ap;
+    va_start(ap, format);
+    NSString *line = [[NSString alloc] initWithFormat:format arguments:ap];
+    va_end(ap);
+    @synchronized (self) {
+        if (!f) {
+            f = fopen([[[self dataPath] stringByAppendingPathComponent:@"run.txt"] fileSystemRepresentation], "w");
+            t0 = CFAbsoluteTimeGetCurrent();
+        }
+        if (!f) return;
+        fprintf(f, "%.0f %s\n", CFAbsoluteTimeGetCurrent() - t0, [line UTF8String]);
+        fflush(f);
+    }
+}
+
 // While Java runs, the app's memory goes into the log each time it has moved by 16 MB: the iPad 2 warns from about
-// 250 MB and ends the app at about 320, and what each version takes shows here
+// 250 MB and ends the app at about 320, and what each version takes shows here. Every 2 seconds the run's notes get
+// the frames the game has drawn, its window and the memory (LWJGL's counters, if it is loaded).
 static void KOWatchMemory(void)
 {
     static dispatch_source_t timer;
@@ -65,6 +85,14 @@ static void KOWatchMemory(void)
             logged = mb;
             KOLog(@"memory: %d MB", mb);
         }
+        static int *frames, *width, *height;
+        if (!frames) {
+            frames = (int *)dlsym(RTLD_DEFAULT, "ko_game_frames");
+            width = (int *)dlsym(RTLD_DEFAULT, "ko_game_width");
+            height = (int *)dlsym(RTLD_DEFAULT, "ko_game_height");
+        }
+        [KOJava note:@"progress frames=%d window=%dx%d memory=%d", frames ? *frames : 0, width ? *width : 0,
+            height ? *height : 0, mb];
     });
     dispatch_resume(timer);
 }
@@ -125,6 +153,7 @@ static void KOFinish(KOJavaLaunch *l, int code, NSString *error)
 {
     if (error) KOLog(@"java: %@", error);
     KOLog(@"java: finished with %d", code);
+    [KOJava note:@"java finished %d %@", code, error ?: @""];
     dispatch_async(dispatch_get_main_queue(), ^{ if (l.done) l.done(code, error); });
 }
 
@@ -162,6 +191,7 @@ static void *KOJavaThread(void *arg)
         free(opts);
         if (rc != JNI_OK) { KOFinish(l, -1, [NSString stringWithFormat:@"JNI_CreateJavaVM failed: %d", rc]); return NULL; }
         KOLog(@"java: VM started in %.0f ms", (CFAbsoluteTimeGetCurrent() - t0) * 1000);
+        [KOJava note:@"java started %@", l.mainClass];
 
         NSString *slashed = [l.mainClass stringByReplacingOccurrencesOfString:@"." withString:@"/"];
         jclass cls = (*env)->FindClass(env, [slashed UTF8String]);
