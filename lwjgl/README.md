@@ -3,8 +3,8 @@
 Minecraft: Java Edition up to 1.12 draws with LWJGL 2 and desktop OpenGL. On the iPad, LWJGL gets an iOS
 backend, and [gl4es](https://github.com/ptitSeb/gl4es) turns the desktop OpenGL into OpenGL ES 2.0.
 
-- `java/`: the iOS backend. iOS reports `os.name` "Mac OS X", so LWJGL loads its Mac OS X classes; these files
-  replace them under the same names. The window is a UIKit view on an EAGL layer, the context an EAGL
+- `java/`: the iOS backend. Kostka's Java reports `os.name` "iPhone OS X", which LWJGL (patched by `build.sh`)
+  takes for its Mac OS X platform; these files replace its Mac OS X classes under the same names. The window is a UIKit view on an EAGL layer, the context an EAGL
   (OpenGL ES 2.0) context, touches are the mouse, and on-screen keys and the iOS keyboard are the keyboard.
   Nothing of AWT or Cocoa is used.
 - `native/`: the backend's JNI side (`ios_display.m`, `ios_context.m`), gl4es on EAGL (`ios_gl4es.c`: the

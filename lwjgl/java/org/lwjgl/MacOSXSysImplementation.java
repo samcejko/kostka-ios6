@@ -33,8 +33,8 @@
 package org.lwjgl;
 
 /**
- * Kostka: LWJGL's system services on iOS. iOS reports os.name "Mac OS X", so LWJGL takes its Mac OS X
- * classes; Kostka replaces them with ones on UIKit (no AWT, no Swing, no Cocoa).
+ * Kostka: LWJGL's system services on iOS. iOS (os.name "iPhone OS X") is LWJGL's Mac OS X platform here, and
+ * Kostka replaces its Mac OS X classes with ones on UIKit (no AWT, no Swing, no Cocoa).
  */
 final class MacOSXSysImplementation extends DefaultSysImplementation {
 	private static final int JNI_VERSION = 25;

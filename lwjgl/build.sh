@@ -1,6 +1,6 @@
 #!/bin/bash
 # Kostka's LWJGL 2 for iOS 6 (armv7): LWJGL 2.9.4 (its last sources) with an iOS backend in place of the Mac OS X
-# one - iOS reports os.name "Mac OS X", so LWJGL takes its Mac classes, and Kostka's replace them (java/) - and
+# one - iOS (os.name "iPhone OS X") is LWJGL's Mac platform here, and Kostka's classes replace its Mac ones - and
 # gl4es under it, for the desktop OpenGL of the games on the iPad's OpenGL ES 2.0. Cross-compiled on Linux with
 # Theos' iOS toolchain, like the Java runtime (jvm/build.sh).
 #
@@ -59,6 +59,18 @@ fetch() {
 lwjgl_java() {
     step "LWJGL's classes, with the iOS backend"
     cp -r "$HERE/java/org" "$LW/src/java/" || return 1
+    # (Kostka's Java says os.name "iPhone OS X", jvm/ios_patch.py: for LWJGL that is its Mac OS X platform)
+    python3 - "$LW/src/java/org/lwjgl/LWJGLUtil.java" <<'EOF' || return 1
+import sys
+path = sys.argv[1]
+old = 'osName.startsWith("Mac OS X") || osName.startsWith("Darwin")'
+new = old + ' || osName.startsWith("iPhone OS")'
+text = open(path).read()
+if new not in text:
+    if text.count(old) != 1:
+        sys.exit("LWJGLUtil.java: the test for Mac OS X is not there once")
+    open(path, "w").write(text.replace(old, new))
+EOF
     (cd "$LW" && JAVA_HOME="$HOST_JAVA_HOME" PATH="$HOST_JAVA_HOME/bin:$PATH" ant -noinput jars headers) > "$LOGS/ant.log" 2>&1
     if [ $? -ne 0 ]; then
         echo "ant failed"

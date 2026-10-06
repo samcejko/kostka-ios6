@@ -116,6 +116,8 @@
     // kostka:play?version=1.7.10: downloads and starts a version, whether it runs here or not yet (for tests)
     if ([target isEqualToString:@"play"] && p[@"version"]) {
         [KOGame setDebugGL:[p[@"gldebug"] isEqualToString:@"1"]];
+        // (jvm=-XX:Foo=1,-Dbar=2: more options for the VM)
+        [KOGame setExtraOptions:p[@"jvm"] ? [p[@"jvm"] componentsSeparatedByString:@","] : nil];
         [KOVersions load:^(NSArray *versions, NSError *error) {
             for (KOVersion *v in versions) {
                 if (![v.identifier isEqualToString:p[@"version"]]) continue;

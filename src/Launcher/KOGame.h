@@ -10,6 +10,8 @@
 + (BOOL)isRunning;
 // (tests: LWJGL with a check after every OpenGL call, lwjgl-debug.jar - the game stops at the first call that fails)
 + (void)setDebugGL:(BOOL)on;
+// (tests: more options for the Java VM, after Kostka's own)
++ (void)setExtraOptions:(NSArray *)options;
 + (NSString *)playerName;
 + (void)setPlayerName:(NSString *)name;
 

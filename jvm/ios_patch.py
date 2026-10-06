@@ -24,6 +24,7 @@ HS = os.path.join(ROOT, "hotspot", "src")
 SR = "hotspot/src/cpu/aarch32/vm/sharedRuntime_aarch32.cpp"
 IRT = "hotspot/src/cpu/aarch32/vm/interpreterRT_aarch32.cpp"
 PROPS = "jdk/src/solaris/native/java/lang/java_props_macosx.c"
+US = "hotspot/src/share/vm/prims/unsafe.cpp"
 
 # (file relative to the tree, exact text, replacement, how many times it is there)
 REPLACE_ALL = [
@@ -296,6 +297,47 @@ static RegisterMap *reg_map;'''),
     // This code is influenced by the darwin lsof source''',
      '''#if defined(__APPLE__) && !defined(__arm__)
     // This code is influenced by the darwin lsof source'''),
+    # The system's name: not "Mac OS X", which makes programs load Mac libraries that cannot run here (Minecraft
+    # 1.12's narrator: JNA's Mac library, then AppKit's speech). The JDK's own classes tell their platforms apart by
+    # "OS X" in the name (file systems, processes, AWT), so this one has it too; iOS 6 calls itself "iPhone OS".
+    (PROPS, '''    sprops->os_name = strdup("Mac OS X");''', '''    sprops->os_name = strdup("iPhone OS X");'''),
+    # Unsafe's large blocks zeroed without bringing their untouched pages into memory (lazyMemory_bsd_aarch32.cpp)
+    (US, '''#include "utilities/dtrace.hpp"
+''', '''#include "utilities/dtrace.hpp"
+#include "lazyMemory_bsd_aarch32.hpp"
+'''),
+    (US, '''  if (x == NULL) {
+    THROW_0(vmSymbols::java_lang_OutOfMemoryError());
+  }
+  //Copy::fill_to_words((HeapWord*)x, sz / HeapWordSize);''', '''  if (x == NULL) {
+    THROW_0(vmSymbols::java_lang_OutOfMemoryError());
+  }
+  LazyMemory::allocated(x, sz);
+  //Copy::fill_to_words((HeapWord*)x, sz / HeapWordSize);'''),
+    (US, '''  UnsafeWrapper("Unsafe_ReallocateMemory");
+  void* p = addr_from_java(addr);
+''', '''  UnsafeWrapper("Unsafe_ReallocateMemory");
+  void* p = addr_from_java(addr);
+  LazyMemory::freed(p);
+'''),
+    (US, '''  UnsafeWrapper("Unsafe_FreeMemory");
+  void* p = addr_from_java(addr);
+  if (p == NULL) {
+    return;
+  }
+  os::free(p);''', '''  UnsafeWrapper("Unsafe_FreeMemory");
+  void* p = addr_from_java(addr);
+  if (p == NULL) {
+    return;
+  }
+  LazyMemory::freed(p);
+  os::free(p);'''),
+    (US, '''  void* p = index_oop_from_field_offset_long(base, offset);
+  Copy::fill_to_memory_atomic(p, sz, value);''', '''  void* p = index_oop_from_field_offset_long(base, offset);
+  if (base == NULL && value == 0 && LazyMemory::zero(p, sz)) {
+    return;
+  }
+  Copy::fill_to_memory_atomic(p, sz, value);'''),
 ]
 
 

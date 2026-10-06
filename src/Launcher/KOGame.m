@@ -5,6 +5,12 @@
 #import "KOCommon.h"
 
 static BOOL g_running, g_debugGL;
+static NSArray *g_extraOptions;
+
++ (void)setExtraOptions:(NSArray *)options
+{
+    g_extraOptions = [options copy];
+}
 
 @implementation KOGame
 
@@ -39,7 +45,8 @@ static BOOL g_running, g_debugGL;
     return p;
 }
 
-// A library is for this device unless its rules say otherwise (Kostka counts as "osx", as iOS calls itself Mac OS X)
+// A library is for this device unless its rules say otherwise (Kostka counts as "osx": the nearest system, and
+// what Kostka's LWJGL stands in for)
 + (BOOL)allowed:(NSDictionary *)library
 {
     NSArray *rules = library[@"rules"];
@@ -309,10 +316,13 @@ static BOOL g_running, g_debugGL;
     CGSize screen = [UIScreen mainScreen].bounds.size;
     CGFloat scale = [UIScreen mainScreen].scale;
     // (the heap: what RubyDung needs, for the others what the iPad's 512 MB leave with the textures and the VM.
+    // Direct buffers: more than the heap's size, as games ask for large ones they barely use - old Minecraft's sound
+    // 32 of 5 MB - and Kostka's Java leaves their untouched pages out of memory (jvm/hotspot lazyMemory_bsd_aarch32).
     // AWT is Kostka's (lwjgl/awt): windows that exist without being drawn - Classic to 1.5.2 put the game in an
     // applet in a frame - and pictures drawn in Java. Swing, which launchwrapper touches, with its own look.)
     NSArray *options = @[
         [self heapFor:version json:json],
+        @"-XX:MaxDirectMemorySize=256m",
         [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:lwjgl],
         @"-Dminecraft.launcher.brand=Kostka",
         [@"-Xbootclasspath/a:" stringByAppendingString:[lwjgl stringByAppendingPathComponent:@"kostka-awt.jar"]],
@@ -324,6 +334,7 @@ static BOOL g_running, g_debugGL;
         [NSString stringWithFormat:@"-Dkostka.screen.width=%d", (int)(MAX(screen.width, screen.height) * scale)],
         [NSString stringWithFormat:@"-Dkostka.screen.height=%d", (int)(MIN(screen.width, screen.height) * scale)],
     ];
+    if (g_extraOptions.count) options = [options arrayByAddingObjectsFromArray:g_extraOptions];
     status(L(@"Starting Java"), -1);
     KOLog(@"play %@: %@ %@", version.identifier, json[@"mainClass"], [args componentsJoinedByString:@" "]);
     [KOJava runMainClass:json[@"mainClass"] classPath:classPath options:options args:args workingDirectory:gameDir

@@ -44,8 +44,8 @@ import org.lwjgl.input.Cursor;
 
 /**
  * Kostka: the Display on iOS. The window is a UIKit view on an EAGL layer (ios_display.m); the game's
- * OpenGL goes through gl4es to OpenGL ES 2.0. iOS reports os.name "Mac OS X", so this class keeps the name
- * of LWJGL's Mac OS X display, which it replaces (no Cocoa, no AWT).
+ * OpenGL goes through gl4es to OpenGL ES 2.0. iOS (os.name "iPhone OS X") is LWJGL's Mac OS X platform here,
+ * so this class keeps the name of LWJGL's Mac OS X display, which it replaces (no Cocoa, no AWT).
  *
  * The framebuffer has the size of the requested display mode (the screen's in fullscreen) and is shown
  * scaled to the screen. Touches come back as mouse and keyboard events (ios_display.m decides which).
