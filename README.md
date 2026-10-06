@@ -11,15 +11,23 @@ player, who must own it.
 
 | Version | |
 | --- | --- |
-| rd-132211 and the other RubyDung builds (May 2009) | plays, 35-60 fps |
-| Classic 0.30 | plays |
-| Infdev 2010-06-18, Alpha 1.2.6, Beta 1.7.3, 1.2.5, 1.5.2, 1.7.10, 1.8.9 | reach the main menu (with sound) |
-| 1.6.4 | plays: a new world in about a minute, ~17 fps while the chunks are built |
-| 1.12.2 | plays: a new world in about 3 minutes, 26 fps at render distance 2, about 240 MB of memory |
-| the rest of Classic to 1.12.2 | to try: the same pieces run them, untested |
-| 1.13 and newer | no: LWJGL 3, OpenGL 3.2 / Java 17 for the newest |
+Every version below was started on the iPad, made a new world and played in it (`Resources/Tested.json`, which the
+launcher shows):
 
-Indev is not on Mojang's list of versions (the launcher shows what Mojang offers).
+| Versions | | the app's memory | a new world |
+| --- | --- | --- | --- |
+| RubyDung, all 5 (May 2009) | play, 20-60 fps | 70-125 MB | at once |
+| Classic, all 4 | play, 20-60 fps | 140-270 MB | at once |
+| Infdev 2010-06-18 | plays | 150 MB | 30 s |
+| Alpha, all 25 | play, 20-50 fps | 145-170 MB | 25-60 s |
+| Beta, all 26 | play; walking into new land is slow (the world is made on the game's thread) | 140-185 MB | 20-140 s |
+| 1.0 to 1.7.10, all 27 | play, 10-30 fps | 170-245 MB | 50-120 s |
+| 1.12.2 | plays, 26 fps at render distance 2 | about 240 MB | about 3 min |
+| 1.8 to 1.12.1 | not tried yet: the same pieces run them | | |
+| 1.13 and newer | no: LWJGL 3, OpenGL 3.2 / Java 17 for the newest | | |
+
+The iPad 2 warns from about 250 MB of the app's memory and ends it at about 320. Indev is not on Mojang's list of
+versions (the launcher shows what Mojang offers).
 
 Mojang's jars are not patched: the pieces under them are made to do what each era of the game expects.
 

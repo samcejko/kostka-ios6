@@ -13,3 +13,8 @@
 - Java calls the system "iPhone OS X" (1.12's narrator loaded a Mac library and stopped the game)
 - The app's memory in the log while a game runs
 - Java's HTTPS with elliptic curves (libsunec): TLS 1.3 to Mojang's servers from the game (profiles, skins)
+- Every version from RubyDung to 1.7.10 tried on an iPad 2: started, a new world made and played in (90 versions);
+  the launcher marks each version by what was tried (Resources/Tested.json)
+- The Java heap grows only as needed and gives memory back; 1 MB thread stacks (Alpha's lighting recursion)
+- Every version's first start gets the iPad's settings (Alpha and Beta started with the farthest view)
+- A game that stops with an error says why ("The game has stopped"), then Kostka closes
