@@ -7,6 +7,7 @@
 // iOS has no window framebuffer, so the game's framebuffer 0 has to be the framebuffer object on the
 // window's layer (ios_context.m makes it), and gl4es binds that one wherever the game binds 0.
 #include <dlfcn.h>
+#include <stdlib.h>
 #include "gl/gl4es.h"
 #include "ios_common.h"
 
@@ -30,6 +31,9 @@ void ko_gl4es_init(void)
     static int done;
     if (done) return;
     done = 1;
+    // (glGetError answers no error: games only log what they get - Minecraft 1.6 three lines every frame for an
+    // error gl4es keeps from its work - and the log costs them time. With KOSTKA_GLDEBUG the errors are told.)
+    if (!getenv("KOSTKA_GLDEBUG")) setenv("LIBGL_NOERROR", "1", 0);
     set_getprocaddress(ko_gles_proc_address);
     initialize_gl4es();
 }

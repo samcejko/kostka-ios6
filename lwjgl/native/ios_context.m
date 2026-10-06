@@ -122,9 +122,12 @@ static int ko_gl_debug(void)
 
 static void ko_check(const char *where)
 {
+    // (gl4es's glGetError: the errors gl4es keeps itself, then the driver's)
+    static GLenum (*get_error)(void);
     static int told;
+    if (!get_error) get_error = (GLenum (*)(void))ko_gl4es_proc_address("glGetError");
     GLenum e;
-    while ((e = glGetError()) != GL_NO_ERROR) {
+    while (get_error && (e = get_error()) != GL_NO_ERROR) {
         if (told < 12) {
             told++;
             fprintf(stderr, "[LWJGL] OpenGL error 0x%x %s\n", e, where);
