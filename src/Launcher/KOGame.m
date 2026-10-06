@@ -316,13 +316,19 @@ static NSArray *g_extraOptions;
     NSString *lwjgl = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"lwjgl"];
     CGSize screen = [UIScreen mainScreen].bounds.size;
     CGFloat scale = [UIScreen mainScreen].scale;
-    // (the heap: what RubyDung needs, for the others what the iPad's 512 MB leave with the textures and the VM.
+    // (the heap: what RubyDung needs, for the others what the iPad's 512 MB leave with the textures and the VM. It
+    // grows only when a collection leaves less than a tenth free and gives memory back above 30 %, and its young
+    // part - written over again and again, so always in memory - is 24 MB: 1.7.10 then stays at about 230 MB of the
+    // app's memory instead of climbing past 260 towards the 320 where iOS ends the app.
     // Direct buffers: more than the heap's size, as games ask for large ones they barely use - old Minecraft's sound
     // 32 of 5 MB - and Kostka's Java leaves their untouched pages out of memory (jvm/hotspot lazyMemory_bsd_aarch32).
     // AWT is Kostka's (lwjgl/awt): windows that exist without being drawn - Classic to 1.5.2 put the game in an
     // applet in a frame - and pictures drawn in Java. Swing, which launchwrapper touches, with its own look.)
     NSArray *options = @[
         [self heapFor:version json:json],
+        @"-Xmn24m",
+        @"-XX:MinHeapFreeRatio=10",
+        @"-XX:MaxHeapFreeRatio=30",
         @"-XX:MaxDirectMemorySize=256m",
         [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:lwjgl],
         @"-Dminecraft.launcher.brand=Kostka",
