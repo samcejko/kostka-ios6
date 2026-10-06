@@ -115,6 +115,16 @@ static BOOL g_running, g_debugGL;
     return args;
 }
 
+// The Java heap a version gets: as little as it plays with, the iPad 2 warns from about 250 MB of the app's memory
+// and ends it at 320 (the heap, the VM's own memory and the textures together)
++ (NSString *)heapFor:(KOVersion *)version json:(NSDictionary *)json
+{
+    if ([self isRubyDung:json] || [version.type isEqualToString:@"old_alpha"]) return @"-Xmx128m";
+    if ([version.type isEqualToString:@"old_beta"] || ![json[@"mainClass"] isEqualToString:@"net.minecraft.client.main.Main"])
+        return @"-Xmx160m";
+    return @"-Xmx192m";
+}
+
 + (BOOL)isRubyDung:(NSDictionary *)json
 {
     return [json[@"mainClass"] hasSuffix:@"RubyDung"];
@@ -302,7 +312,7 @@ static BOOL g_running, g_debugGL;
     // AWT is Kostka's (lwjgl/awt): windows that exist without being drawn - Classic to 1.5.2 put the game in an
     // applet in a frame - and pictures drawn in Java. Swing, which launchwrapper touches, with its own look.)
     NSArray *options = @[
-        [self isRubyDung:json] ? @"-Xmx128m" : @"-Xmx192m",
+        [self heapFor:version json:json],
         [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:lwjgl],
         @"-Dminecraft.launcher.brand=Kostka",
         [@"-Xbootclasspath/a:" stringByAppendingString:[lwjgl stringByAppendingPathComponent:@"kostka-awt.jar"]],
