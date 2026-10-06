@@ -329,6 +329,9 @@ static NSArray *g_extraOptions;
         @"-Xmn24m",
         @"-XX:MinHeapFreeRatio=10",
         @"-XX:MaxHeapFreeRatio=30",
+        // (the threads' stacks as on a desktop: Alpha lights a new world recursively, deeper than 512 KB holds while
+        // the code is still interpreted - a1.0.17_04 stopped with a StackOverflowError)
+        @"-Xss1m",
         @"-XX:MaxDirectMemorySize=256m",
         [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:lwjgl],
         @"-Dminecraft.launcher.brand=Kostka",
