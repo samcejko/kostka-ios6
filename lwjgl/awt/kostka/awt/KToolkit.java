@@ -266,6 +266,11 @@ public class KToolkit extends SunToolkit {
 	public void beep() {
 	}
 
+	// (Toolkit's own version asks the default toolkit, itself: every real toolkit answers it)
+	public boolean areExtraMouseButtonsEnabled() {
+		return false;
+	}
+
 	public Clipboard getSystemClipboard() {
 		// (within the game: what it copies, it can paste)
 		return clipboard;
