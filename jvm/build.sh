@@ -351,6 +351,12 @@ jdklibs() {
     srcs="$(ls "$j"/share/native/sun/management/*.c) $j/solaris/native/sun/management/FileSystemImpl.c
  $j/solaris/native/sun/management/MacosxOperatingSystem.c $j/solaris/native/sun/management/OperatingSystemImpl.c"
     native_lib management "$srcs" "-I$j/share/native/sun/management" "-ljvm -ljava" || return 1
+
+    # libsunec (jdk/make/lib/SecurityLibraries.gmk): without it the SunEC provider offers no elliptic curves, and
+    # Java's TLS no ECDHE key exchange - which today's servers require (Mojang's: profiles, skins, joining a server)
+    srcs="$j/share/native/sun/security/ec/ECC_JNI.cpp $(ls "$j"/share/native/sun/security/ec/impl/*.c) $HERE/jdk/new_ios.cpp"
+    native_lib sunec "$srcs" "-I$j/share/native/sun/security/ec -I$j/share/native/sun/security/ec/impl \
+ -DMP_API_COMPATIBLE -DNSS_ECC_MORE_THAN_SUITE_B -fno-exceptions -fno-rtti" "" || return 1
 }
 
 # 5b. libawt, for now a stub: the image classes (BufferedImage, ImageIO's decoders) and others look up JNI IDs
