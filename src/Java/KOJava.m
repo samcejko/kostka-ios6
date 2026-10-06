@@ -91,8 +91,11 @@ static int g_logFd = -1;
     if (!h) return nil;
     unsigned long long size = [h seekToEndOfFile];
     [h seekToFileOffset:size > 65536 ? size - 65536 : 0];
-    NSString *tail = [[NSString alloc] initWithData:[h readDataToEndOfFile] encoding:NSUTF8StringEncoding];
+    NSData *data = [h readDataToEndOfFile];
     [h closeFile];
+    // (the cut may fall inside a character: then as Latin-1, which takes any byte - exceptions are ASCII anyway)
+    NSString *tail = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?:
+                     [[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding];
     if (!tail) return nil;
     NSRegularExpression *exception = [NSRegularExpression regularExpressionWithPattern:
         @"^(Exception in thread \"[^\"]*\" )?([a-zA-Z_$][\\w$]*\\.)+[\\w$]*(Exception|Error)\\b.*$" options:0 error:NULL];
