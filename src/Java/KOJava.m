@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <mach/mach.h>
 #include "jni.h"
 
 typedef jint (JNICALL *KOCreateJavaVM)(JavaVM **vm, void **env, void *args);
@@ -40,6 +41,32 @@ static int g_logFd = -1;
 + (NSString *)logPath
 {
     return [[self dataPath] stringByAppendingPathComponent:@"java.log"];
+}
+
++ (int)memoryInUse
+{
+    struct task_basic_info info;
+    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &count) != KERN_SUCCESS) return -1;
+    return (int)(info.resident_size >> 20);
+}
+
+// While Java runs, the app's memory goes into the log each time it has moved by 16 MB: the iPad 2 warns from about
+// 250 MB and ends the app at about 320, and what each version takes shows here
+static void KOWatchMemory(void)
+{
+    static dispatch_source_t timer;
+    static int logged;
+    timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0));
+    dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, 0), 2 * NSEC_PER_SEC, NSEC_PER_SEC / 2);
+    dispatch_source_set_event_handler(timer, ^{
+        int mb = [KOJava memoryInUse];
+        if (mb >= 0 && abs(mb - logged) >= 16) {
+            logged = mb;
+            KOLog(@"memory: %d MB", mb);
+        }
+    });
+    dispatch_resume(timer);
 }
 
 // What Java writes to stdout and stderr goes through a pipe: into java.log, and each line into the system log - at
@@ -209,6 +236,8 @@ static void *KOJavaThread(void *arg)
     if (pthread_create(&t, &attr, KOJavaThread, (__bridge_retained void *)l) != 0) {
         g_started = NO;
         if (done) done(-1, @"pthread_create failed");
+    } else {
+        KOWatchMemory();
     }
     pthread_attr_destroy(&attr);
 }

@@ -7,11 +7,6 @@
 static BOOL g_running, g_debugGL;
 static NSArray *g_extraOptions;
 
-+ (void)setExtraOptions:(NSArray *)options
-{
-    g_extraOptions = [options copy];
-}
-
 @implementation KOGame
 
 + (void)setDebugGL:(BOOL)on
@@ -20,6 +15,11 @@ static NSArray *g_extraOptions;
     // (and the swap of LWJGL's iOS side says which of its steps leaves an OpenGL error: ios_context.m)
     if (on) setenv("KOSTKA_GLDEBUG", "1", 1);
     else unsetenv("KOSTKA_GLDEBUG");
+}
+
++ (void)setExtraOptions:(NSArray *)options
+{
+    g_extraOptions = [options copy];
 }
 
 + (BOOL)isRunning

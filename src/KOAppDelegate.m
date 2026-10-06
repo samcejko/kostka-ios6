@@ -136,7 +136,7 @@
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
 {
-    KOLog(@"memory warning");
+    KOLog(@"memory warning (%d MB in use)", [KOJava memoryInUse]);
 }
 
 @end

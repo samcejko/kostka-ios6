@@ -9,6 +9,7 @@
 + (NSString *)dataPath;       // Library/Kostka: Kostka's files, and the folder Java works in
 + (NSString *)runtimePath;    // the jre folder: in the app bundle, or a downloaded one in Documents
 + (NSString *)logPath;
++ (int)memoryInUse;           // the app's memory in use (resident), in MB
 
 // Starts the VM with `options` ("-Xmx96m", "-Dfoo=bar") and the class path, then runs `mainClass`.main(args).
 // `done` is called on the main thread with the exit code (0 when main returned, else a message in `error`).
