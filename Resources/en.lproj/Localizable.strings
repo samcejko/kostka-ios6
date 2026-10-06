@@ -15,6 +15,7 @@
 "it stops while starting." = "it stops while starting.";
 "Java has already run since the app was opened: close the app and open it again." ="Java has already run since the app was opened: close the app and open it again.";
 "Jump" = "Jump";
+"Kostka closes: open it again to play." = "Kostka closes: open it again to play.";
 "Kostka does not run this version yet: %@" = "Kostka does not run this version yet: %@";
 "Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license)." = "Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).";
 "Loading Mojang's list of versions…" ="Loading Mojang's list of versions…";
@@ -40,6 +41,7 @@
 "Starting Java" = "Starting Java";
 "The download of %@ is damaged (its checksum does not match)." = "The download of %@ is damaged (its checksum does not match).";
 "The game could not start" = "The game could not start";
+"The game has stopped" = "The game has stopped";
 "The name the old versions show for the player." = "The name the old versions show for the player.";
 "The server answered %ld." = "The server answered %ld.";
 "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another." = "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another.";

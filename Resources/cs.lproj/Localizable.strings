@@ -15,6 +15,7 @@
 "it stops while starting." = "při startu se zastaví.";
 "Java has already run since the app was opened: close the app and open it again." ="Java už od otevření aplikace běžela: zavři aplikaci a otevři ji znovu.";
 "Jump" = "Skok";
+"Kostka closes: open it again to play." = "Kostka se zavře: pro další hru ji otevři znovu.";
 "Kostka does not run this version yet: %@" = "Tuhle verzi Kostka zatím nespustí: %@";
 "Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license)." = "Kostka stahuje soubory Minecraftu od Mojangu. Minecraft je hra studia Mojang; Kostka není oficiální produkt. Uvnitř: OpenJDK 8 (GPL v2 s výjimkou Classpath), LWJGL 2 (licence BSD), gl4es (licence MIT).";
 "Loading Mojang's list of versions…" ="Načítám seznam verzí od Mojangu…";
@@ -40,6 +41,7 @@
 "Starting Java" = "Spouštím Javu";
 "The download of %@ is damaged (its checksum does not match)." = "Stažený soubor %@ je poškozený (nesedí kontrolní součet).";
 "The game could not start" = "Hru se nepodařilo spustit";
+"The game has stopped" = "Hra skončila";
 "The name the old versions show for the player." = "Jméno, které staré verze ukazují u hráče.";
 "The server answered %ld." = "Server odpověděl %ld.";
 "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another." = "Verze, které zatím nejdou, se nemusí spustit, nebo brzy skončí: Kostka se k nim dostává krok za krokem.";

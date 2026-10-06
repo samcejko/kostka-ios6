@@ -41,9 +41,10 @@ int ko_window_height(KOWindow *window);
 // In the background iOS kills an app that draws: the swap waits there until the app is back (ios_display.m)
 void ko_wait_while_inactive(void);
 
-// For tests, read by the app (dlsym): the frames the game has drawn, the size of its window, whether it holds the
-// mouse - in the game rather than in a menu (ios_display.m)
-extern int ko_game_frames, ko_game_width, ko_game_height, ko_game_grabbed;
+// Read by the app (dlsym): the frames the game has drawn, the size of its window, whether it holds the mouse - in the
+// game rather than in a menu - and how many windows it has open (none after it had one: the game has stopped
+// showing anything, ios_display.m)
+extern int ko_game_frames, ko_game_width, ko_game_height, ko_game_grabbed, ko_game_windows;
 
 // gl4es (ios_gl4es.c): set up on the first current context; framebuffer 0 of the game is the window's
 void ko_gl4es_init(void);

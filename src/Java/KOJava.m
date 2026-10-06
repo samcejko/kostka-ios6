@@ -1,3 +1,4 @@
+#import <UIKit/UIKit.h>
 #import "KOJava.h"
 #import "KOCommon.h"
 #include <dlfcn.h>
@@ -5,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <mach/mach.h>
+#include <libkern/OSAtomic.h>
 #include "jni.h"
 
 typedef jint (JNICALL *KOCreateJavaVM)(JavaVM **vm, void **env, void *args);
@@ -19,6 +21,16 @@ static int g_logFd = -1;
 @property (nonatomic, copy) void (^done)(int, NSString *);
 @end
 @implementation KOJavaLaunch
+@end
+
+// The alert of a game that has stopped: its button closes Kostka (one Java VM per process)
+@interface KOStoppedAlert : NSObject <UIAlertViewDelegate>
+@end
+@implementation KOStoppedAlert
+- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    exit(0);
+}
 @end
 
 @implementation KOJava
@@ -70,9 +82,65 @@ static int g_logFd = -1;
     }
 }
 
+// Why the game stopped, from what Java printed last (java.log): the last exception, leaving out the ones that are
+// part of every start here (no game controllers, Mojang's old resource server gone) and Kostka's own AWT refusing the
+// text area of an old version's crash screen (the cause is printed before it)
++ (NSString *)stopReason
+{
+    NSFileHandle *h = [NSFileHandle fileHandleForReadingAtPath:[self logPath]];
+    if (!h) return nil;
+    unsigned long long size = [h seekToEndOfFile];
+    [h seekToFileOffset:size > 65536 ? size - 65536 : 0];
+    NSString *tail = [[NSString alloc] initWithData:[h readDataToEndOfFile] encoding:NSUTF8StringEncoding];
+    [h closeFile];
+    if (!tail) return nil;
+    NSRegularExpression *exception = [NSRegularExpression regularExpressionWithPattern:
+        @"^(Exception in thread \"[^\"]*\" )?([a-zA-Z_$][\\w$]*\\.)+[\\w$]*(Exception|Error)\\b.*$" options:0 error:NULL];
+    NSString *found = nil;
+    for (NSString *line in [tail componentsSeparatedByString:@"\n"]) {
+        NSString *t = [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (![exception firstMatchInString:t options:0 range:NSMakeRange(0, t.length)]) continue;
+        if ([t rangeOfString:@"HeadlessException"].location != NSNotFound ||
+            [t rangeOfString:@"initialise controllers"].location != NSNotFound ||
+            [t rangeOfString:@"MinecraftResources"].location != NSNotFound) continue;
+        found = t;
+    }
+    return found.length > 240 ? [[found substringToIndex:240] stringByAppendingString:@"…"] : found;
+}
+
+static void KOShowStopped(int code)
+{
+    static volatile int32_t shown;
+    static KOStoppedAlert *delegate;
+    if (!OSAtomicCompareAndSwap32(0, 1, &shown)) return;
+    NSString *reason = [KOJava stopReason];
+    KOLog(@"game stopped: %d %@", code, reason ?: @"");
+    [KOJava note:@"stopped %d %@", code, reason ?: @""];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *closing = L(@"Kostka closes: open it again to play.");
+        NSString *message = reason.length ? [NSString stringWithFormat:@"%@\n\n%@", reason, closing] : closing;
+        delegate = [[KOStoppedAlert alloc] init];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:L(@"The game has stopped") message:message delegate:delegate
+                                              cancelButtonTitle:L(@"OK") otherButtonTitles:nil];
+        [alert show];
+    });
+}
+
+// HotSpot's exit hook (the VM option "exit"): System.exit ends here. A plain quit ends the app at once; a game that
+// ends with an error (1.6 and newer do after their crash report) has its reason shown first.
+static void JNICALL KOJavaExit(jint code)
+{
+    [KOJava note:@"java exit %d", (int)code];
+    if (code == 0) exit(0);
+    KOShowStopped((int)code);
+    for (;;) sleep(60);
+}
+
 // While Java runs, the app's memory goes into the log each time it has moved by 16 MB: the iPad 2 warns from about
 // 250 MB and ends the app at about 320, and what each version takes shows here. Every 2 seconds the run's notes get
-// the frames the game has drawn, its window and the memory (LWJGL's counters, if it is loaded).
+// the frames the game has drawn, its window and the memory (LWJGL's counters, if it is loaded). And a game that has
+// closed its window and does nothing more for 8 seconds has stopped: Classic to 1.5.2 then show their crash report in
+// an AWT window, which iOS has not - Kostka says so instead.
 static void KOWatchMemory(void)
 {
     static dispatch_source_t timer;
@@ -85,15 +153,25 @@ static void KOWatchMemory(void)
             logged = mb;
             KOLog(@"memory: %d MB", mb);
         }
-        static int *frames, *width, *height, *grabbed;
+        static int *frames, *width, *height, *grabbed, *windows;
         if (!frames) {
             frames = (int *)dlsym(RTLD_DEFAULT, "ko_game_frames");
             width = (int *)dlsym(RTLD_DEFAULT, "ko_game_width");
             height = (int *)dlsym(RTLD_DEFAULT, "ko_game_height");
             grabbed = (int *)dlsym(RTLD_DEFAULT, "ko_game_grabbed");
+            windows = (int *)dlsym(RTLD_DEFAULT, "ko_game_windows");
         }
         [KOJava note:@"progress frames=%d window=%dx%d memory=%d grabbed=%d", frames ? *frames : 0, width ? *width : 0,
             height ? *height : 0, mb, grabbed ? *grabbed : 0];
+        static BOOL hadWindow;
+        static CFAbsoluteTime goneSince;
+        if (windows && *windows > 0) {
+            hadWindow = YES;
+            goneSince = 0;
+        } else if (windows && hadWindow) {
+            if (!goneSince) goneSince = CFAbsoluteTimeGetCurrent();
+            else if (CFAbsoluteTimeGetCurrent() - goneSince > 8) KOShowStopped(-1);
+        }
     });
     dispatch_resume(timer);
 }
@@ -172,7 +250,7 @@ static void *KOJavaThread(void *arg)
         if (!create) { KOFinish(l, -1, @"JNI_CreateJavaVM not found"); return NULL; }
 
         NSUInteger n = l.options.count;
-        JavaVMOption *opts = calloc(n, sizeof(JavaVMOption));
+        JavaVMOption *opts = calloc(n + 1, sizeof(JavaVMOption));
         NSMutableArray *keep = [NSMutableArray array];
         for (NSUInteger i = 0; i < n; i++) {
             NSData *d = [[l.options[i] stringByAppendingString:@"\0"] dataUsingEncoding:NSUTF8StringEncoding];
@@ -180,9 +258,12 @@ static void *KOJavaThread(void *arg)
             opts[i].optionString = (char *)d.bytes;
             KOLog(@"java: option %@", l.options[i]);
         }
+        // (System.exit through Kostka: KOJavaExit)
+        opts[n].optionString = "exit";
+        opts[n].extraInfo = (void *)KOJavaExit;
         JavaVMInitArgs vmArgs;
         vmArgs.version = JNI_VERSION_1_8;
-        vmArgs.nOptions = (jint)n;
+        vmArgs.nOptions = (jint)(n + 1);
         vmArgs.options = opts;
         vmArgs.ignoreUnrecognized = JNI_FALSE;
         JavaVM *vm = NULL;
