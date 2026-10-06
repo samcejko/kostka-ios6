@@ -5,28 +5,53 @@
 
 static NSString *const KOManifestURL = @"https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
+// What was tried on an iPad 2 (iOS 6.1.3): Resources/Tested.json, written from the run that starts every version,
+// makes a new world in it and plays there for a while. "plays": the versions that did; "notYet": the ones that did
+// not, each with a word for what went wrong (KOVersion.problem)
+static NSSet *g_plays;
+static NSDictionary *g_notYet;
+
+static void KOLoadTested(void)
+{
+    if (g_plays) return;
+    NSData *d = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Tested" ofType:@"json"]];
+    NSDictionary *json = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:NULL] : nil;
+    if (![json isKindOfClass:[NSDictionary class]]) json = @{};
+    g_plays = [NSSet setWithArray:[json[@"plays"] isKindOfClass:[NSArray class]] ? json[@"plays"] : @[]];
+    g_notYet = [json[@"notYet"] isKindOfClass:[NSDictionary class]] ? json[@"notYet"] : @{};
+}
+
 @implementation KOVersion
 
 - (KOSupport)support
 {
-    // RubyDung (May 2009) opens its window with LWJGL alone: it runs. Everything up to 1.12.2 is of LWJGL 2 and
-    // Java 8 (17w43a, the first 1.13 snapshot of October 2017, moved to LWJGL 3); Classic to 1.5.2 open an AWT
-    // window first, 1.6 and newer want more memory: not yet.
-    // The whole LWJGL 2 era runs on Kostka's own window toolkit and OpenGL (17w43a, the first 1.13 snapshot of
-    // October 2017, moved to LWJGL 3); the versions tried on an iPad 2 (into the game, or to its menu) are marked so
-    static NSSet *played;
-    if (!played) played = [NSSet setWithObjects:@"c0.30_01c", @"inf-20100618", @"a1.2.6", @"b1.7.3", @"1.2.5", @"1.5.2",
-                           @"1.6.4", @"1.7.10", @"1.8.9", @"1.12.2", nil];
-    if ([self.identifier hasPrefix:@"rd-"] || [played containsObject:self.identifier]) return KOSupportPlays;
+    // The whole LWJGL 2 era runs on Kostka's Java, windows and OpenGL; 17w43a, the first 1.13 snapshot (October
+    // 2017), moved to LWJGL 3
+    KOLoadTested();
+    if ([g_plays containsObject:self.identifier]) return KOSupportPlays;
+    if (g_notYet[self.identifier]) return KOSupportSoon;
     if ([self.released compare:@"2017-10-25"] != NSOrderedAscending) return KOSupportNever;
     return KOSupportTry;
+}
+
+- (NSString *)problem
+{
+    KOLoadTested();
+    NSString *word = g_notYet[self.identifier];
+    if (!word) return nil;
+    NSDictionary *texts = @{
+        @"crash": L(@"it stops while starting."),
+        @"world": L(@"it stops while making or loading a world."),
+        @"memory": L(@"it needs more memory than the iPad 2 has."),
+    };
+    return texts[word] ?: L(@"it did not play in the tries on an iPad 2.");
 }
 
 - (NSString *)localizedSupport
 {
     switch (self.support) {
         case KOSupportPlays: return L(@"Plays");
-        case KOSupportTry: return L(@"To try");
+        case KOSupportTry: return L(@"Not tried yet");
         case KOSupportSoon: return L(@"Not yet");
         default: return L(@"Too new for iOS 6");
     }

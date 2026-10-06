@@ -59,24 +59,34 @@
     }];
 }
 
+// The versions by kind, newest first, each with what it does here; the releases too new for iOS 6 at the end (the
+// snapshots of that time are left out: hundreds of them)
 - (void)arrange
 {
     BOOL snapshots = [[NSUserDefaults standardUserDefaults] boolForKey:@"KOShowSnapshots"];
-    NSMutableArray *plays = [NSMutableArray array], *releases = [NSMutableArray array], *betas = [NSMutableArray array],
-                   *alphas = [NSMutableArray array], *snaps = [NSMutableArray array];
+    NSMutableArray *releases = [NSMutableArray array], *betas = [NSMutableArray array], *alphas = [NSMutableArray array],
+                   *snaps = [NSMutableArray array], *tooNew = [NSMutableArray array];
     for (KOVersion *v in self.versions) {
-        if (v.support == KOSupportPlays) [plays addObject:v];
-        else if ([v.type isEqualToString:@"release"]) [releases addObject:v];
-        else if ([v.type isEqualToString:@"old_beta"]) [betas addObject:v];
-        else if ([v.type isEqualToString:@"old_alpha"]) [alphas addObject:v];
-        else if (snapshots) [snaps addObject:v];
+        BOOL snapshot = ![v.type isEqualToString:@"release"] && ![v.type isEqualToString:@"old_beta"] &&
+                        ![v.type isEqualToString:@"old_alpha"];
+        if (v.support == KOSupportNever) {
+            if (!snapshot) [tooNew addObject:v];
+        } else if ([v.type isEqualToString:@"release"]) {
+            [releases addObject:v];
+        } else if ([v.type isEqualToString:@"old_beta"]) {
+            [betas addObject:v];
+        } else if ([v.type isEqualToString:@"old_alpha"]) {
+            [alphas addObject:v];
+        } else if (snapshots) {
+            [snaps addObject:v];
+        }
     }
     NSMutableArray *sections = [NSMutableArray array];
-    if (plays.count) [sections addObject:@{ @"title": L(@"Plays on this iPad"), @"versions": plays }];
     if (releases.count) [sections addObject:@{ @"title": L(@"Releases"), @"versions": releases }];
     if (betas.count) [sections addObject:@{ @"title": L(@"Beta"), @"versions": betas }];
-    if (alphas.count) [sections addObject:@{ @"title": L(@"Alpha"), @"versions": alphas }];
+    if (alphas.count) [sections addObject:@{ @"title": L(@"Alpha, Infdev, Classic"), @"versions": alphas }];
     if (snaps.count) [sections addObject:@{ @"title": L(@"Snapshots"), @"versions": snaps }];
+    if (tooNew.count) [sections addObject:@{ @"title": L(@"Too new for iOS 6"), @"versions": tooNew }];
     self.sections = sections;
     [self.tableView reloadData];
 }

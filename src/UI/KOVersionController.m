@@ -26,12 +26,14 @@
     KOVersion *v = self.version;
     if ([v.identifier hasPrefix:@"rd-"])
         return L(@"RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes Kostka: open it again to play once more).");
+    NSString *controls = L(@"In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item. When the game ends, Kostka closes: open it again for the next one.");
     switch (v.support) {
         case KOSupportPlays:
+            return [NSString stringWithFormat:@"%@ %@", L(@"Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12)."), controls];
         case KOSupportTry:
-            return L(@"Kostka runs the Minecraft of this era, Classic to 1.12.2, with its own windows and OpenGL for iOS. Classic 0.30, Beta 1.7.3 and 1.6.4 play; others may not start or end soon after, and the newer the version, the more memory and speed it wants of the iPad. A new world takes about a minute. In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item. When the game ends, Kostka closes: open it again for the next one.");
+            return [NSString stringWithFormat:@"%@ %@", L(@"Not tried on an iPad yet: the versions of its time play on Kostka, so this one most likely does too."), controls];
         case KOSupportSoon:
-            return L(@"Kostka does not run this version yet. Everything up to 1.12.2 is its aim: Classic to 1.5.2 still need Java's window toolkit (AWT), which Kostka does not have yet, the newer ones more memory than Kostka gives the game now.");
+            return [NSString stringWithFormat:L(@"Kostka does not run this version yet: %@"), v.problem];
         default:
             return L(@"This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.");
     }

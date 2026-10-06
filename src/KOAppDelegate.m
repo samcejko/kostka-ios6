@@ -15,7 +15,8 @@
 //                                                        or from /; args: its arguments)
 //   kostka:screenshot                                    the screen into Library/Kostka/screen.png
 //   kostka:play?version=1.7.10[&gldebug=1]               downloads and starts a version (any, for tests; gldebug: LWJGL
-//                                                        stops the game at the first OpenGL call that fails)
+//                                                        stops the game at the first OpenGL call that fails;
+//                                                        jvm=-Xa,-Xb: more VM options; env=NAME:value,...)
 //   kostka:mouse?x=&y=[&button=] / key?code=[&char=] / text?s=   input for the running game
 @interface KOAppDelegate ()
 @property (nonatomic, strong, readwrite) KOProbeController *probe;
@@ -118,8 +119,13 @@
     // kostka:play?version=1.7.10: downloads and starts a version, whether it runs here or not yet (for tests)
     if ([target isEqualToString:@"play"] && p[@"version"]) {
         [KOGame setDebugGL:[p[@"gldebug"] isEqualToString:@"1"]];
-        // (jvm=-XX:Foo=1,-Dbar=2: more options for the VM)
+        // (jvm=-XX:Foo=1,-Dbar=2: more options for the VM; env=LIBGL_FOO:1,BAR:2 - gl4es's settings, for instance)
         [KOGame setExtraOptions:p[@"jvm"] ? [p[@"jvm"] componentsSeparatedByString:@","] : nil];
+        for (NSString *pair in p[@"env"] ? [p[@"env"] componentsSeparatedByString:@","] : @[]) {
+            NSRange colon = [pair rangeOfString:@":"];
+            if (colon.location != NSNotFound)
+                setenv([[pair substringToIndex:colon.location] UTF8String], [[pair substringFromIndex:colon.location + 1] UTF8String], 1);
+        }
         [KOVersions load:^(NSArray *versions, NSError *error) {
             for (KOVersion *v in versions) {
                 if (![v.identifier isEqualToString:p[@"version"]]) continue;
