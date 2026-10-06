@@ -21,24 +21,23 @@
 
 #include <stdlib.h>
 
-#define HIDDEN __attribute__((visibility("hidden")))
-
-HIDDEN void* operator new(size_t size) {
+// (exported, as C++ wants them: with two-level names, each library still binds to its own, or to libc++'s)
+void* operator new(size_t size) {
   void* p = malloc(size != 0 ? size : 1);
   if (p == NULL) abort();
   return p;
 }
 
-HIDDEN void* operator new[](size_t size) {
+void* operator new[](size_t size) {
   void* p = malloc(size != 0 ? size : 1);
   if (p == NULL) abort();
   return p;
 }
 
-HIDDEN void operator delete(void* p) throw() {
+void operator delete(void* p) throw() {
   free(p);
 }
 
-HIDDEN void operator delete[](void* p) throw() {
+void operator delete[](void* p) throw() {
   free(p);
 }
