@@ -205,7 +205,13 @@ public class KToolkit extends SunToolkit {
 	}
 
 	public RobotPeer createRobot(Robot target, GraphicsDevice screen) throws AWTException {
-		throw new AWTException("No robot on iOS");
+		return new KPointer.Robot();
+	}
+
+	private final java.awt.peer.MouseInfoPeer mouseInfo = new KPointer.Info();
+
+	public synchronized java.awt.peer.MouseInfoPeer getMouseInfoPeer() {
+		return mouseInfo;
 	}
 
 	public KeyboardFocusManagerPeer getKeyboardFocusManagerPeer() {

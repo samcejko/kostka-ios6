@@ -27,6 +27,11 @@ public class KWindowPeer extends KComponentPeer implements FramePeer, DialogPeer
 		super(target);
 	}
 
+	/** (on iOS every window is at the screen's origin: AWT's screen is then LWJGL's window, see KPointer) */
+	public java.awt.Point getLocationOnScreen() {
+		return new java.awt.Point(0, 0);
+	}
+
 	public void setVisible(boolean v) {
 		boolean was = visible;
 		super.setVisible(v);
