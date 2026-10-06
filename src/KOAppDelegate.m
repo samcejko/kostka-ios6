@@ -88,7 +88,10 @@
     //   kostka:mouse?x=512&y=400[&button=0]   moves the mouse (from the bottom left), clicks if a button is given
     //   kostka:key?code=28[&char=13]           a key down and up (LWJGL's key codes)
     //   kostka:text?s=Svet                     characters, as typed
-    if ([target isEqualToString:@"mouse"] || [target isEqualToString:@"key"] || [target isEqualToString:@"text"]) {
+    //   kostka:key?code=17&hold=10                 a key held down for 10 seconds
+    //   kostka:look?dx=200&dy=0                    turns the view (the held mouse's movement, in the game)
+    if ([target isEqualToString:@"mouse"] || [target isEqualToString:@"key"] || [target isEqualToString:@"text"] ||
+        [target isEqualToString:@"look"]) {
         void (*post)(int, int, int, int) = (void (*)(int, int, int, int))dlsym(RTLD_DEFAULT, "ko_post_event");
         if (!post) {
             KOLog(@"input: no game running");
@@ -105,8 +108,19 @@
                 });
             }
         } else if ([target isEqualToString:@"key"]) {
-            post(5, [p[@"code"] intValue], 1, [p[@"char"] intValue]);
-            post(5, [p[@"code"] intValue], 0, 0);
+            // (hold=10: the key stays down for 10 seconds - walking, for a test that moves around a world)
+            int code = [p[@"code"] intValue];
+            double hold = [p[@"hold"] doubleValue];
+            post(5, code, 1, [p[@"char"] intValue]);
+            if (hold > 0) {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(hold * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    post(5, code, 0, 0);
+                });
+            } else {
+                post(5, code, 0, 0);
+            }
+        } else if ([target isEqualToString:@"look"]) {
+            post(2, [p[@"dx"] intValue], [p[@"dy"] intValue], 0);
         } else {
             NSString *s = p[@"s"] ?: @"";
             for (NSUInteger i = 0; i < s.length; i++) {
