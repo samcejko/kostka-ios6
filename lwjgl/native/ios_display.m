@@ -538,7 +538,16 @@ static void ko_set_inactive(int inactive)
         }
     } else {
         [self postPosition:[self framebufferPoint:t]];
-        ko_post_event(KO_EVENT_MOUSE_BUTTON, 0, 0, 0);
+        // (a quick tap is held down at least 0.15 s for the game: Minecraft reads clicks 20 times a second, and its
+        // lists - GuiSlot - throw away the ones whose button is already up when they draw)
+        NSTimeInterval held = t.timestamp - began;
+        if (held >= 0.15) {
+            ko_post_event(KO_EVENT_MOUSE_BUTTON, 0, 0, 0);
+        } else {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)((0.15 - held) * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                ko_post_event(KO_EVENT_MOUSE_BUTTON, 0, 0, 0);
+            });
+        }
     }
     holding = NO;
     pointer = nil;

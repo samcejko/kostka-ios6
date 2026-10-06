@@ -94,8 +94,12 @@
         if ([target isEqualToString:@"mouse"]) {
             post(1, [p[@"x"] intValue], [p[@"y"] intValue], 0);
             if (p[@"button"]) {
-                post(3, [p[@"button"] intValue], 1, 0);
-                post(3, [p[@"button"] intValue], 0, 0);
+                // (held 0.15 s, as a finger: Minecraft's lists drop a click whose button is up when they draw)
+                int b = [p[@"button"] intValue];
+                post(3, b, 1, 0);
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    post(3, b, 0, 0);
+                });
             }
         } else if ([target isEqualToString:@"key"]) {
             post(5, [p[@"code"] intValue], 1, [p[@"char"] intValue]);

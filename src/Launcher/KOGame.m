@@ -310,6 +310,7 @@ static BOOL g_running, g_debugGL;
         @"-Dawt.toolkit=kostka.awt.KToolkit",
         @"-Djava.awt.graphicsenv=kostka.awt.KGraphicsEnvironment",
         @"-Dswing.defaultlaf=javax.swing.plaf.metal.MetalLookAndFeel",
+        @"-Dswing.volatileImageBufferEnabled=false",   // (Swing's buffers as plain pictures: no Java2D surfaces here)
         [NSString stringWithFormat:@"-Dkostka.screen.width=%d", (int)(MAX(screen.width, screen.height) * scale)],
         [NSString stringWithFormat:@"-Dkostka.screen.height=%d", (int)(MIN(screen.width, screen.height) * scale)],
     ];
