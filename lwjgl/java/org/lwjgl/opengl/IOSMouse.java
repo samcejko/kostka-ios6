@@ -45,6 +45,8 @@ final class IOSMouse extends EventQueue {
 
 	private final ByteBuffer event = ByteBuffer.allocate(Mouse.EVENT_SIZE);
 	private final byte[] buttons = new byte[NUM_BUTTONS];
+	private final int width;
+	private final int height;
 	private boolean grabbed;
 	private int last_x;
 	private int last_y;
@@ -52,10 +54,12 @@ final class IOSMouse extends EventQueue {
 	private int accum_dy;
 	private int accum_dz;
 
-	IOSMouse(int x, int y) {
+	IOSMouse(int width, int height) {
 		super(Mouse.EVENT_SIZE);
-		last_x = x;
-		last_y = y;
+		this.width = width;
+		this.height = height;
+		last_x = width / 2;
+		last_y = height / 2;
 	}
 
 	synchronized void setGrabbed(boolean grabbed) {
@@ -93,12 +97,20 @@ final class IOSMouse extends EventQueue {
 			put((byte)-1, (byte)0, x, y, 0, nanos);
 	}
 
-	/** A finger moved by so much (grabbed mouse) */
+	/**
+	 * A finger moved by so much: the grabbed mouse moves so much; a free one with its cursor hidden (a game that
+	 * re-centers it itself) moves its pointer
+	 */
 	synchronized void moveBy(int dx, int dy, long nanos) {
 		accum_dx += dx;
 		accum_dy += dy;
-		if (grabbed)
+		if (grabbed) {
 			put((byte)-1, (byte)0, dx, dy, 0, nanos);
+		} else {
+			last_x = Math.max(0, Math.min(width - 1, last_x + dx));
+			last_y = Math.max(0, Math.min(height - 1, last_y + dy));
+			put((byte)-1, (byte)0, last_x, last_y, 0, nanos);
+		}
 	}
 
 	synchronized void setButton(int button, int state, long nanos) {

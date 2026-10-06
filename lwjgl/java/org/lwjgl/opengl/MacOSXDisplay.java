@@ -62,6 +62,10 @@ final class MacOSXDisplay implements DisplayImplementation {
 	static final int EVENT_FOCUS = 7;          // a: 1 in front / 0 in the background
 
 	private static final int MAX_EVENTS = 256;
+	// (cursors: there is no pointer to draw, but a game that hides it - an empty cursor, as Minecraft Classic does
+	// while playing instead of grabbing the mouse - gets the same touches as a grabbed mouse)
+	private static final Long CURSOR = Long.valueOf(1);
+	private static final Long CURSOR_EMPTY = Long.valueOf(2);
 
 	private final ByteBuffer events = ByteBuffer.allocateDirect(EVENT_SIZE * MAX_EVENTS).order(ByteOrder.nativeOrder());
 	private ByteBuffer window;
@@ -69,6 +73,8 @@ final class MacOSXDisplay implements DisplayImplementation {
 	private IOSKeyboard keyboard;
 	private boolean close_requested;
 	private boolean focused = true;
+	private boolean grabbed;
+	private boolean cursorHidden;
 	private int width;
 	private int height;
 
@@ -102,6 +108,7 @@ final class MacOSXDisplay implements DisplayImplementation {
 		window = nCreateWindow(mode.getWidth(), mode.getHeight(), Display.isFullscreen());
 		width = nGetWidth(window);
 		height = nGetHeight(window);
+		touchesForGame();
 	}
 
 	public void destroyWindow() {
@@ -284,7 +291,7 @@ final class MacOSXDisplay implements DisplayImplementation {
 	}
 
 	public void createMouse() throws LWJGLException {
-		mouse = new IOSMouse(width / 2, height / 2);
+		mouse = new IOSMouse(width, height);
 	}
 
 	public void destroyMouse() {
@@ -301,13 +308,18 @@ final class MacOSXDisplay implements DisplayImplementation {
 	}
 
 	public void grabMouse(boolean grab) {
+		grabbed = grab;
 		if (mouse != null)
 			mouse.setGrabbed(grab);
-		if (window != null)
-			nSetGrabbed(window, grab);
+		touchesForGame();
 	}
 
-	// (there is no pointer to draw on a touch screen, but games create cursors to hide it: they get a dummy)
+	/** The touches look around (and the moving keys show) while the mouse is grabbed or its cursor hidden */
+	private void touchesForGame() {
+		if (window != null)
+			nSetGrabbed(window, grabbed || cursorHidden);
+	}
+
 	public int getNativeCursorCapabilities() {
 		return Cursor.CURSOR_ONE_BIT_TRANSPARENCY | Cursor.CURSOR_8_BIT_ALPHA | Cursor.CURSOR_ANIMATION;
 	}
@@ -318,6 +330,8 @@ final class MacOSXDisplay implements DisplayImplementation {
 	}
 
 	public void setNativeCursor(Object handle) throws LWJGLException {
+		cursorHidden = CURSOR_EMPTY.equals(handle);
+		touchesForGame();
 	}
 
 	public int getMinCursorSize() {
@@ -346,7 +360,11 @@ final class MacOSXDisplay implements DisplayImplementation {
 	}
 
 	public Object createCursor(int width, int height, int xHotspot, int yHotspot, int numImages, IntBuffer images, IntBuffer delays) throws LWJGLException {
-		return Long.valueOf(1);
+		for (int i = images.position(); i < images.limit(); i++) {
+			if ((images.get(i) >>> 24) != 0)
+				return CURSOR;
+		}
+		return CURSOR_EMPTY;
 	}
 
 	public void destroyCursor(Object cursor_handle) {

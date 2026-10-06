@@ -12,16 +12,13 @@ static NSString *const KOManifestURL = @"https://piston-meta.mojang.com/mc/game/
     // RubyDung (May 2009) opens its window with LWJGL alone: it runs. Everything up to 1.12.2 is of LWJGL 2 and
     // Java 8 (17w43a, the first 1.13 snapshot of October 2017, moved to LWJGL 3); Classic to 1.5.2 open an AWT
     // window first, 1.6 and newer want more memory: not yet.
-    if ([self.identifier hasPrefix:@"rd-"]) return KOSupportPlays;
+    // The whole LWJGL 2 era runs on Kostka's own window toolkit and OpenGL (17w43a, the first 1.13 snapshot of
+    // October 2017, moved to LWJGL 3); the versions tried and playing are marked so
+    static NSSet *played;
+    if (!played) played = [NSSet setWithObjects:@"c0.30_01c", @"b1.7.3", @"1.6.4", nil];
+    if ([self.identifier hasPrefix:@"rd-"] || [played containsObject:self.identifier]) return KOSupportPlays;
     if ([self.released compare:@"2017-10-25"] != NSOrderedAscending) return KOSupportNever;
-    // 1.6 started the game without an AWT window (1.6.4 plays). By number for the releases: 1.5.2 came out after
-    // the first 1.6 snapshot (13w16a, 21 April 2013), and still opens one.
-    if ([self.type isEqualToString:@"release"]) {
-        NSArray *parts = [self.identifier componentsSeparatedByString:@"."];
-        return parts.count > 1 && [parts[0] isEqualToString:@"1"] && [parts[1] intValue] >= 6 ? KOSupportTry : KOSupportSoon;
-    }
-    if ([self.type isEqualToString:@"snapshot"] && [self.released compare:@"2013-04-21"] != NSOrderedAscending) return KOSupportTry;
-    return KOSupportSoon;
+    return KOSupportTry;
 }
 
 - (NSString *)localizedSupport
