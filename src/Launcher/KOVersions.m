@@ -13,9 +13,10 @@ static NSString *const KOManifestURL = @"https://piston-meta.mojang.com/mc/game/
     // Java 8 (17w43a, the first 1.13 snapshot of October 2017, moved to LWJGL 3); Classic to 1.5.2 open an AWT
     // window first, 1.6 and newer want more memory: not yet.
     // The whole LWJGL 2 era runs on Kostka's own window toolkit and OpenGL (17w43a, the first 1.13 snapshot of
-    // October 2017, moved to LWJGL 3); the versions tried and playing are marked so
+    // October 2017, moved to LWJGL 3); the versions tried on an iPad 2 (into the game, or to its menu) are marked so
     static NSSet *played;
-    if (!played) played = [NSSet setWithObjects:@"c0.30_01c", @"b1.7.3", @"1.6.4", nil];
+    if (!played) played = [NSSet setWithObjects:@"c0.30_01c", @"inf-20100618", @"a1.2.6", @"b1.7.3", @"1.2.5", @"1.5.2",
+                           @"1.6.4", @"1.7.10", @"1.8.9", @"1.12.2", nil];
     if ([self.identifier hasPrefix:@"rd-"] || [played containsObject:self.identifier]) return KOSupportPlays;
     if ([self.released compare:@"2017-10-25"] != NSOrderedAscending) return KOSupportNever;
     return KOSupportTry;

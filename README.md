@@ -13,10 +13,13 @@ player, who must own it.
 | --- | --- |
 | rd-132211 and the other RubyDung builds (May 2009) | plays, 35-60 fps |
 | Classic 0.30 | plays |
-| Beta 1.7.3 | reaches the main menu |
+| Infdev 2010-06-18, Alpha 1.2.6, Beta 1.7.3, 1.2.5, 1.5.2, 1.7.10, 1.8.9 | reach the main menu (with sound) |
 | 1.6.4 | plays: a new world in about a minute, ~17 fps while the chunks are built |
+| 1.12.2 | plays: a new world in about 3 minutes, 26 fps at render distance 2, about 240 MB of memory |
 | the rest of Classic to 1.12.2 | to try: the same pieces run them, untested |
 | 1.13 and newer | no: LWJGL 3, OpenGL 3.2 / Java 17 for the newest |
+
+Indev is not on Mojang's list of versions (the launcher shows what Mojang offers).
 
 Mojang's jars are not patched: the pieces under them are made to do what each era of the game expects.
 
@@ -24,8 +27,9 @@ Mojang's jars are not patched: the pieces under them are made to do what each er
 
 - **Java** (`jvm/`): HotSpot from the AArch32 port of OpenJDK 8 (client VM: template interpreter + C1 JIT, serial
   GC) ported to Darwin/armv7 - the Darwin calling convention, 4-byte aligned `long`s in structures, iOS 6's
-  missing pieces - with the JDK's native libraries (java, zip, net, nio, management, a stub of awt); the class
-  library is Amazon Corretto 8's. Cross-compiled on Linux with Theos' toolchain.
+  missing pieces, direct buffers that take memory only where they are written - with the JDK's native libraries
+  (java, zip, net, nio, management, a stub of awt); the class library is Amazon Corretto 8's. It calls itself
+  "iPhone OS X": games that see a Mac load Mac libraries. Cross-compiled on Linux with Theos' toolchain.
 - **LWJGL 2** (`lwjgl/`): an iOS backend in place of the Mac OS X one - a UIKit view on an EAGL layer, touches as
   the mouse, on-screen keys, the iOS keyboard - with **gl4es** turning the game's desktop OpenGL into OpenGL ES 2.0.
   Sound through iOS's OpenAL.

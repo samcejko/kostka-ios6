@@ -7,4 +7,8 @@
 - LWJGL 2 on iOS (UIKit/EAGL) with gl4es, OpenAL, touch controls and on-screen keys
 - Kostka's AWT: windows without drawing (for launchwrapper's frames and applets), pictures drawn in Java
 - The launcher: Mojang's versions with what plays here, downloads checked against their SHA-1, settings
-- Playing: RubyDung (rd-132211 ...), Classic 0.30, Beta 1.7.3 (menu), 1.6.4
+- Playing: RubyDung (rd-132211 ...), Classic 0.30, 1.6.4, 1.12.2; to the menu: Infdev, Alpha 1.2.6, Beta 1.7.3,
+  1.2.5, 1.5.2, 1.7.10, 1.8.9
+- Direct buffers take memory only where they are written (old versions' sound asked for 160 MB and ran out)
+- Java calls the system "iPhone OS X" (1.12's narrator loaded a Mac library and stopped the game)
+- The app's memory in the log while a game runs
