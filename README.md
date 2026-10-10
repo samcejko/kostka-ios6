@@ -21,13 +21,15 @@ launcher shows):
 | Infdev 2010-06-18 | plays | 150 MB | 30 s |
 | Alpha, all 25 | play, 20-50 fps | 145-170 MB | 25-60 s |
 | Beta, all 26 | play; walking into new land is slow (the world is made on the game's thread) | 140-185 MB | 20-140 s |
-| 1.0 to 1.7.10, all 27 | play, 10-30 fps | 170-245 MB | 50-120 s |
-| 1.12.2 | plays, 26 fps at render distance 2 | about 240 MB | about 3 min |
-| 1.8 to 1.12.1 | not tried yet: the same pieces run them | | |
+| 1.0 to 1.7.10, all 28 | play, 10-30 fps | 170-245 MB | 50-120 s |
+| 1.8 to 1.12.2, all 24 | play, 25-55 fps at render distance 2 | 200-260 MB | 2-4 min |
+| snapshots | not tried yet: the same pieces run them | | |
 | 1.13 and newer | no: LWJGL 3, OpenGL 3.2 / Java 17 for the newest | | |
 
-The iPad 2 warns from about 250 MB of the app's memory and ends it at about 320. Indev is not on Mojang's list of
-versions (the launcher shows what Mojang offers).
+All 113 versions of the LWJGL 2 era on Mojang's list play. The iPad 2 warns from about 250 MB of the app's memory and
+ends it at about 320. Indev is not on Mojang's list of versions (the launcher shows what Mojang offers). A new world
+can put the player at the bottom of an ocean, as on a computer (the game looks for the ground through water): swim
+up.
 
 Mojang's jars are not patched: the pieces under them are made to do what each era of the game expects.
 
