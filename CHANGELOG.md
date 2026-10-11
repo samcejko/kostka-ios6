@@ -30,4 +30,6 @@
 - Every version fills the screen: Classic to 1.5.2 and the first 1.6 snapshots asked for 854x480 and had bars above
   and below (Kostka's AWT gives every window the whole screen, LWJGL maximizes a resizable window)
 - The frame rate in the game's upper left corner (Settings, In the game: on by default)
+- A joystick in place of the arrows, as Minecraft on phones has it (Settings, In the game, Movement): eight ways,
+  and forwards at its edge sprints
 - With snapshots shown and the versions that do not run yet tried, the snapshots too new for iOS 6 are listed too
