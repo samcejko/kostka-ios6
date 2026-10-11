@@ -9,7 +9,8 @@ backend, and [gl4es](https://github.com/ptitSeb/gl4es) turns the desktop OpenGL 
   Nothing of AWT or Cocoa is used.
 - `native/`: the backend's JNI side (`ios_display.m`, `ios_context.m`), gl4es on EAGL (`ios_gl4es.c`: the
   game's framebuffer 0 is the window's framebuffer object), LWJGL's OpenGL functions from gl4es
-  (`ios_extgl.c`) and OpenAL from the system framework (`ios_al.c`).
+  (`ios_extgl.c`; `ios_glsl.c` takes GLSL 1.20's initial values of uniforms out of shaders, which OpenGL ES does not
+  take, and sets them once the program is linked) and OpenAL from the system framework (`ios_al.c`).
 - `test/GLTest.java`: the first test: a turning triangle, the mouse under the finger, the keys.
 - `build.sh`: fetches LWJGL 2 (its last sources, 2.9.4) and gl4es at fixed commits, runs LWJGL's generator,
   builds the jars, and cross-compiles gl4es and LWJGL's natives into one `liblwjgl.dylib` for armv7.

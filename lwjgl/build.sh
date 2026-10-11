@@ -198,7 +198,7 @@ EOF
  $n/common/org_lwjgl_openal_ALC10.c $n/common/org_lwjgl_openal_ALC11.c
  $n/common/opengl/extgl.c $n/common/opengl/org_lwjgl_opengl_GLContext.c $n/common/opengl/org_lwjgl_opengl_CallbackUtil.c
  $(ls "$n"/generated/opengl/*.c "$n"/generated/openal/*.c)
- $HERE/native/ios_display.m $HERE/native/ios_context.m $HERE/native/ios_extgl.c $HERE/native/ios_al.c"
+ $HERE/native/ios_display.m $HERE/native/ios_context.m $HERE/native/ios_extgl.c $HERE/native/ios_glsl.c $HERE/native/ios_al.c"
     objects "$OBJ/lwjgl" "-std=gnu99 -O2 -fPIC -fno-strict-aliasing -w -I$GEN/jni -I$n/common -I$n/common/opengl -I$HERE/native" $srcs || return 1
 
     step "liblwjgl.dylib"

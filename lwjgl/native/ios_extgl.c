@@ -17,9 +17,13 @@ static int ko_gl_missing(void)
     return 0;
 }
 
+void *ko_glsl_wrap(const char *name, void *real);   // (ios_glsl.c: GLSL 1.20's uniform initial values)
+
 void *extgl_GetProcAddress(const char *name)
 {
     void *p = ko_gl4es_proc_address(name);
+    void *wrapped = ko_glsl_wrap(name, p);
+    if (wrapped) return wrapped;
     if (p == NULL && strncmp(name, "gl", 2) == 0 && strncmp(name, "glX", 3) != 0) {
         if (isDebugEnabled()) fprintf(stderr, "[LWJGL] gl4es has no %s: it does nothing\n", name);
         p = (void *)ko_gl_missing;
