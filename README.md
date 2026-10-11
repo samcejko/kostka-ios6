@@ -35,6 +35,9 @@ ends it at about 320. Indev is not on Mojang's list of versions (the launcher sh
 can put the player at the bottom of an ocean, as on a computer (the game looks for the ground through water): swim
 up.
 
+Every version fills the screen. The oldest (Classic to 1.5.2, the first 1.6 snapshots) asked for an 854x480 window;
+at the screen's 1024x768 Alpha draws about a fifth fewer frames.
+
 1.8's Super Secret Settings: most of its effects run at 11-27 fps; art, blobs2 and blur at 2-4 fps with a smaller
 radius than on a computer (their loops are cut down), ntsc at 0.3 fps - more than the iPad 2's graphics can do, but
 the game goes on and the next click moves past it.

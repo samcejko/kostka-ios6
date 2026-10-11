@@ -27,3 +27,5 @@
   a second (Minecraft stood still for good: ntsc, 3 seconds a frame); a shader that takes a whole number for a
   float, as GLSL 1.20 lets it, compiles (wobble)
 - Java has the iPad's time zone (it had GMT: the times in the log, the dates of worlds and screenshots were off)
+- Every version fills the screen: Classic to 1.5.2 and the first 1.6 snapshots asked for 854x480 and had bars above
+  and below (Kostka's AWT gives every window the whole screen, LWJGL maximizes a resizable window)
