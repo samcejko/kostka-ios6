@@ -77,6 +77,7 @@ final class MacOSXDisplay implements DisplayImplementation {
 	private boolean cursorHidden;
 	private int width;
 	private int height;
+	private boolean resized;
 
 	MacOSXDisplay() {
 	}
@@ -105,9 +106,18 @@ final class MacOSXDisplay implements DisplayImplementation {
 
 	public void createWindow(DrawableLWJGL drawable, DisplayMode mode, Canvas parent, int x, int y) throws LWJGLException {
 		close_requested = false;
-		window = nCreateWindow(mode.getWidth(), mode.getHeight(), Display.isFullscreen());
+		// (an iPad shows one window, over the whole screen: a resizable one - 1.6's first snapshots ask for 854x480 -
+		// gets the screen's size, and the game hears that its window was resized, as when it is maximized on a
+		// computer. One in a canvas has the canvas' size: Kostka's AWT gives old Minecraft's frame the whole screen)
+		int w = mode.getWidth(), h = mode.getHeight();
+		if (!Display.isFullscreen() && parent == null && Display.isResizable()) {
+			w = nGetScreenWidth();
+			h = nGetScreenHeight();
+		}
+		window = nCreateWindow(w, h, Display.isFullscreen());
 		width = nGetWidth(window);
 		height = nGetHeight(window);
+		resized = width != mode.getWidth() || height != mode.getHeight();
 		touchesForGame();
 	}
 
@@ -258,7 +268,9 @@ final class MacOSXDisplay implements DisplayImplementation {
 	}
 
 	public boolean wasResized() {
-		return false;
+		boolean result = resized;
+		resized = false;
+		return result;
 	}
 
 	public int getWidth() {
