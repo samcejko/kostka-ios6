@@ -166,6 +166,8 @@
         [KOGame setDebugGL:[p[@"gldebug"] isEqualToString:@"1"]];
         // (jvm=-XX:Foo=1,-Dbar=2: more options for the VM; env=LIBGL_FOO:1,BAR:2 - gl4es's settings, for instance)
         [KOGame setExtraOptions:p[@"jvm"] ? [p[@"jvm"] componentsSeparatedByString:@","] : nil];
+        // (gamedir=bench: the game in games/bench - its own worlds and options, the player's left alone)
+        [KOGame setGameDirName:p[@"gamedir"]];
         for (NSString *pair in p[@"env"] ? [p[@"env"] componentsSeparatedByString:@","] : @[]) {
             NSRange colon = [pair rangeOfString:@":"];
             if (colon.location != NSNotFound)

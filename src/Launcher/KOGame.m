@@ -6,6 +6,7 @@
 
 static BOOL g_running, g_debugGL;
 static NSArray *g_extraOptions;
+static NSString *g_gameDirName;
 
 @implementation KOGame
 
@@ -20,6 +21,12 @@ static NSArray *g_extraOptions;
 + (void)setExtraOptions:(NSArray *)options
 {
     g_extraOptions = [options copy];
+}
+
++ (void)setGameDirName:(NSString *)name
+{
+    // (one name, no way out of games/)
+    g_gameDirName = name.length && [name rangeOfString:@"/"].location == NSNotFound && ![name hasPrefix:@"."] ? [name copy] : nil;
 }
 
 + (BOOL)isRunning
@@ -295,7 +302,7 @@ static NSArray *g_extraOptions;
             }
             [classPath insertObjects:front atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, front.count)]];
         }
-        NSString *gameDir = [self dir:[@"games" stringByAppendingPathComponent:base.identifier]];
+        NSString *gameDir = [self dir:[@"games" stringByAppendingPathComponent:g_gameDirName ?: base.identifier]];
         [self fetch:files index:0 status:status done:^(NSError *e) {
             if (e) { fail(e); return; }
             [self assets:json gameDir:gameDir status:status done:^(NSString *gameAssets, NSError *e2) {

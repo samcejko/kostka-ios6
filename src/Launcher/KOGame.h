@@ -12,6 +12,9 @@
 + (void)setDebugGL:(BOOL)on;
 // (tests: more options for the Java VM, after Kostka's own)
 + (void)setExtraOptions:(NSArray *)options;
+// (tests: the folder the game plays in - games/<name> - instead of its own: worlds and options of their own, away
+// from the player's)
++ (void)setGameDirName:(NSString *)name;
 + (NSString *)playerName;
 + (void)setPlayerName:(NSString *)name;
 
