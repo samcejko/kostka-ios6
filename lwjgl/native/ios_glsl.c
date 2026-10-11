@@ -15,6 +15,10 @@
 // second stops the game's clock (the game stands still for good, clicks and keys included). Such a uniform is used
 // as min(uniform, cap): 8 for one loop over it, 3 for loops in loops. The effect keeps its kind, with a smaller
 // radius. (KOSTKA_LOOP_CAPS=one,nested sets the caps for a test; 0 leaves the loops as they are.)
+//
+// GLSL 1.20 also makes a whole number a float where a float is wanted ("float g = 2 - abs(x);", "if (c != 0)": 1.8's
+// wobble); OpenGL ES 2.0 does not. A shader that does not compile for that reason is compiled once more with its whole
+// numbers written as floats, and if that does not compile either, as it was (the game gets the errors of its own).
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,11 +33,15 @@ typedef int (*ko_location_t)(ko_uint program, const char *name);
 typedef void (*ko_uniformfv_t)(int location, int count, const float *value);
 typedef void (*ko_uniformiv_t)(int location, int count, const int *value);
 typedef void (*ko_getiv_t)(unsigned int pname, int *params);
+typedef void (*ko_shader_getiv_t)(ko_uint shader, unsigned int pname, int *params);
+typedef void (*ko_info_log_t)(ko_uint shader, int size, int *length, char *log);
 
 #define KO_GL_CURRENT_PROGRAM 0x8B8D
+#define KO_GL_COMPILE_STATUS 0x8B81
 #define KO_MAX_INITS 24
 #define KO_MAX_SHADERS 64
 #define KO_MAX_PROGRAMS 64
+#define KO_MAX_SOURCES 128
 
 typedef struct {
     char name[64];
@@ -54,11 +62,18 @@ typedef struct {
     ko_uint shaders[8];
 } ko_program_shaders;
 
+// (the source each shader was given, for compiling it once more)
+typedef struct {
+    ko_uint shader;
+    char *text;
+} ko_source;
+
 static ko_shader_inits g_shaders[KO_MAX_SHADERS];
 static ko_program_shaders g_programs[KO_MAX_PROGRAMS];
+static ko_source g_sources[KO_MAX_SOURCES];
 static ko_shader_source_t g_shader_source;
 static ko_attach_t g_attach;
-static ko_one_t g_link, g_delete_shader, g_delete_program;
+static ko_one_t g_link, g_delete_shader, g_delete_program, g_compile;
 
 static void *ko_gl(const char *name)
 {
@@ -231,6 +246,192 @@ static char *ko_cap_loops(const char *src)
     return out;
 }
 
+static int ko_is_type(const char *p, size_t n)
+{
+    static const char *types[] = { "void", "bool", "int", "float", "vec2", "vec3", "vec4", "bvec2", "bvec3", "bvec4",
+        "ivec2", "ivec3", "ivec4", "mat2", "mat3", "mat4", "sampler2D", "samplerCube", "const", "in", "out", "inout",
+        "uniform", "varying", "attribute", "lowp", "mediump", "highp", NULL };
+    for (int i = 0; types[i]; i++)
+        if (strlen(types[i]) == n && !strncmp(p, types[i], n)) return 1;
+    return 0;
+}
+
+#define KO_MAX_INT_NAMES 32
+
+// The shader with its whole numbers as floats ("2" -> "2.0"), but not in the preprocessor's lines, comments, array
+// indexes, and statements - a loop's whole header - that name an int type or one of its int variables
+static char *ko_float_literals(const char *src)
+{
+    // the int variables: "int a, b = 1;", "ivec2 c;", a function's "int x"
+    char names[KO_MAX_INT_NAMES][64];
+    int count = 0;
+    for (const char *p = src; *p; p++) {
+        if (p > src && ko_ident(p[-1])) continue;
+        size_t kw = !strncmp(p, "int", 3) && !ko_ident(p[3]) ? 3 :
+                    !strncmp(p, "ivec", 4) && p[4] >= '2' && p[4] <= '4' && !ko_ident(p[5]) ? 5 : 0;
+        if (!kw) continue;
+        const char *q = p + kw;
+        for (;;) {
+            while (isspace((unsigned char)*q)) q++;
+            size_t n = 0;
+            while (ko_ident(q[n])) n++;
+            if (!n || isdigit((unsigned char)*q) || ko_is_type(q, n)) break;
+            if (count < KO_MAX_INT_NAMES && n < sizeof names[0]) {
+                memcpy(names[count], q, n);
+                names[count++][n] = 0;
+            }
+            q += n;
+            int depth = 0;
+            while (*q && !(depth == 0 && (*q == ',' || *q == ';' || *q == ')' || *q == '{'))) {
+                if (*q == '(' || *q == '[') depth++;
+                else if (*q == ')' || *q == ']') depth--;
+                q++;
+            }
+            if (*q != ',') break;
+            q++;
+        }
+    }
+
+    size_t len = strlen(src);
+    char *out = malloc(len * 3 + 1);   // ("1" -> "1.0" at most)
+    if (!out) return NULL;
+    char *o = out;
+    const char *p = src, *header = NULL;   // (header: the ")" that ends a loop's header)
+    int brackets = 0, intSegment = -1, lineStart = 1;
+    while (*p) {
+        if (header && p > header) {
+            header = NULL;
+            intSegment = -1;
+        }
+        // a statement's start: is it about ints?
+        if (intSegment < 0) {
+            const char *s = p;
+            while (isspace((unsigned char)*s)) s++;
+            const char *end;
+            if (!strncmp(s, "for", 3) && !ko_ident(s[3])) {
+                const char *open = s + 3;
+                while (isspace((unsigned char)*open)) open++;
+                int depth = 0;
+                for (end = open; *end; end++) {
+                    if (*end == '(') depth++;
+                    else if (*end == ')' && --depth <= 0) break;
+                }
+                header = *end ? end : NULL;
+            } else {
+                for (end = s; *end && *end != ';' && *end != '{' && *end != '}'; end++) {}
+            }
+            intSegment = 0;
+            for (const char *t = s; t < end && !intSegment; t++) {
+                if (!(isalpha((unsigned char)*t) || *t == '_') || (t > src && ko_ident(t[-1]))) continue;
+                size_t n = 0;
+                while (ko_ident(t[n])) n++;
+                if ((n == 3 && !strncmp(t, "int", 3)) || (n == 5 && !strncmp(t, "ivec", 4))) intSegment = 1;
+                for (int i = 0; i < count && !intSegment; i++)
+                    if (strlen(names[i]) == n && !strncmp(t, names[i], n)) intSegment = 1;
+                t += n - 1;
+            }
+        }
+        if (lineStart) {
+            const char *s = p;
+            while (*s == ' ' || *s == '\t') s++;
+            if (*s == '#') {
+                while (*p && *p != '\n') *o++ = *p++;
+                continue;
+            }
+            lineStart = 0;
+        }
+        if (p[0] == '/' && p[1] == '/') {
+            while (*p && *p != '\n') *o++ = *p++;
+            continue;
+        }
+        if (p[0] == '/' && p[1] == '*') {
+            const char *e = strstr(p + 2, "*/");
+            const char *stop = e ? e + 2 : p + strlen(p);
+            while (p < stop) *o++ = *p++;
+            continue;
+        }
+        char c = *p;
+        if (isdigit((unsigned char)c) && !(p > src && (ko_ident(p[-1]) || p[-1] == '.'))) {
+            const char *e = p;
+            while (isdigit((unsigned char)*e)) e++;
+            int whole = !ko_ident(*e) && *e != '.';
+            while (p < e) *o++ = *p++;
+            if (whole && !brackets && !intSegment) {
+                *o++ = '.';
+                *o++ = '0';
+            }
+            continue;
+        }
+        if (c == '[') brackets++;
+        else if (c == ']' && brackets > 0) brackets--;
+        else if (c == '\n') lineStart = 1;
+        *o++ = *p++;
+        if (!header && (c == ';' || c == '{' || c == '}')) intSegment = -1;
+    }
+    *o = 0;
+    return out;
+}
+
+static ko_source *ko_source_entry(ko_uint shader, int create)
+{
+    ko_source *free_slot = NULL;
+    for (int i = 0; i < KO_MAX_SOURCES; i++) {
+        if (g_sources[i].text && g_sources[i].shader == shader) return &g_sources[i];
+        if (!g_sources[i].text && !free_slot) free_slot = &g_sources[i];
+    }
+    if (!create || !free_slot) return NULL;
+    free_slot->shader = shader;
+    return free_slot;
+}
+
+// (keeps text, malloc'd, as the shader's source: freed here when there is no place for it)
+static void ko_keep_source(ko_uint shader, char *text)
+{
+    ko_source *s = ko_source_entry(shader, 1);
+    if (!s) {
+        free(text);
+        return;
+    }
+    free(s->text);
+    s->text = text;
+}
+
+static void ko_glCompileShader(ko_uint shader)
+{
+    g_compile(shader);
+    static ko_shader_getiv_t getiv;
+    static ko_info_log_t info;
+    if (!getiv) {
+        getiv = (ko_shader_getiv_t)ko_gl("glGetShaderiv");
+        info = (ko_info_log_t)ko_gl("glGetShaderInfoLog");
+    }
+    ko_source *s = ko_source_entry(shader, 0);
+    if (!getiv || !info || !g_shader_source || !s) return;
+    int ok = 1;
+    getiv(shader, KO_GL_COMPILE_STATUS, &ok);
+    if (ok) return;
+    char log[2048];
+    int n = 0;
+    log[0] = 0;
+    info(shader, (int)sizeof log, &n, log);
+    // ("'-' does not operate on 'int' and 'float'": a whole number where GLSL 1.20 would have made a float)
+    if (!strstr(log, "does not operate on") || !strstr(log, "'int'")) return;
+    char *fixed = ko_float_literals(s->text);
+    if (!fixed) return;
+    const char *one = fixed;
+    g_shader_source(shader, 1, &one, NULL);
+    g_compile(shader);
+    getiv(shader, KO_GL_COMPILE_STATUS, &ok);
+    if (ok) {
+        fprintf(stderr, "Kostka: a shader compiles with its whole numbers as floats\n");
+    } else {
+        one = s->text;
+        g_shader_source(shader, 1, &one, NULL);
+        g_compile(shader);
+    }
+    free(fixed);
+}
+
 static ko_shader_inits *ko_shader_entry(ko_uint shader, int create)
 {
     ko_shader_inits *free_slot = NULL;
@@ -323,7 +524,8 @@ static void ko_glShaderSource(ko_uint shader, int count, const char *const *stri
     } else {
         g_shader_source(shader, count, strings, lengths);
     }
-    free(src);
+    // (src is what the shader now has: kept, for compiling it once more)
+    ko_keep_source(shader, src);
 }
 
 static ko_program_shaders *ko_program_entry(ko_uint program, int create)
@@ -398,6 +600,11 @@ static void ko_glDeleteShader(ko_uint shader)
     g_delete_shader(shader);
     ko_shader_inits *entry = ko_shader_entry(shader, 0);
     if (entry) memset(entry, 0, sizeof *entry);
+    ko_source *s = ko_source_entry(shader, 0);
+    if (s) {
+        free(s->text);
+        s->text = NULL;
+    }
 }
 
 static void ko_glDeleteProgram(ko_uint program)
@@ -421,6 +628,10 @@ void *ko_glsl_wrap(const char *name, void *real)
     if (!strcmp(name, "glLinkProgram") || !strcmp(name, "glLinkProgramARB")) {
         g_link = (ko_one_t)real;
         return (void *)ko_glLinkProgram;
+    }
+    if (!strcmp(name, "glCompileShader") || !strcmp(name, "glCompileShaderARB")) {
+        g_compile = (ko_one_t)real;
+        return (void *)ko_glCompileShader;
     }
     if (!strcmp(name, "glDeleteShader")) {
         g_delete_shader = (ko_one_t)real;
