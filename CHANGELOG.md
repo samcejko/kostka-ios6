@@ -15,6 +15,9 @@
 - Java's HTTPS with elliptic curves (libsunec): TLS 1.3 to Mojang's servers from the game (profiles, skins)
 - Every version from RubyDung to 1.12.2 tried on an iPad 2: started, a new world made and played in (all 113 of
   Mojang's list); the launcher marks each version by what was tried (Resources/Tested.json)
+- The snapshots tried too: 231 of 236 play. gl4es reserves large display list ranges (the 1.7 snapshots asked for
+  14 million lists), shaders with initial values of uniforms compile (post-processing, 15w14a), the first 1.6
+  snapshots get the options and assets they expect and start in English
 - The Java heap grows only as needed and gives memory back; 1 MB thread stacks (Alpha's lighting recursion)
 - Every version's first start gets the iPad's settings (Alpha and Beta started with the farthest view)
 - A game that stops with an error says why ("The game has stopped"), then Kostka closes

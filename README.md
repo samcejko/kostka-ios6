@@ -23,10 +23,14 @@ launcher shows):
 | Beta, all 26 | play; walking into new land is slow (the world is made on the game's thread) | 140-185 MB | 20-140 s |
 | 1.0 to 1.7.10, all 28 | play, 10-30 fps | 170-245 MB | 50-120 s |
 | 1.8 to 1.12.2, all 24 | play, 25-55 fps at render distance 2 | 200-260 MB | 2-4 min |
-| snapshots | not tried yet: the same pieces run them | | |
+| snapshots, 231 of 236 | play (the 1.3 to 1.5 pre-releases, every snapshot from 13w16a to 1.12.2-pre2) | 200-260 MB | 1-4 min |
+| 13w47a to 13w47d | not yet: they will not start without Twitch's streaming library, which has no iOS build | | |
+| 15w41a | not yet: its integrated server stops on a bug of its own when the player joins | | |
 | 1.13 and newer | no: LWJGL 3, OpenGL 3.2 / Java 17 for the newest | | |
 
-All 113 versions of the LWJGL 2 era on Mojang's list play. The iPad 2 warns from about 250 MB of the app's memory and
+All 113 versions of the LWJGL 2 era on Mojang's list play, and 231 of its 236 snapshots (shown when snapshots are
+switched on in the settings). The first 1.6 snapshots (13w16a to 13w23b) and 13w42b start in English: the first have
+no other language, 13w42b's font stops on a Czech letter. The iPad 2 warns from about 250 MB of the app's memory and
 ends it at about 320. Indev is not on Mojang's list of versions (the launcher shows what Mojang offers). A new world
 can put the player at the bottom of an ocean, as on a computer (the game looks for the ground through water): swim
 up.
