@@ -29,3 +29,5 @@
 - Java has the iPad's time zone (it had GMT: the times in the log, the dates of worlds and screenshots were off)
 - Every version fills the screen: Classic to 1.5.2 and the first 1.6 snapshots asked for 854x480 and had bars above
   and below (Kostka's AWT gives every window the whole screen, LWJGL maximizes a resizable window)
+- The frame rate in the game's upper left corner (Settings, In the game: on by default)
+- With snapshots shown and the versions that do not run yet tried, the snapshots too new for iOS 6 are listed too
