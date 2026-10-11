@@ -82,9 +82,12 @@ static int g_logFd = -1;
     }
 }
 
-// Why the game stopped, from what Java printed last (java.log): the last exception, leaving out the ones that are
-// part of every start here (no game controllers, Mojang's old resource server gone) and Kostka's own AWT refusing the
-// text area of an old version's crash screen (the cause is printed before it)
+// Why the game stopped, from what Java printed last (java.log). Minecraft's crash report when there is one (1.6 and
+// newer print it: its description and the exception under it, "Rendering screen" / "java.lang.Array...Exception:
+// 382"); otherwise the last stack trace printed, its first line and its last cause - "java.lang.NullPointerException",
+// or an old version's own exception, whose class has a name like "ji" ("ji: Manually triggered debug crash": only the
+// message then) - leaving out the ones that are part of every start here (no game controllers, Mojang's old servers
+// gone) and Kostka's own AWT refusing the text area of an old version's crash screen (the cause is printed before it)
 + (NSString *)stopReason
 {
     NSFileHandle *h = [NSFileHandle fileHandleForReadingAtPath:[self logPath]];
@@ -97,18 +100,50 @@ static int g_logFd = -1;
     NSString *tail = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?:
                      [[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding];
     if (!tail) return nil;
-    NSRegularExpression *exception = [NSRegularExpression regularExpressionWithPattern:
-        @"^(Exception in thread \"[^\"]*\" )?([a-zA-Z_$][\\w$]*\\.)+[\\w$]*(Exception|Error)\\b.*$" options:0 error:NULL];
-    NSString *found = nil;
-    for (NSString *line in [tail componentsSeparatedByString:@"\n"]) {
-        NSString *t = [line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        if (![exception firstMatchInString:t options:0 range:NSMakeRange(0, t.length)]) continue;
+    // (a stack trace's first line: a class's name, its message after ": ")
+    NSRegularExpression *thrown = [NSRegularExpression regularExpressionWithPattern:
+        @"^(Exception in thread \"[^\"]*\" )?([A-Za-z_$][\\w$]*(\\.[A-Za-z_$][\\w$]*)*)(: (.*))?$" options:0 error:NULL];
+    NSArray *lines = [tail componentsSeparatedByString:@"\n"];
+    NSCharacterSet *space = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString *description = nil, *under = nil, *found = nil, *cause = nil;
+    BOOL inReport = NO, inTrace = NO;
+    for (NSUInteger i = 0; i < lines.count; i++) {
+        NSString *t = [lines[i] stringByTrimmingCharactersInSet:space];
+        if ([t isEqualToString:@"---- Minecraft Crash Report ----"]) {
+            inReport = YES;
+            description = under = nil;
+            continue;
+        }
+        if (inReport && !description && [t hasPrefix:@"Description: "]) {
+            description = [t substringFromIndex:13];
+            continue;
+        }
+        if (description && !under && t.length) under = t;
+        if (inReport && under) inReport = NO;
+        // (a cause of the trace taken: "Caused by: java.lang.Throwable")
+        if ([t hasPrefix:@"Caused by: "]) {
+            if (inTrace) cause = [t substringFromIndex:11];
+            continue;
+        }
+        if (!t.length || [lines[i] hasPrefix:@"\t"] || i + 1 >= lines.count || ![lines[i + 1] hasPrefix:@"\tat "]) continue;
+        inTrace = NO;
+        NSTextCheckingResult *m = [thrown firstMatchInString:t options:0 range:NSMakeRange(0, t.length)];
+        if (!m) continue;
         if ([t rangeOfString:@"HeadlessException"].location != NSNotFound ||
             [t rangeOfString:@"initialise controllers"].location != NSNotFound ||
-            [t rangeOfString:@"MinecraftResources"].location != NSNotFound) continue;
-        found = t;
+            [t rangeOfString:@"MinecraftResources"].location != NSNotFound ||
+            [t rangeOfString:@"UnknownHostException"].location != NSNotFound) continue;
+        NSString *name = [t substringWithRange:[m rangeAtIndex:2]];
+        NSString *message = [m rangeAtIndex:5].location != NSNotFound ? [t substringWithRange:[m rangeAtIndex:5]] : nil;
+        BOOL obfuscated = [name rangeOfString:@"."].location == NSNotFound && name.length <= 4 &&
+                          [name isEqualToString:[name lowercaseString]];
+        found = obfuscated && message.length ? message : [t substringFromIndex:[m rangeAtIndex:2].location];
+        cause = nil;
+        inTrace = YES;
     }
-    return found.length > 240 ? [[found substringToIndex:240] stringByAppendingString:@"…"] : found;
+    NSString *reason = description ? (under ? [NSString stringWithFormat:@"%@\n%@", description, under] : description)
+                     : cause ? [NSString stringWithFormat:@"%@\n%@", found, cause] : found;
+    return reason.length > 240 ? [[reason substringToIndex:240] stringByAppendingString:@"…"] : reason;
 }
 
 static void KOShowStopped(int code)
