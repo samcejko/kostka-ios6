@@ -129,18 +129,59 @@ natives() {
 import os, sys
 d = sys.argv[1]
 def patch(name, old, new):
+    # (applied once: a patch that adds to the text keeps the old text in it, so "done" is checked first)
     p = os.path.join(d, name)
     s = open(p).read()
-    if old in s:
-        open(p, "w").write(s.replace(old, new, 1))
-    elif new not in s:
+    if new in s:
+        return
+    if old not in s:
         sys.exit("%s: not found: %s" % (name, old.splitlines()[0]))
+    open(p, "w").write(s.replace(old, new, 1))
 patch("loader.h", "#if defined(_WIN32) || defined(_WIN64)\n  #define THREAD_LOCAL __declspec(thread)",
       "#if defined(__APPLE__) && defined(__arm__)\n  #define THREAD_LOCAL\n#elif defined(_WIN32) || defined(_WIN64)\n  #define THREAD_LOCAL __declspec(thread)")
 for f in ("Enable", "Disable"):
     patch("directstate.c",
           "AliasDecl(void,gl4es_gl%sClientStatei,(GLenum array, GLuint index),gl4es_gl%sClientStateIndexed);" % (f, f),
           "void APIENTRY_GL4ES gl4es_gl%sClientStatei(GLenum array, GLuint index) { gl4es_gl%sClientStateIndexed(array, index); }" % (f, f))
+# A large range of display list names is only reserved: a list gets its entry when it is first compiled (glNewList
+# makes one for any name) and is deleted by going over the lists that exist. Minecraft's 1.7 snapshots ask for 14
+# million names at once (546 * 546 * 16 * 3); an entry each takes more memory than an iPad 2 has.
+GENLISTS = """    int start = glstate->list.count;
+    glstate->list.count += range;
+"""
+patch("gl4es.c", GENLISTS, """    if (range > 65536) {
+        GLuint first = glstate->list.count;
+        int moved;
+        do {
+            moved = 0;
+            for (khint_t kk = kh_begin(lists); kk != kh_end(lists); ++kk) {
+                if (!kh_exist(lists, kk)) continue;
+                GLuint name = kh_key(lists, kk);
+                if (name > first && name <= first + (GLuint)range) {
+                    first = name;
+                    moved = 1;
+                }
+            }
+        } while (moved);
+        glstate->list.count = first + range;
+        return first + 1;
+    }
+""" + GENLISTS)
+DELETELISTS = "void APIENTRY_GL4ES gl4es_glDeleteLists(GLuint list, GLsizei range) {\n"
+patch("gl4es.c", DELETELISTS, DELETELISTS + """    if (range > 65536) {
+        noerrorShimNoPurge();
+        khash_t(gllisthead) *lists = glstate->headlists;
+        for (khint_t k = kh_begin(lists); k != kh_end(lists); ++k) {
+            if (!kh_exist(lists, k)) continue;
+            GLuint name = kh_key(lists, k);
+            if (name >= list && name - list < (GLuint)range) {
+                free_renderlist(kh_value(lists, k));
+                kh_del(gllisthead, lists, k);
+            }
+        }
+        return;
+    }
+""")
 EOF
     local g4flags="-std=gnu11 -O2 -fPIC -fvisibility=hidden -funwind-tables -fno-strict-aliasing -w
  -DNOX11 -DNOEGL -DNO_GBM -DNO_LOADER -DNO_INIT_CONSTRUCTOR -DSTATICLIB -DEGL_NO_X11 -DDEFAULT_ES=2

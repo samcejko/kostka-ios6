@@ -112,8 +112,9 @@ static NSArray *g_extraOptions;
             [args addObject:w];
         }
     }
-    // (1.6 and newer take the window's size: the whole screen, in pixels)
-    if ([args containsObject:@"--username"]) {
+    // (1.6 and newer take the window's size: the whole screen, in pixels - from 13w23b on: the first 1.6 snapshots
+    // stop at an option they do not know)
+    if ([args containsObject:@"--username"] && [version.released compare:@"2013-06-08"] != NSOrderedAscending) {
         CGSize s = [UIScreen mainScreen].bounds.size;
         CGFloat scale = [UIScreen mainScreen].scale;
         [args addObjectsFromArray:@[ @"--width", [NSString stringWithFormat:@"%d", (int)(MAX(s.width, s.height) * scale)],
@@ -139,7 +140,9 @@ static NSArray *g_extraOptions;
 
 // The assets (sounds, languages: 1.6 and newer read them from outside the jar): Mojang's index of them, then each
 // file by its hash into assets/objects, four at a time. The old indexes want them under their names too: "legacy"
-// in assets/virtual/legacy, "pre-1.6" in the game's resources folder. `done` gets the folder the game reads them from.
+// in assets/virtual/legacy, "pre-1.6" in the game's resources folder - and in its assets folder for the first 1.6
+// snapshots (13w16a to 13w23b, given --workDir: they read <workDir>/assets). `done` gets the folder the game reads
+// them from.
 + (void)assets:(NSDictionary *)json gameDir:(NSString *)gameDir status:(void (^)(NSString *, float))status
           done:(void (^)(NSString *gameAssets, NSError *error))done
 {
@@ -160,9 +163,12 @@ static NSArray *g_extraOptions;
             done(nil, [KONet errorWithText:L(@"Mojang's description of the version is not readable.")]);
             return;
         }
-        NSString *named = nil;
+        NSString *named = nil, *alsoNamed = nil;
         if ([list[@"virtual"] boolValue]) named = [self dir:[@"assets/virtual" stringByAppendingPathComponent:index[@"id"]]];
         else if ([list[@"map_to_resources"] boolValue]) named = [gameDir stringByAppendingPathComponent:@"resources"];
+        if ([list[@"map_to_resources"] boolValue] && [json[@"minecraftArguments"] isKindOfClass:[NSString class]] &&
+            [json[@"minecraftArguments"] rangeOfString:@"--workDir"].location != NSNotFound)
+            alsoNamed = [gameDir stringByAppendingPathComponent:@"assets"];
         NSFileManager *fm = [NSFileManager defaultManager];
         NSMutableArray *missing = [NSMutableArray array];
         NSMutableArray *names = [NSMutableArray array];
@@ -180,6 +186,7 @@ static NSArray *g_extraOptions;
                 [missing addObject:@{ @"url": url, @"sha1": hash, @"to": path }];
             }
             if (named) [names addObject:@[ path, [named stringByAppendingPathComponent:name] ]];
+            if (alsoNamed) [names addObject:@[ path, [alsoNamed stringByAppendingPathComponent:name] ]];
         }
         [self fetchMany:missing what:L(@"Downloading the sounds and languages") status:status done:^(NSError *e) {
             if (e) { done(nil, e); return; }
