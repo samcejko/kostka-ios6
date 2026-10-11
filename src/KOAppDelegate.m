@@ -3,6 +3,7 @@
 #import "KOProbeController.h"
 #import "KOVersions.h"
 #import "KOGame.h"
+#import "KOChangelog.h"
 #import "KOStyle.h"
 #import "KOJava.h"
 #import "KOCommon.h"
@@ -68,6 +69,15 @@
         [KOJava runMainClass:p[@"main"] ?: @"Hello" classPath:cp options:options args:args
                         done:^(int code, NSString *error) {
             [weakSelf.probe append:[NSString stringWithFormat:@"java: exit %d %@", code, error ?: @""]];
+        }];
+        return YES;
+    }
+    // kostka:changelog?version=1.12.2: what is new in a version (the Minecraft Wiki's page as text), into
+    // Library/Kostka/changelogs/<version>.txt - the page's text as Kostka shows it (tests)
+    if ([target isEqualToString:@"changelog"] && p[@"version"]) {
+        NSString *version = p[@"version"];
+        [KOChangelog load:version done:^(NSString *text, NSError *error) {
+            KOLog(@"changelog %@: %lu characters %@", version, (unsigned long)text.length, error.localizedDescription ?: @"");
         }];
         return YES;
     }

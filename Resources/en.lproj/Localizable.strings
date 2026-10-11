@@ -8,7 +8,6 @@
 "Downloading the game" = "Downloading the game";
 "Downloading the libraries" = "Downloading the libraries";
 "Downloading the sounds and languages" = "Downloading the sounds and languages";
-"In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item. When the game ends, Kostka closes: open it again for the next one." = "In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item. When the game ends, Kostka closes: open it again for the next one.";
 "it did not play in the tries on an iPad 2." = "it did not play in the tries on an iPad 2.";
 "it needs more memory than the iPad 2 has." = "it needs more memory than the iPad 2 has.";
 "it stops while making or loading a world." = "it stops while making or loading a world.";
@@ -67,13 +66,17 @@
 "Installing OptiFine" = "Installing OptiFine";
 "OptiFine is installed" = "OptiFine is installed";
 "OptiFine could not be installed" = "OptiFine could not be installed";
-"OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@. %@" = "OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@. %@";
+"OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@." = "OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@.";
 "Arrows" = "Arrows";
 "Joystick" = "Joystick";
 "Snapshots too new for iOS 6" = "Snapshots too new for iOS 6";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.";
 "Too new for iOS 6" = "Too new for iOS 6";
-"Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12)." = "Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12).";
 "Try the versions that do not run yet" = "Try the versions that do not run yet";
 "Versions" = "Versions";
 "What this device allows a Java VM: generated code, memory, graphics, speed." = "What this device allows a Java VM: generated code, memory, graphics, speed.";
+"What is new" = "What is new";
+"Loading what is new…" = "Loading what is new…";
+"What is new could not be loaded: %@" = "What is new could not be loaded: %@";
+"From the Minecraft Wiki (minecraft.wiki), its text under the CC BY-NC-SA 3.0 license" = "From the Minecraft Wiki (minecraft.wiki), its text under the CC BY-NC-SA 3.0 license";
+"The Minecraft Wiki has no page about this version." = "The Minecraft Wiki has no page about this version.";

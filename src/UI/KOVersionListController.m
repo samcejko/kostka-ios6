@@ -158,8 +158,9 @@
     }
     KOVersion *v = item;
     cell.textLabel.text = v.parent ? [NSString stringWithFormat:@"%@  OptiFine %@", v.parent.identifier, v.optiFineEdition] : v.identifier;
-    cell.detailTextLabel.text = v.localizedSupport;
-    cell.detailTextLabel.textColor = v.support == KOSupportPlays ? [KOStyle playsColor]
+    // (a version that plays: its date - what is new in it is on its page; one that does not: why)
+    cell.detailTextLabel.text = v.support == KOSupportPlays ? v.localizedReleased : v.localizedSupport;
+    cell.detailTextLabel.textColor = v.support == KOSupportPlays ? [UIColor grayColor]
                                    : v.support == KOSupportTry ? [KOStyle tryColor]
                                    : v.support == KOSupportSoon ? [KOStyle soonColor] : [KOStyle neverColor];
     return cell;

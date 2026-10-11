@@ -8,7 +8,6 @@
 "Downloading the game" = "Stahuji hru";
 "Downloading the libraries" = "Stahuji knihovny";
 "Downloading the sounds and languages" = "Stahuji zvuky a jazyky";
-"In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item. When the game ends, Kostka closes: open it again for the next one." = "V menu je prst ukazatel; ve hře otáčí pohledem, klepnutí použije nebo položí kostku, podržený prst ji rozbije, šipky chodí a klepnutím na lištu dole vybereš předmět. Když hra skončí, Kostka se zavře: pro další hru ji otevři znovu.";
 "it did not play in the tries on an iPad 2." = "při zkouškách na iPadu 2 nehrála.";
 "it needs more memory than the iPad 2 has." = "potřebuje víc paměti, než má iPad 2.";
 "it stops while making or loading a world." = "zastaví se při vytváření nebo načítání světa.";
@@ -67,13 +66,17 @@
 "Installing OptiFine" = "Instaluji OptiFine";
 "OptiFine is installed" = "OptiFine je nainstalovaný";
 "OptiFine could not be installed" = "OptiFine se nepodařilo nainstalovat";
-"OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@. %@" = "OptiFine %@ pro Minecraft %@: rychlejší, s víc nastaveními (Možnosti, Nastavení grafiky). Hraje se ve stejných světech jako %@. %@";
+"OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@." = "OptiFine %@ pro Minecraft %@: rychlejší, s víc nastaveními (Možnosti, Nastavení grafiky). Hraje se ve stejných světech jako %@.";
 "Arrows" = "Šipky";
 "Joystick" = "Joystick";
 "Snapshots too new for iOS 6" = "Snapshoty na iOS 6 příliš nové";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "Tahle verze potřebuje LWJGL 3 a novější OpenGL i Javu, než Kostka má: víc, než iOS 6 a tento iPad dokážou dát.";
 "Too new for iOS 6" = "Na iOS 6 příliš nová";
-"Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12)." = "Vyzkoušeno na iPadu 2: tahle verze se spustí, vytvoří nový svět a dá se v něm hrát. Nový svět trvá od půl minuty (Alfa) po tři minuty (1.12).";
 "Try the versions that do not run yet" = "Zkoušet i verze, které zatím nejdou";
 "Versions" = "Verze";
 "What this device allows a Java VM: generated code, memory, graphics, speed." = "Co toto zařízení dovolí Javě: generovaný kód, paměť, grafika, rychlost.";
+"What is new" = "Co je nového";
+"Loading what is new…" = "Načítám, co je nového…";
+"What is new could not be loaded: %@" = "Co je nového, se nepodařilo načíst: %@";
+"From the Minecraft Wiki (minecraft.wiki), its text under the CC BY-NC-SA 3.0 license" = "Z Minecraft Wiki (minecraft.wiki), text pod licencí CC BY-NC-SA 3.0 (anglicky)";
+"The Minecraft Wiki has no page about this version." = "Minecraft Wiki o této verzi nemá stránku.";
