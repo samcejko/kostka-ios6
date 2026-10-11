@@ -71,6 +71,18 @@
         }];
         return YES;
     }
+    // kostka:fetch?url=https%3A%2F%2F...: whether this iOS reaches a site (its TLS, its certificates): the log says
+    if ([target isEqualToString:@"fetch"] && p[@"url"]) {
+        NSString *address = p[@"url"];
+        NSURLRequest *r = [NSURLRequest requestWithURL:[NSURL URLWithString:address]
+                                           cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:30];
+        [NSURLConnection sendAsynchronousRequest:r queue:[NSOperationQueue mainQueue]
+                               completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+            NSInteger code = [response isKindOfClass:[NSHTTPURLResponse class]] ? [(NSHTTPURLResponse *)response statusCode] : 0;
+            KOLog(@"fetch %@: %ld, %lu bytes, %@", address, (long)code, (unsigned long)data.length, error.localizedDescription ?: @"ok");
+        }];
+        return YES;
+    }
     // (UIGetScreenImage: a private UIKit function, looked up at run time; the game's OpenGL is in the picture too)
     if ([target isEqualToString:@"screenshot"]) {
         CGImageRef (*grab)(void) = (CGImageRef (*)(void))dlsym(RTLD_DEFAULT, "UIGetScreenImage");

@@ -20,4 +20,12 @@
       status:(void (^)(NSString *text, float progress))status
       failed:(void (^)(NSError *error))failed;
 
+// OptiFine: its installer - the jar the player downloaded from optifine.net - run by Java without its window, once
+// the version it is for is here (its JSON, jar and libraries). `done`: 0 when it installed; Java has run then, so
+// Kostka closes after it as after a game.
++ (void)installOptiFine:(NSString *)installer
+                    for:(KOVersion *)version
+                 status:(void (^)(NSString *text, float progress))status
+                   done:(void (^)(int code, NSString *error))done;
+
 @end

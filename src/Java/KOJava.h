@@ -13,6 +13,8 @@
 // (tests: a line into Library/Kostka/run.txt, which each process starts anew - what a run did, for a computer to read
 // over SSH; while Java runs, "progress frames= window= memory= grabbed=" every 2 seconds)
 + (void)note:(NSString *)format, ... NS_FORMAT_FUNCTION(1, 2);
+// Why Java's program stopped, from the end of java.log (Minecraft's crash report, or the last exception), or nil
++ (NSString *)stopReason;
 
 // Starts the VM with `options` ("-Xmx96m", "-Dfoo=bar") and the class path, then runs `mainClass`.main(args).
 // `done` is called on the main thread with the exit code (0 when main returned, else a message in `error`).

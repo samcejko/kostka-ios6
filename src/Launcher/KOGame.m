@@ -307,6 +307,31 @@ static NSArray *g_extraOptions;
     }];
 }
 
++ (void)installOptiFine:(NSString *)installer for:(KOVersion *)version status:(void (^)(NSString *, float))status
+                   done:(void (^)(int, NSString *))done
+{
+    if (g_running) {
+        done(-1, L(@"Java has already run since the app was opened: close the app and open it again."));
+        return;
+    }
+    g_running = YES;
+    // (the installer copies the version's jar and patches it: the version must be here first, as in the official
+    // launcher after one start of it)
+    [self prepare:version status:status failed:^(NSError *e) {
+        g_running = NO;
+        done(-1, e.localizedDescription);
+    } done:^(NSDictionary *json, NSMutableArray *classPath) {
+        status(L(@"Installing OptiFine"), -1);
+        NSString *helpers = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"java/kostka-helpers.jar"];
+        KOLog(@"optifine: installing %@ for %@", installer.lastPathComponent, version.identifier);
+        [KOJava runMainClass:@"OptiFineInstall" classPath:@[ helpers ] options:@[ @"-Xmx128m" ]
+                        args:@[ installer, [KOJava dataPath] ] done:^(int code, NSString *error) {
+            KOLog(@"optifine: installer ended with %d %@", code, error ?: @"");
+            done(code, error);
+        }];
+    }];
+}
+
 // The version's JSON (from Mojang), its jar and libraries: `done` gets the JSON and the class path (the libraries,
 // the jar, Kostka's LWJGL)
 + (void)prepare:(KOVersion *)version status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))fail

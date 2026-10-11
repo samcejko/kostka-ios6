@@ -1,6 +1,7 @@
 #import "KOVersionListController.h"
 #import "KOVersionController.h"
 #import "KOSettingsController.h"
+#import "KOOptiFineController.h"
 #import "KOVersions.h"
 #import "KOStyle.h"
 #import "KOCommon.h"
@@ -68,11 +69,14 @@
     BOOL snapshots = [defaults boolForKey:@"KOShowSnapshots"];
     BOOL all = snapshots && [defaults boolForKey:@"KOTryAll"];
     NSMutableArray *releases = [NSMutableArray array], *betas = [NSMutableArray array], *alphas = [NSMutableArray array],
-                   *snaps = [NSMutableArray array], *tooNew = [NSMutableArray array], *tooNewSnaps = [NSMutableArray array];
+                   *snaps = [NSMutableArray array], *tooNew = [NSMutableArray array], *tooNewSnaps = [NSMutableArray array],
+                   *optiFine = [NSMutableArray array];
     for (KOVersion *v in self.versions) {
         BOOL snapshot = ![v.type isEqualToString:@"release"] && ![v.type isEqualToString:@"old_beta"] &&
                         ![v.type isEqualToString:@"old_alpha"];
-        if (v.support == KOSupportNever) {
+        if (v.parent) {
+            [optiFine addObject:v];
+        } else if (v.support == KOSupportNever) {
             if (!snapshot) [tooNew addObject:v];
             else if (all) [tooNewSnaps addObject:v];
         } else if ([v.type isEqualToString:@"release"]) {
@@ -86,6 +90,11 @@
         }
     }
     NSMutableArray *sections = [NSMutableArray array];
+    // (OptiFine first: what is installed, and the way to add it - for the releases 1.7.2 to 1.12.2)
+    if (self.versions.count) {
+        [optiFine addObject:@"add"];
+        [sections addObject:@{ @"title": @"OptiFine", @"versions": optiFine }];
+    }
     if (releases.count) [sections addObject:@{ @"title": L(@"Releases"), @"versions": releases }];
     if (betas.count) [sections addObject:@{ @"title": L(@"Beta"), @"versions": betas }];
     if (alphas.count) [sections addObject:@{ @"title": L(@"Alpha, Infdev, Classic"), @"versions": alphas }];
@@ -140,8 +149,15 @@
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         cell.textLabel.font = [UIFont boldSystemFontOfSize:18];
     }
-    KOVersion *v = self.sections[indexPath.section][@"versions"][indexPath.row];
-    cell.textLabel.text = v.identifier;
+    id item = self.sections[indexPath.section][@"versions"][indexPath.row];
+    if (![item isKindOfClass:[KOVersion class]]) {
+        cell.textLabel.text = L(@"Add OptiFine…");
+        cell.detailTextLabel.text = @"1.7.2 – 1.12.2";
+        cell.detailTextLabel.textColor = [UIColor grayColor];
+        return cell;
+    }
+    KOVersion *v = item;
+    cell.textLabel.text = v.parent ? [NSString stringWithFormat:@"%@  OptiFine %@", v.parent.identifier, v.optiFineEdition] : v.identifier;
     cell.detailTextLabel.text = v.localizedSupport;
     cell.detailTextLabel.textColor = v.support == KOSupportPlays ? [KOStyle playsColor]
                                    : v.support == KOSupportTry ? [KOStyle tryColor]
@@ -161,8 +177,12 @@
         if (!self.loading) [self load];   // (tapping the problem tries again)
         return;
     }
-    KOVersion *v = self.sections[indexPath.section][@"versions"][indexPath.row];
-    [self.navigationController pushViewController:[[KOVersionController alloc] initWithVersion:v] animated:YES];
+    id item = self.sections[indexPath.section][@"versions"][indexPath.row];
+    if (![item isKindOfClass:[KOVersion class]]) {
+        [self.navigationController pushViewController:[[KOOptiFineController alloc] initWithVersions:self.versions] animated:YES];
+        return;
+    }
+    [self.navigationController pushViewController:[[KOVersionController alloc] initWithVersion:item] animated:YES];
 }
 
 @end

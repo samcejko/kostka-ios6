@@ -27,6 +27,9 @@
     if ([v.identifier hasPrefix:@"rd-"])
         return L(@"RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes Kostka: open it again to play once more).");
     NSString *controls = L(@"In the menus a finger is the pointer; in the game it turns the view, a tap uses or puts a block, a held finger breaks one, the arrows walk and a tap on the bar at the bottom picks an item. When the game ends, Kostka closes: open it again for the next one.");
+    if (v.parent)
+        return [NSString stringWithFormat:L(@"OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@. %@"),
+                v.optiFineEdition, v.parent.identifier, v.parent.identifier, controls];
     switch (v.support) {
         case KOSupportPlays:
             return [NSString stringWithFormat:@"%@ %@", L(@"Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12)."), controls];
