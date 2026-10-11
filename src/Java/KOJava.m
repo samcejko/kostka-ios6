@@ -333,6 +333,9 @@ static void *KOJavaThread(void *arg)
         @"-Djava.awt.headless=true",
         [@"-Djava.io.tmpdir=" stringByAppendingString:tmp],
         @"-Dfile.encoding=UTF-8",
+        // (Java looks for the time zone in /etc/localtime, which iOS has not: it would be GMT - the times in the log,
+        // the dates of worlds and screenshots hours off)
+        [@"-Duser.timezone=" stringByAppendingString:[NSTimeZone localTimeZone].name ?: @"GMT"],
         @"-XX:+UseSerialGC",
         @"-XX:ReservedCodeCacheSize=24m",
         @"-Xss512k",

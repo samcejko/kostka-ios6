@@ -43,9 +43,40 @@ final class MacOSXSysImplementation extends DefaultSysImplementation {
 		return JNI_VERSION;
 	}
 
+	/** A thread's clock: what it has had taken out, where it was last read, when it last jumped by over a second */
+	private static final class Clock {
+		long lost, last = Long.MIN_VALUE, slow = Long.MIN_VALUE;
+	}
+
+	private static final ThreadLocal<Clock> CLOCKS = new ThreadLocal<Clock>() {
+		protected Clock initialValue() {
+			return new Clock();
+		}
+	};
+
+	/**
+	 * A monotonic clock in milliseconds: games time their frames with it. Minecraft (1.3 to 1.11) takes a step of
+	 * more than a second between two frames for a clock that was set, and lets that frame's time go: a game whose
+	 * every frame takes longer - a post-processing shader too much for the iPad 2's graphics (1.8's ntsc, 3 seconds)
+	 * - never moves again, clicks and keys included. So from the second such step within 5 seconds on a thread, its
+	 * clock goes on by 0.9 seconds: the game runs slowly instead of standing still. A single step (a long garbage
+	 * collection) and a pause of more than 10 seconds (the app in the background) are left as they are.
+	 */
 	public long getTime() {
-		// (a monotonic clock: games time their frames with it)
-		return System.nanoTime() / 1000000L;
+		Clock c = CLOCKS.get();
+		long now = System.nanoTime() / 1000000L - c.lost;
+		if (c.last != Long.MIN_VALUE) {
+			long step = now - c.last;
+			if (step > 1000 && step <= 10000) {
+				if (c.slow != Long.MIN_VALUE && c.last - c.slow < 5000) {
+					c.lost += step - 900;
+					now = c.last + 900;
+				}
+				c.slow = now;
+			}
+		}
+		c.last = now;
+		return now;
 	}
 
 	public void alert(String title, String message) {
