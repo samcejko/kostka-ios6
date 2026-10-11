@@ -35,6 +35,10 @@ ends it at about 320. Indev is not on Mojang's list of versions (the launcher sh
 can put the player at the bottom of an ocean, as on a computer (the game looks for the ground through water): swim
 up.
 
+1.8's Super Secret Settings: most of its effects run at 11-27 fps; art, blobs2 and blur at 2-4 fps with a smaller
+radius than on a computer (their loops are cut down), ntsc at 0.3 fps - more than the iPad 2's graphics can do, but
+the game goes on and the next click moves past it.
+
 Mojang's jars are not patched: the pieces under them are made to do what each era of the game expects.
 
 ## How

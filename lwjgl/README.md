@@ -6,11 +6,17 @@ backend, and [gl4es](https://github.com/ptitSeb/gl4es) turns the desktop OpenGL 
 - `java/`: the iOS backend. Kostka's Java reports `os.name` "iPhone OS X", which LWJGL (patched by `build.sh`)
   takes for its Mac OS X platform; these files replace its Mac OS X classes under the same names. The window is a UIKit view on an EAGL layer, the context an EAGL
   (OpenGL ES 2.0) context, touches are the mouse, and on-screen keys and the iOS keyboard are the keyboard.
-  Nothing of AWT or Cocoa is used.
+  Nothing of AWT or Cocoa is used. A resizable window takes the whole screen, and the game hears it was resized;
+  the clock (`Sys.getTime`) goes on by 0.9 s when a thread's frames keep taking over a second (Minecraft 1.3 to
+  1.11 stands still after such frames: a post-processing shader too much for the iPad 2).
 - `native/`: the backend's JNI side (`ios_display.m`, `ios_context.m`), gl4es on EAGL (`ios_gl4es.c`: the
   game's framebuffer 0 is the window's framebuffer object), LWJGL's OpenGL functions from gl4es
   (`ios_extgl.c`; `ios_glsl.c` takes GLSL 1.20's initial values of uniforms out of shaders, which OpenGL ES does not
-  take, and sets them once the program is linked) and OpenAL from the system framework (`ios_al.c`).
+  take, and sets them once the program is linked; caps fragment shader loops bound by a uniform at 8 steps, 3 when
+  nested; and compiles a shader that took a whole number for a float once more with floats) and OpenAL from the
+  system framework (`ios_al.c`).
+- `awt/`: Kostka's AWT for Classic to 1.5.2 (launchwrapper's frame, applet and canvas): windows that exist without
+  being drawn, each over the whole screen.
 - `test/GLTest.java`: the first test: a turning triangle, the mouse under the finger, the keys.
 - `build.sh`: fetches LWJGL 2 (its last sources, 2.9.4) and gl4es at fixed commits, runs LWJGL's generator,
   builds the jars, and cross-compiles gl4es and LWJGL's natives into one `liblwjgl.dylib` for armv7. Its changes to

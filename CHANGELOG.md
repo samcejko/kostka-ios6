@@ -20,4 +20,10 @@
   snapshots get the options and assets they expect and start in English
 - The Java heap grows only as needed and gives memory back; 1 MB thread stacks (Alpha's lighting recursion)
 - Every version's first start gets the iPad's settings (Alpha and Beta started with the farthest view)
-- A game that stops with an error says why ("The game has stopped"), then Kostka closes
+- A game that stops with an error says why ("The game has stopped"), then Kostka closes: Minecraft's own description
+  of the crash, or the last exception with its cause (an old version's crash showed an earlier network error)
+- 1.8's Super Secret Settings and the spectator's views: a shader loop bound by a uniform goes to at most 8 steps
+  (3 when nested) - art and blobs2 took 2 seconds a frame - and LWJGL's clock goes on when frames keep taking over
+  a second (Minecraft stood still for good: ntsc, 3 seconds a frame); a shader that takes a whole number for a
+  float, as GLSL 1.20 lets it, compiles (wobble)
+- Java has the iPad's time zone (it had GMT: the times in the log, the dates of worlds and screenshots were off)

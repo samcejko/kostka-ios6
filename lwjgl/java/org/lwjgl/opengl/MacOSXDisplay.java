@@ -77,7 +77,7 @@ final class MacOSXDisplay implements DisplayImplementation {
 	private boolean cursorHidden;
 	private int width;
 	private int height;
-	private boolean resized;
+	private boolean maximized;
 
 	MacOSXDisplay() {
 	}
@@ -117,7 +117,7 @@ final class MacOSXDisplay implements DisplayImplementation {
 		window = nCreateWindow(w, h, Display.isFullscreen());
 		width = nGetWidth(window);
 		height = nGetHeight(window);
-		resized = width != mode.getWidth() || height != mode.getHeight();
+		maximized = width != mode.getWidth() || height != mode.getHeight();
 		touchesForGame();
 	}
 
@@ -267,10 +267,12 @@ final class MacOSXDisplay implements DisplayImplementation {
 	public void setResizable(boolean resizable) {
 	}
 
+	/**
+	 * (a maximized window says so at every update: Minecraft asks only in its main loop, after its loading screens
+	 * have had the first updates, and acts only when the size it reads is new to it)
+	 */
 	public boolean wasResized() {
-		boolean result = resized;
-		resized = false;
-		return result;
+		return maximized;
 	}
 
 	public int getWidth() {
