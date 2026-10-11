@@ -48,7 +48,10 @@
 "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too." = "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.";
 "In the game" = "In the game";
 "Show the frame rate (FPS)" = "Show the frame rate (FPS)";
-"The frames the game draws in a second, in its upper left corner." = "The frames the game draws in a second, in its upper left corner.";
+"The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint." = "The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint.";
+"Movement" = "Movement";
+"Arrows" = "Arrows";
+"Joystick" = "Joystick";
 "Snapshots too new for iOS 6" = "Snapshots too new for iOS 6";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.";
 "Too new for iOS 6" = "Too new for iOS 6";

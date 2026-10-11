@@ -48,7 +48,10 @@
 "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too." = "Verze, které zatím nejdou, se nemusí spustit, nebo brzy skončí: Kostka se k nim dostává krok za krokem. Se zapnutými snapshoty se ukážou i snapshoty, které jsou na iOS 6 příliš nové.";
 "In the game" = "Ve hře";
 "Show the frame rate (FPS)" = "Ukazovat snímky za sekundu (FPS)";
-"The frames the game draws in a second, in its upper left corner." = "Kolik snímků za sekundu hra kreslí, ukazuje se vlevo nahoře.";
+"The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint." = "Snímky za sekundu se ukazují ve hře vlevo nahoře. Joystickem chodíš všemi směry; vytažený dopředu až k okraji = sprint.";
+"Movement" = "Pohyb";
+"Arrows" = "Šipky";
+"Joystick" = "Joystick";
 "Snapshots too new for iOS 6" = "Snapshoty na iOS 6 příliš nové";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "Tahle verze potřebuje LWJGL 3 a novější OpenGL i Javu, než Kostka má: víc, než iOS 6 a tento iPad dokážou dát.";
 "Too new for iOS 6" = "Na iOS 6 příliš nová";

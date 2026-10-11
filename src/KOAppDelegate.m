@@ -92,6 +92,13 @@
     //   kostka:text?s=Svet                     characters, as typed
     //   kostka:key?code=17&hold=10                 a key held down for 10 seconds
     //   kostka:look?dx=200&dy=0                    turns the view (the held mouse's movement, in the game)
+    //   kostka:stick?x=0&y=1                       the joystick's knob (-1 to 1, up positive; 0,0 lets go)
+    if ([target isEqualToString:@"stick"]) {
+        void (*stick)(float, float) = (void (*)(float, float))dlsym(RTLD_DEFAULT, "ko_stick");
+        if (stick) stick([p[@"x"] floatValue], [p[@"y"] floatValue]);
+        else KOLog(@"input: no game running");
+        return YES;
+    }
     if ([target isEqualToString:@"mouse"] || [target isEqualToString:@"key"] || [target isEqualToString:@"text"] ||
         [target isEqualToString:@"look"]) {
         void (*post)(int, int, int, int) = (void (*)(int, int, int, int))dlsym(RTLD_DEFAULT, "ko_post_event");

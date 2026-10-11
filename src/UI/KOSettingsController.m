@@ -34,7 +34,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return section == 2 ? 3 : 1;
+    return section == 1 ? 2 : section == 2 ? 3 : 1;
 }
 
 - (NSString *)titleFor:(NSInteger)section
@@ -55,7 +55,7 @@
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
     NSString *text = section == 0 ? L(@"The name the old versions show for the player.")
-                   : section == 1 ? L(@"The frames the game draws in a second, in its upper left corner.")
+                   : section == 1 ? L(@"The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint.")
                    : section == 2 ? L(@"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.")
                    : section == 3 ? L(@"Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).")
                                   : nil;
@@ -95,6 +95,16 @@
         field.delegate = self;
         field.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
         cell.accessoryView = field;
+    } else if (indexPath.section == 1 && indexPath.row == 1) {
+        // (how the player walks: the arrows' cross, or a joystick as Minecraft on phones has it)
+        cell.textLabel.text = L(@"Movement");
+        UISegmentedControl *c = [[UISegmentedControl alloc] initWithItems:@[ L(@"Arrows"), L(@"Joystick") ]];
+        c.segmentedControlStyle = UISegmentedControlStyleBar;
+        c.tintColor = [KOStyle barColor];
+        c.selectedSegmentIndex = [[NSUserDefaults standardUserDefaults] integerForKey:@"KOMoveControl"] == 1 ? 1 : 0;
+        c.frame = CGRectMake(0, 0, 200, 32);
+        [c addTarget:self action:@selector(movementChanged:) forControlEvents:UIControlEventValueChanged];
+        cell.accessoryView = c;
     } else if (indexPath.section == 1 || indexPath.section == 2) {
         // (a switch's tag: its row, 10 more in the versions' section)
         NSInteger tag = indexPath.section == 1 ? indexPath.row : 10 + indexPath.row;
@@ -132,6 +142,11 @@
 - (void)switchChanged:(UISwitch *)s
 {
     [[NSUserDefaults standardUserDefaults] setBool:s.on forKey:[self switchKey:s.tag]];
+}
+
+- (void)movementChanged:(UISegmentedControl *)c
+{
+    [[NSUserDefaults standardUserDefaults] setInteger:c.selectedSegmentIndex forKey:@"KOMoveControl"];
 }
 
 - (void)textFieldDidEndEditing:(UITextField *)field

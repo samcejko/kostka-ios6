@@ -27,7 +27,8 @@
 // (LWJGL's key codes)
 enum {
     KO_KEY_NONE = 0, KO_KEY_ESCAPE = 1, KO_KEY_BACK = 14, KO_KEY_E = 18, KO_KEY_T = 20, KO_KEY_RETURN = 28,
-    KO_KEY_W = 17, KO_KEY_A = 30, KO_KEY_S = 31, KO_KEY_D = 32, KO_KEY_LSHIFT = 42, KO_KEY_SPACE = 57
+    KO_KEY_W = 17, KO_KEY_A = 30, KO_KEY_S = 31, KO_KEY_D = 32, KO_KEY_LSHIFT = 42, KO_KEY_SPACE = 57,
+    KO_KEY_LCONTROL = 29
 };
 
 typedef char ko_event_size_check[sizeof(KOEvent) == 24 ? 1 : -1];
@@ -266,6 +267,206 @@ static void ko_set_inactive(int inactive)
 }
 @end
 
+// The joystick's knob: a glass ball, light at its upper left
+@interface KOJoystickKnob : UIView
+@end
+
+@implementation KOJoystickKnob
+- (void)drawRect:(CGRect)rect
+{
+    CGContextRef c = UIGraphicsGetCurrentContext();
+    CGRect r = CGRectInset(self.bounds, 2, 2);
+    CGPoint center = CGPointMake(CGRectGetMidX(r), CGRectGetMidY(r));
+    CGContextSaveGState(c);
+    CGContextSetShadowWithColor(c, CGSizeMake(0, 2), 4, [UIColor colorWithWhite:0 alpha:0.5].CGColor);
+    CGContextSetRGBFillColor(c, 0.3, 0.3, 0.3, 0.85);
+    CGContextFillEllipseInRect(c, r);
+    CGContextRestoreGState(c);
+    CGContextSaveGState(c);
+    CGContextAddEllipseInRect(c, r);
+    CGContextClip(c);
+    CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+    CGFloat colors[] = { 0.97, 0.97, 0.97, 0.92, 0.6, 0.6, 0.6, 0.88, 0.28, 0.28, 0.28, 0.88 };
+    CGFloat locations[] = { 0, 0.5, 1 };
+    CGGradientRef g = CGGradientCreateWithColorComponents(space, colors, locations, 3);
+    CGContextDrawRadialGradient(c, g, CGPointMake(center.x - r.size.width * 0.2, center.y - r.size.height * 0.24), 0,
+                                center, r.size.width / 2, kCGGradientDrawsAfterEndLocation);
+    CGGradientRelease(g);
+    CGColorSpaceRelease(space);
+    CGContextRestoreGState(c);
+    CGContextSetRGBStrokeColor(c, 1, 1, 1, 0.6);
+    CGContextSetLineWidth(c, 1.5);
+    CGContextStrokeEllipseInRect(c, r);
+}
+@end
+
+// The joystick (the app's setting KOMoveControl 1, in place of the arrows): a ring with a knob the finger drags. The
+// game knows only keys: the knob's direction holds W, A, S and D (eight ways, 45 degrees each), and at the ring's
+// edge forwards also sprints - Left Control held (1.8 and newer), and forward let go and pressed twice within a third
+// of a second (Minecraft's double tap: Beta 1.8 to 1.7).
+@interface KOJoystickView : UIView {
+@public
+    KOJoystickKnob *knob;
+    UITouch *finger;
+    int held;      // the keys down: 1 W, 2 A, 4 S, 8 D
+    BOOL running;  // at the edge, forwards
+}
+- (void)pointTo:(CGPoint)v;
+- (void)letGo;
+@end
+
+@implementation KOJoystickView
+
+static const int ko_stick_keys[4] = { KO_KEY_W, KO_KEY_A, KO_KEY_S, KO_KEY_D };
+
+- (id)initWithFrame:(CGRect)frame
+{
+    if ((self = [super initWithFrame:frame])) {
+        self.opaque = NO;
+        self.backgroundColor = [UIColor clearColor];
+        CGFloat k = floor(frame.size.width * 0.4);
+        knob = [[KOJoystickKnob alloc] initWithFrame:CGRectMake(0, 0, k, k)];
+        knob.opaque = NO;
+        knob.backgroundColor = [UIColor clearColor];
+        knob.userInteractionEnabled = NO;
+        knob.center = CGPointMake(frame.size.width / 2, frame.size.height / 2);
+        [self addSubview:knob];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [knob release];
+    [super dealloc];
+}
+
+// (how far the knob's center goes from the ring's)
+- (CGFloat)reach
+{
+    return self.bounds.size.width / 2 - knob.bounds.size.width * 0.3;
+}
+
+- (void)drawRect:(CGRect)rect
+{
+    // the ring: dark glass, light on its upper half (as the keys), with four small arrows
+    CGContextRef c = UIGraphicsGetCurrentContext();
+    CGRect r = CGRectInset(self.bounds, 2, 2);
+    UIBezierPath *p = [UIBezierPath bezierPathWithOvalInRect:r];
+    [[UIColor colorWithWhite:0.1 alpha:0.45] setFill];
+    [p fill];
+    CGContextSaveGState(c);
+    [p addClip];
+    CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+    CGFloat colors[] = { 1, 1, 1, 0.26, 1, 1, 1, 0.04 };
+    CGFloat locations[] = { 0, 1 };
+    CGGradientRef g = CGGradientCreateWithColorComponents(space, colors, locations, 2);
+    CGContextDrawLinearGradient(c, g, CGPointMake(0, CGRectGetMinY(r)), CGPointMake(0, CGRectGetMidY(r)), 0);
+    CGGradientRelease(g);
+    CGColorSpaceRelease(space);
+    CGContextRestoreGState(c);
+    [[UIColor colorWithWhite:1 alpha:0.45] setStroke];
+    p.lineWidth = 1.5;
+    [p stroke];
+    CGFloat cx = CGRectGetMidX(self.bounds), cy = CGRectGetMidY(self.bounds), d = r.size.width / 2 - 16, s = 7;
+    for (int i = 0; i < 4; i++) {
+        CGContextSaveGState(c);
+        CGContextTranslateCTM(c, cx, cy);
+        CGContextRotateCTM(c, i * M_PI_2);
+        CGContextMoveToPoint(c, 0, -d - s);
+        CGContextAddLineToPoint(c, s, -d + s * 0.5);
+        CGContextAddLineToPoint(c, -s, -d + s * 0.5);
+        CGContextClosePath(c);
+        CGContextSetRGBFillColor(c, 1, 1, 1, 0.5);
+        CGContextFillPath(c);
+        CGContextRestoreGState(c);
+    }
+}
+
+- (void)setKeys:(int)keys run:(BOOL)run
+{
+    for (int i = 0; i < 4; i++) {
+        int bit = 1 << i;
+        if ((keys & bit) != (held & bit)) ko_post_event(KO_EVENT_KEY, ko_stick_keys[i], (keys & bit) ? 1 : 0, 0);
+    }
+    BOOL wasRunning = running;
+    held = keys;
+    running = run;
+    if (run && !wasRunning) {
+        ko_post_event(KO_EVENT_KEY, KO_KEY_LCONTROL, 1, 0);
+        // (forward up, down, up, down, a tenth of a second apart: each lasts a tick or more for the game)
+        ko_post_event(KO_EVENT_KEY, KO_KEY_W, 0, 0);
+        for (int i = 1; i <= 3; i++) {
+            // (the block holds the view; the last step leaves forward as the knob has it then)
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(i * 0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                if (self->held & 1) ko_post_event(KO_EVENT_KEY, KO_KEY_W, i % 2, 0);
+                else if (i == 3) ko_post_event(KO_EVENT_KEY, KO_KEY_W, 0, 0);
+            });
+        }
+    } else if (!run && wasRunning) {
+        ko_post_event(KO_EVENT_KEY, KO_KEY_LCONTROL, 0, 0);
+    }
+}
+
+// v: the knob's place from the ring's center, 1 at the edge, up positive (also kostka:stick)
+- (void)pointTo:(CGPoint)v
+{
+    CGFloat len = hypot(v.x, v.y);
+    if (len > 1) {
+        v.x /= len;
+        v.y /= len;
+        len = 1;
+    }
+    CGFloat reach = [self reach];
+    knob.center = CGPointMake(self.bounds.size.width / 2 + v.x * reach, self.bounds.size.height / 2 - v.y * reach);
+    int keys = 0;
+    if (len > 0.25) {
+        CGFloat nx = v.x / len, ny = v.y / len;   // (0.38: sin 22.5 degrees, the eight ways' borders)
+        if (ny > 0.38) keys |= 1;
+        if (nx < -0.38) keys |= 2;
+        if (ny < -0.38) keys |= 4;
+        if (nx > 0.38) keys |= 8;
+    }
+    [self setKeys:keys run:(keys & 1) && len > 0.95];
+}
+
+- (void)follow:(UITouch *)t
+{
+    CGPoint p = [t locationInView:self];
+    CGFloat reach = [self reach];
+    [self pointTo:CGPointMake((p.x - self.bounds.size.width / 2) / reach, (self.bounds.size.height / 2 - p.y) / reach)];
+}
+
+- (void)letGo
+{
+    finger = nil;
+    [self pointTo:CGPointZero];
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    if (finger) return;
+    finger = [touches anyObject];
+    [self follow:finger];
+}
+
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    if (finger && [touches containsObject:finger]) [self follow:finger];
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    if (finger && [touches containsObject:finger]) [self letGo];
+}
+
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    if (finger && [touches containsObject:finger]) [self letGo];
+}
+
+@end
+
 @interface KOGameView : UIView <UITextFieldDelegate> {
 @public
     KOGLView *glView;
@@ -284,8 +485,11 @@ static void ko_set_inactive(int inactive)
     NSTimer *fpsTimer;
     int fpsFrames;
     CFAbsoluteTime fpsTime;
+    KOJoystickView *joystick;   // in place of the arrows (the app's setting KOMoveControl 1)
 }
 @end
+
+static KOGameView *g_game_view;   // (the game's view, while there is one: for kostka:stick)
 
 @implementation KOGameView
 
@@ -313,6 +517,7 @@ static void ko_set_inactive(int inactive)
         [nc addObserver:self selector:@selector(didBecomeActive:) name:UIApplicationDidBecomeActiveNotification object:nil];
         [nc addObserver:self selector:@selector(didEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
         [nc addObserver:self selector:@selector(willEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
+        g_game_view = self;
     }
     return self;
 }
@@ -322,12 +527,14 @@ static void ko_set_inactive(int inactive)
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [holdTimer invalidate];
     [fpsTimer invalidate];
+    if (g_game_view == self) g_game_view = nil;
     textInput.delegate = nil;
     [glView release];
     [controls release];
     [moveControls release];
     [textInput release];
     [fpsLabel release];
+    [joystick release];
     [super dealloc];
 }
 
@@ -360,12 +567,19 @@ static void ko_set_inactive(int inactive)
     UIViewAutoresizing bottomLeft = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleRightMargin;
     UIViewAutoresizing bottomRight = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleLeftMargin;
     UIViewAutoresizing topRight = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin;
-    // the cross: forwards, left, backwards, right
+    // the cross - forwards, left, backwards, right - or the joystick in its place (Settings: In the game, Movement)
     CGFloat x0 = m, y0 = s.height - m - 3 * k - 2 * gap;
-    [self key:KO_KEY_W label:@"" frame:CGRectMake(x0 + k + gap, y0, k, k) in:moveControls mask:bottomLeft]->arrow = 1;
-    [self key:KO_KEY_A label:@"" frame:CGRectMake(x0, y0 + k + gap, k, k) in:moveControls mask:bottomLeft]->arrow = 2;
-    [self key:KO_KEY_S label:@"" frame:CGRectMake(x0 + k + gap, y0 + 2 * (k + gap), k, k) in:moveControls mask:bottomLeft]->arrow = 3;
-    [self key:KO_KEY_D label:@"" frame:CGRectMake(x0 + 2 * (k + gap), y0 + k + gap, k, k) in:moveControls mask:bottomLeft]->arrow = 4;
+    if ([[NSUserDefaults standardUserDefaults] integerForKey:@"KOMoveControl"] == 1) {
+        CGFloat d = 3 * k + 2 * gap;
+        joystick = [[KOJoystickView alloc] initWithFrame:CGRectMake(x0, y0, d, d)];
+        joystick.autoresizingMask = bottomLeft;
+        [moveControls addSubview:joystick];
+    } else {
+        [self key:KO_KEY_W label:@"" frame:CGRectMake(x0 + k + gap, y0, k, k) in:moveControls mask:bottomLeft]->arrow = 1;
+        [self key:KO_KEY_A label:@"" frame:CGRectMake(x0, y0 + k + gap, k, k) in:moveControls mask:bottomLeft]->arrow = 2;
+        [self key:KO_KEY_S label:@"" frame:CGRectMake(x0 + k + gap, y0 + 2 * (k + gap), k, k) in:moveControls mask:bottomLeft]->arrow = 3;
+        [self key:KO_KEY_D label:@"" frame:CGRectMake(x0 + 2 * (k + gap), y0 + k + gap, k, k) in:moveControls mask:bottomLeft]->arrow = 4;
+    }
     // jump and sneak
     CGFloat big = 92;
     [self key:KO_KEY_SPACE label:KOText(@"Jump") frame:CGRectMake(s.width - m - big, s.height - m - big, big, big) in:moveControls mask:bottomRight];
@@ -440,6 +654,8 @@ static void ko_set_inactive(int inactive)
 - (void)grabbedChanged
 {
     moveControls.hidden = !g_grabbed;
+    // (a menu came up: the joystick lets its keys go, the player stops)
+    if (!g_grabbed) [joystick letGo];
 }
 
 - (void)willMoveToSuperview:(UIView *)newSuperview
@@ -641,6 +857,18 @@ static void ko_set_inactive(int inactive)
 }
 
 @end
+
+// kostka:stick?x=&y= (tests): the joystick's knob where a finger would put it, x and y from -1 to 1 (up positive);
+// 0,0 lets it go
+void ko_stick(float x, float y)
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        KOJoystickView *stick = g_game_view ? g_game_view->joystick : nil;
+        if (!stick) return;
+        if (x == 0 && y == 0) [stick letGo];
+        else [stick pointTo:CGPointMake(x, y)];
+    });
+}
 
 #pragma mark - The window
 
