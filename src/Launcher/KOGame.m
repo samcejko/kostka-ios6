@@ -315,10 +315,11 @@ static NSArray *g_extraOptions;
     NSString *optionsFile = [gameDir stringByAppendingPathComponent:@"options.txt"];
     if (![[NSFileManager defaultManager] fileExistsAtPath:optionsFile]) {
         // (the first 1.6 snapshots - 13w16a to 13w23b, the ones given --workDir - have English in their jar and no
-        // other language among their assets: another one stops them at the start)
+        // other language among their assets: another one stops them at the start; Tested.json names the others
+        // that stop on a letter of another language)
         NSArray *languages = [NSLocale preferredLanguages];
-        BOOL englishOnly = [json[@"minecraftArguments"] isKindOfClass:[NSString class]] &&
-                           [json[@"minecraftArguments"] rangeOfString:@"--workDir"].location != NSNotFound;
+        BOOL englishOnly = version.englishOnly || ([json[@"minecraftArguments"] isKindOfClass:[NSString class]] &&
+                           [json[@"minecraftArguments"] rangeOfString:@"--workDir"].location != NSNotFound);
         NSString *lang = !englishOnly && languages.count && [languages[0] hasPrefix:@"cs"] ? @"cs_CZ" : @"en_US";
         NSString *text = [NSString stringWithFormat:@"viewDistance:3\nrenderDistance:2\nfancyGraphics:false\nao:0\nclouds:false\n"
                           @"renderClouds:false\nparticles:2\nmipmapLevels:0\nuseVbo:true\nlang:%@\n", lang];

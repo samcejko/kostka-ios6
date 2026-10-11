@@ -18,6 +18,7 @@ typedef NS_ENUM(NSInteger, KOSupport) {
 @property (nonatomic, readonly) KOSupport support;
 @property (nonatomic, readonly) NSString *localizedSupport;   // "Plays", "Not yet", ...
 @property (nonatomic, readonly) NSString *problem;            // KOSupportSoon: what went wrong in the tries
+@property (nonatomic, readonly) BOOL englishOnly;             // starts in English (another language stops it)
 @property (nonatomic, readonly) NSString *localizedReleased;  // the date, as this device writes dates
 @end
 

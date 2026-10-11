@@ -8,7 +8,7 @@ static NSString *const KOManifestURL = @"https://piston-meta.mojang.com/mc/game/
 // What was tried on an iPad 2 (iOS 6.1.3): Resources/Tested.json, written from the run that starts every version,
 // makes a new world in it and plays there for a while. "plays": the versions that did; "notYet": the ones that did
 // not, each with a word for what went wrong (KOVersion.problem)
-static NSSet *g_plays;
+static NSSet *g_plays, *g_english;
 static NSDictionary *g_notYet;
 
 static void KOLoadTested(void)
@@ -19,6 +19,8 @@ static void KOLoadTested(void)
     if (![json isKindOfClass:[NSDictionary class]]) json = @{};
     g_plays = [NSSet setWithArray:[json[@"plays"] isKindOfClass:[NSArray class]] ? json[@"plays"] : @[]];
     g_notYet = [json[@"notYet"] isKindOfClass:[NSDictionary class]] ? json[@"notYet"] : @{};
+    // ("english": versions that stop on a letter of another language - a bug of their own, 13w42b's font)
+    g_english = [NSSet setWithArray:[json[@"english"] isKindOfClass:[NSArray class]] ? json[@"english"] : @[]];
 }
 
 @implementation KOVersion
@@ -32,6 +34,12 @@ static void KOLoadTested(void)
     if (g_notYet[self.identifier]) return KOSupportSoon;
     if ([self.released compare:@"2017-10-25"] != NSOrderedAscending) return KOSupportNever;
     return KOSupportTry;
+}
+
+- (BOOL)englishOnly
+{
+    KOLoadTested();
+    return [g_english containsObject:self.identifier];
 }
 
 - (NSString *)problem
