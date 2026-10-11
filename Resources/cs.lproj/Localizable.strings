@@ -13,6 +13,7 @@
 "it needs more memory than the iPad 2 has." = "potřebuje víc paměti, než má iPad 2.";
 "it stops while making or loading a world." = "zastaví se při vytváření nebo načítání světa.";
 "it stops while starting." = "při startu se zastaví.";
+"it will not start without Twitch's streaming library, which there is none of for iOS (the next snapshots go on without it)." = "bez knihovny Twitche pro streamování nenaběhne a ta pro iOS neexistuje (další snapshoty se bez ní obejdou).";
 "Java has already run since the app was opened: close the app and open it again." ="Java už od otevření aplikace běžela: zavři aplikaci a otevři ji znovu.";
 "Jump" = "Skok";
 "Kostka closes: open it again to play." = "Kostka se zavře: pro další hru ji otevři znovu.";

@@ -13,6 +13,7 @@
 "it needs more memory than the iPad 2 has." = "it needs more memory than the iPad 2 has.";
 "it stops while making or loading a world." = "it stops while making or loading a world.";
 "it stops while starting." = "it stops while starting.";
+"it will not start without Twitch's streaming library, which there is none of for iOS (the next snapshots go on without it)." = "it will not start without Twitch's streaming library, which there is none of for iOS (the next snapshots go on without it).";
 "Java has already run since the app was opened: close the app and open it again." ="Java has already run since the app was opened: close the app and open it again.";
 "Jump" = "Jump";
 "Kostka closes: open it again to play." = "Kostka closes: open it again to play.";

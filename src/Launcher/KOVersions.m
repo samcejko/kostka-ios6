@@ -43,6 +43,7 @@ static void KOLoadTested(void)
         @"crash": L(@"it stops while starting."),
         @"world": L(@"it stops while making or loading a world."),
         @"memory": L(@"it needs more memory than the iPad 2 has."),
+        @"twitch": L(@"it will not start without Twitch's streaming library, which there is none of for iOS (the next snapshots go on without it)."),
     };
     return texts[word] ?: L(@"it did not play in the tries on an iPad 2.");
 }

@@ -13,7 +13,11 @@ backend, and [gl4es](https://github.com/ptitSeb/gl4es) turns the desktop OpenGL 
   take, and sets them once the program is linked) and OpenAL from the system framework (`ios_al.c`).
 - `test/GLTest.java`: the first test: a turning triangle, the mouse under the finger, the keys.
 - `build.sh`: fetches LWJGL 2 (its last sources, 2.9.4) and gl4es at fixed commits, runs LWJGL's generator,
-  builds the jars, and cross-compiles gl4es and LWJGL's natives into one `liblwjgl.dylib` for armv7.
+  builds the jars, and cross-compiles gl4es and LWJGL's natives into one `liblwjgl.dylib` for armv7. Its changes to
+  gl4es: no thread-local storage (iOS 6 has none), functions for two symbol aliases (Darwin has none), and display
+  lists by name only for large ranges - `glGenLists` of more than 65536 names reserves them, as desktop drivers do,
+  instead of making an entry each (Minecraft's 1.7 snapshots ask for 14 million and the memory ran out). LWJGL itself
+  takes the name "iPhone OS X" for its Mac OS X platform.
   The GitHub workflow `lwjgl.yml` runs it; the app takes its result (`Resources/lwjgl`).
 
 ## Licenses
