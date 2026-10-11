@@ -15,6 +15,10 @@ typedef NS_ENUM(NSInteger, KOSupport) {
 @property (nonatomic, copy) NSString *url;          // its JSON
 @property (nonatomic, copy) NSString *sha1;         // of its JSON
 @property (nonatomic, copy) NSString *released;     // "2009-05-13"
+// A version installed here from another (OptiFine's installer: "1.12.2-OptiFine_HD_U_G5", inheritsFrom 1.12.2): the
+// one it is made from. Its JSON is the one in versions/<identifier>; it plays in its parent's folder (the same worlds)
+@property (nonatomic, strong) KOVersion *parent;
+@property (nonatomic, readonly) NSString *optiFineEdition;    // "HD U G5" for an OptiFine version, else nil
 @property (nonatomic, readonly) KOSupport support;
 @property (nonatomic, readonly) NSString *localizedSupport;   // "Plays", "Not yet", ...
 @property (nonatomic, readonly) NSString *problem;            // KOSupportSoon: what went wrong in the tries

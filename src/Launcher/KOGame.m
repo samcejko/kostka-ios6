@@ -236,6 +236,16 @@ static NSArray *g_extraOptions;
     for (int i = 0; i < 4; i++) one();
 }
 
+// A library's file under libraries/, from its Maven name ("optifine:OptiFine:1.12.2_HD_U_G5" ->
+// optifine/OptiFine/1.12.2_HD_U_G5/OptiFine-1.12.2_HD_U_G5.jar)
++ (NSString *)pathOfLibraryNamed:(NSString *)name
+{
+    NSArray *parts = [name componentsSeparatedByString:@":"];
+    if (parts.count < 3) return nil;
+    NSString *file = [NSString stringWithFormat:@"%@-%@%@.jar", parts[1], parts[2], parts.count > 3 ? [@"-" stringByAppendingString:parts[3]] : @""];
+    return [NSString pathWithComponents:@[ [parts[0] stringByReplacingOccurrencesOfString:@"." withString:@"/"], parts[1], parts[2], file ]];
+}
+
 + (void)play:(KOVersion *)version status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))failed
 {
     if (g_running) {
@@ -247,6 +257,61 @@ static NSArray *g_extraOptions;
         g_running = NO;
         failed(e);
     };
+    // A version made from another (OptiFine): its parent is made ready as for itself, then its own JSON goes over the
+    // parent's (the main class, the arguments: launchwrapper and OptiFine's tweaker) and its libraries come first
+    // (OptiFine's, made by its installer here, or launchwrapper from Mojang). It plays in the parent's folder.
+    KOVersion *base = version.parent ?: version;
+    [self prepare:base status:status failed:fail done:^(NSDictionary *baseJson, NSMutableArray *classPath) {
+        NSDictionary *json = baseJson;
+        NSMutableArray *files = [NSMutableArray array];
+        if (version.parent) {
+            NSString *path = [[[KOVersions versionsPath] stringByAppendingPathComponent:version.identifier]
+                              stringByAppendingPathComponent:[version.identifier stringByAppendingPathExtension:@"json"]];
+            NSData *d = [NSData dataWithContentsOfFile:path];
+            NSDictionary *child = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:NULL] : nil;
+            if (![child isKindOfClass:[NSDictionary class]]) {
+                fail([KONet errorWithText:L(@"The installed version's description is not readable.")]);
+                return;
+            }
+            NSMutableDictionary *merged = [baseJson mutableCopy];
+            for (NSString *key in child) {
+                if ([key isEqualToString:@"libraries"] || [key isEqualToString:@"inheritsFrom"] || [key isEqualToString:@"id"]) continue;
+                merged[key] = child[key];
+            }
+            json = merged;
+            NSString *libDir = [self dir:@"libraries"];
+            NSMutableArray *front = [NSMutableArray array];
+            for (NSDictionary *lib in child[@"libraries"]) {
+                if (![lib isKindOfClass:[NSDictionary class]] || ![lib[@"name"] isKindOfClass:[NSString class]] || ![self allowed:lib]) continue;
+                NSDictionary *artifact = lib[@"downloads"][@"artifact"];
+                NSString *rel = [artifact isKindOfClass:[NSDictionary class]] && artifact[@"path"] ? artifact[@"path"] : [self pathOfLibraryNamed:lib[@"name"]];
+                if (!rel) continue;
+                NSString *to = [libDir stringByAppendingPathComponent:rel];
+                [front addObject:to];
+                if ([[NSFileManager defaultManager] fileExistsAtPath:to]) continue;
+                NSString *url = [artifact isKindOfClass:[NSDictionary class]] && artifact[@"url"] ? artifact[@"url"]
+                              : [(lib[@"url"] ?: @"https://libraries.minecraft.net/") stringByAppendingString:rel];
+                [files addObject:@{ @"url": url, @"sha1": artifact[@"sha1"] ?: @"", @"to": to, @"what": L(@"Downloading the libraries") }];
+            }
+            [classPath insertObjects:front atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, front.count)]];
+        }
+        NSString *gameDir = [self dir:[@"games" stringByAppendingPathComponent:base.identifier]];
+        [self fetch:files index:0 status:status done:^(NSError *e) {
+            if (e) { fail(e); return; }
+            [self assets:json gameDir:gameDir status:status done:^(NSString *gameAssets, NSError *e2) {
+                if (e2) { fail(e2); return; }
+                [self start:version json:json heap:[self heapFor:base json:baseJson] classPath:classPath gameDir:gameDir
+                 gameAssets:gameAssets status:status failed:fail];
+            }];
+        }];
+    }];
+}
+
+// The version's JSON (from Mojang), its jar and libraries: `done` gets the JSON and the class path (the libraries,
+// the jar, Kostka's LWJGL)
++ (void)prepare:(KOVersion *)version status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))fail
+           done:(void (^)(NSDictionary *json, NSMutableArray *classPath))done
+{
     NSString *versionDir = [[KOVersions versionsPath] stringByAppendingPathComponent:version.identifier];
     NSString *jsonPath = [versionDir stringByAppendingPathComponent:[version.identifier stringByAppendingPathExtension:@"json"]];
     status(L(@"Asking Mojang about the version"), -1);
@@ -274,14 +339,9 @@ static NSArray *g_extraOptions;
         NSString *lwjgl = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"lwjgl"];
         [classPath addObject:[lwjgl stringByAppendingPathComponent:g_debugGL ? @"lwjgl-debug.jar" : @"lwjgl.jar"]];
         [classPath addObject:[lwjgl stringByAppendingPathComponent:@"lwjgl_util.jar"]];
-
-        NSString *gameDir = [self dir:[@"games" stringByAppendingPathComponent:version.identifier]];
         [self fetch:files index:0 status:status done:^(NSError *e) {
             if (e) { fail(e); return; }
-            [self assets:json gameDir:gameDir status:status done:^(NSString *gameAssets, NSError *e2) {
-                if (e2) { fail(e2); return; }
-                [self start:version json:json classPath:classPath gameDir:gameDir gameAssets:gameAssets status:status failed:fail];
-            }];
+            done(json, classPath);
         }];
     }];
 }
@@ -305,8 +365,9 @@ static NSArray *g_extraOptions;
            }];
 }
 
-+ (void)start:(KOVersion *)version json:(NSDictionary *)json classPath:(NSArray *)classPath gameDir:(NSString *)gameDir
-   gameAssets:(NSString *)gameAssets status:(void (^)(NSString *, float))status failed:(void (^)(NSError *))failed
++ (void)start:(KOVersion *)version json:(NSDictionary *)json heap:(NSString *)heap classPath:(NSArray *)classPath
+      gameDir:(NSString *)gameDir gameAssets:(NSString *)gameAssets status:(void (^)(NSString *, float))status
+       failed:(void (^)(NSError *))failed
 {
     NSArray *args = [self arguments:json version:version gameDir:gameDir gameAssets:gameAssets];
     // (the first start of a version: settings the iPad can carry - the shortest view, plain graphics - and the
@@ -337,7 +398,7 @@ static NSArray *g_extraOptions;
     // AWT is Kostka's (lwjgl/awt): windows that exist without being drawn - Classic to 1.5.2 put the game in an
     // applet in a frame - and pictures drawn in Java. Swing, which launchwrapper touches, with its own look.)
     NSArray *options = @[
-        [self heapFor:version json:json],
+        heap,
         @"-Xmn24m",
         @"-XX:MinHeapFreeRatio=10",
         @"-XX:MaxHeapFreeRatio=30",

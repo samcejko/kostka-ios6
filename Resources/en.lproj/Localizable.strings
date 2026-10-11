@@ -50,6 +50,7 @@
 "Show the frame rate (FPS)" = "Show the frame rate (FPS)";
 "The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint." = "The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint.";
 "Movement" = "Movement";
+"The installed version's description is not readable." = "The installed version's description is not readable.";
 "Arrows" = "Arrows";
 "Joystick" = "Joystick";
 "Snapshots too new for iOS 6" = "Snapshots too new for iOS 6";

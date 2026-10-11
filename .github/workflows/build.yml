@@ -120,6 +120,15 @@ jobs:
           (cd /tmp/javatest && "${JAVA_HOME_8_X64:-$JAVA_HOME}/bin/jar" cf "$GITHUB_WORKSPACE/Resources/test/hello.jar" .)
           ls -la Resources/test
 
+      - name: Kostka's Java helpers (OptiFine's installer without its window)
+        run: |
+          set -e
+          JAVAC="${JAVA_HOME_8_X64:-$JAVA_HOME}/bin/javac"
+          mkdir -p /tmp/javahelpers Resources/java
+          "$JAVAC" -source 1.8 -target 1.8 -d /tmp/javahelpers src/Java/helpers/*.java
+          (cd /tmp/javahelpers && "${JAVA_HOME_8_X64:-$JAVA_HOME}/bin/jar" cf "$GITHUB_WORKSPACE/Resources/java/kostka-helpers.jar" .)
+          ls -la Resources/java
+
       - name: The Java runtime (the latest successful build of jre.yml)
         env:
           GH_TOKEN: ${{ github.token }}

@@ -50,6 +50,7 @@
 "Show the frame rate (FPS)" = "Ukazovat snímky za sekundu (FPS)";
 "The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint." = "Snímky za sekundu se ukazují ve hře vlevo nahoře. Joystickem chodíš všemi směry; vytažený dopředu až k okraji = sprint.";
 "Movement" = "Pohyb";
+"The installed version's description is not readable." = "Popis nainstalované verze se nedá přečíst.";
 "Arrows" = "Šipky";
 "Joystick" = "Joystick";
 "Snapshots too new for iOS 6" = "Snapshoty na iOS 6 příliš nové";

@@ -28,9 +28,11 @@ static void KOLoadTested(void)
 - (KOSupport)support
 {
     // The whole LWJGL 2 era runs on Kostka's Java, windows and OpenGL; 17w43a, the first 1.13 snapshot (October
-    // 2017), moved to LWJGL 3
+    // 2017), moved to LWJGL 3. A version made from another (OptiFine) plays where it was tried, else as its parent
+    // would, not tried yet.
     KOLoadTested();
     if ([g_plays containsObject:self.identifier]) return KOSupportPlays;
+    if (self.parent) return self.parent.support == KOSupportNever ? KOSupportNever : KOSupportTry;
     if (g_notYet[self.identifier]) return KOSupportSoon;
     if ([self.released compare:@"2017-10-25"] != NSOrderedAscending) return KOSupportNever;
     return KOSupportTry;
@@ -64,6 +66,13 @@ static void KOLoadTested(void)
         case KOSupportSoon: return L(@"Not yet");
         default: return L(@"Too new for iOS 6");
     }
+}
+
+- (NSString *)optiFineEdition
+{
+    NSRange r = [self.identifier rangeOfString:@"-OptiFine_"];
+    if (r.location == NSNotFound) return nil;
+    return [[self.identifier substringFromIndex:NSMaxRange(r)] stringByReplacingOccurrencesOfString:@"_" withString:@" "];
 }
 
 - (NSString *)localizedReleased
@@ -115,19 +124,47 @@ static void KOLoadTested(void)
     return list.count ? list : nil;
 }
 
+// The versions installed here from others (OptiFine): folders in versions/ whose JSON names a version of the list it
+// inherits from, after the list's
++ (NSArray *)withInstalled:(NSArray *)list
+{
+    if (!list) return nil;
+    NSMutableDictionary *byId = [NSMutableDictionary dictionary];
+    for (KOVersion *v in list) byId[v.identifier] = v;
+    NSMutableArray *all = [list mutableCopy];
+    NSString *root = [self versionsPath];
+    NSArray *names = [[[NSFileManager defaultManager] contentsOfDirectoryAtPath:root error:NULL] sortedArrayUsingSelector:@selector(compare:)];
+    for (NSString *name in names.reverseObjectEnumerator) {
+        if (byId[name]) continue;
+        NSString *path = [[root stringByAppendingPathComponent:name] stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"json"]];
+        NSData *d = [NSData dataWithContentsOfFile:path];
+        NSDictionary *json = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:NULL] : nil;
+        if (![json isKindOfClass:[NSDictionary class]] || ![json[@"inheritsFrom"] isKindOfClass:[NSString class]]) continue;
+        KOVersion *parent = byId[json[@"inheritsFrom"]];
+        if (!parent) continue;
+        KOVersion *v = [[KOVersion alloc] init];
+        v.identifier = name;
+        v.type = parent.type;
+        v.released = parent.released;
+        v.parent = parent;
+        [all addObject:v];
+    }
+    return all;
+}
+
 + (void)load:(void (^)(NSArray *, NSError *))done
 {
     [KONet fetchJSON:[NSURL URLWithString:KOManifestURL] done:^(id json, NSData *data, NSError *error) {
         NSArray *list = [self parse:json];
         if (list) {
             [data writeToFile:[self manifestPath] atomically:YES];
-            done(list, nil);
+            done([self withInstalled:list], nil);
             return;
         }
         // (offline: the list from the last time)
         NSData *cached = [NSData dataWithContentsOfFile:[self manifestPath]];
         id old = cached ? [NSJSONSerialization JSONObjectWithData:cached options:0 error:NULL] : nil;
-        list = [self parse:old];
+        list = [self withInstalled:[self parse:old]];
         done(list, list ? nil : (error ?: [KONet errorWithText:L(@"Mojang's list of versions is not readable.")]));
     }];
 }
