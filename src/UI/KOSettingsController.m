@@ -26,19 +26,20 @@
     self.tableView.backgroundView = back;
 }
 
+// (sections: the player, the game, the versions, about)
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 3;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return section == 1 ? 3 : 1;
+    return section == 2 ? 3 : 1;
 }
 
 - (NSString *)titleFor:(NSInteger)section
 {
-    return section == 0 ? L(@"Player") : section == 1 ? L(@"Versions") : L(@"About");
+    return section == 0 ? L(@"Player") : section == 1 ? L(@"In the game") : section == 2 ? L(@"Versions") : L(@"About");
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
@@ -54,8 +55,9 @@
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
     NSString *text = section == 0 ? L(@"The name the old versions show for the player.")
-                   : section == 1 ? L(@"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another.")
-                   : section == 2 ? L(@"Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).")
+                   : section == 1 ? L(@"The frames the game draws in a second, in its upper left corner.")
+                   : section == 2 ? L(@"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.")
+                   : section == 3 ? L(@"Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).")
                                   : nil;
     if (!text) return nil;
     UILabel *l = [KOStyle labelWithFont:[UIFont systemFontOfSize:14]];
@@ -93,14 +95,16 @@
         field.delegate = self;
         field.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
         cell.accessoryView = field;
-    } else if (indexPath.section == 1) {
-        NSString *key = [self switchKey:indexPath.row];
-        cell.textLabel.text = indexPath.row == 0 ? L(@"Show snapshots")
-                            : indexPath.row == 1 ? L(@"Try the versions that do not run yet") : L(@"Download sounds and music (100 MB and more)");
+    } else if (indexPath.section == 1 || indexPath.section == 2) {
+        // (a switch's tag: its row, 10 more in the versions' section)
+        NSInteger tag = indexPath.section == 1 ? indexPath.row : 10 + indexPath.row;
+        cell.textLabel.text = tag == 0 ? L(@"Show the frame rate (FPS)")
+                            : tag == 10 ? L(@"Show snapshots")
+                            : tag == 11 ? L(@"Try the versions that do not run yet") : L(@"Download sounds and music (100 MB and more)");
         UISwitch *s = [[UISwitch alloc] init];
-        s.on = [[NSUserDefaults standardUserDefaults] boolForKey:key];
+        s.on = [[NSUserDefaults standardUserDefaults] boolForKey:[self switchKey:tag]];
         s.onTintColor = [KOStyle barColor];
-        s.tag = indexPath.row;
+        s.tag = tag;
         [s addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
         cell.accessoryView = s;
     } else {
@@ -114,15 +118,15 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    if (indexPath.section == 2) {
+    if (indexPath.section == 3) {
         KOAppDelegate *app = (KOAppDelegate *)[UIApplication sharedApplication].delegate;
         [self.navigationController pushViewController:app.probe animated:YES];
     }
 }
 
-- (NSString *)switchKey:(NSInteger)row
+- (NSString *)switchKey:(NSInteger)tag
 {
-    return row == 0 ? @"KOShowSnapshots" : row == 1 ? @"KOTryAll" : @"KOSounds";
+    return tag == 0 ? @"KOShowFPS" : tag == 10 ? @"KOShowSnapshots" : tag == 11 ? @"KOTryAll" : @"KOSounds";
 }
 
 - (void)switchChanged:(UISwitch *)s

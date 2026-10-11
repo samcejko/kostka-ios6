@@ -27,6 +27,8 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     KOLog(@"Kostka %@ starting", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"]);
+    // (the frame rate in the game's corner: on until switched off in the settings; LWJGL reads it too)
+    [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"KOShowFPS": @YES }];
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.probe = [[KOProbeController alloc] init];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:[[KOVersionListController alloc] init]];

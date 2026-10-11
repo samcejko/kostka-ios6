@@ -59,18 +59,22 @@
     }];
 }
 
-// The versions by kind, newest first, each with what it does here; the releases too new for iOS 6 at the end (the
-// snapshots of that time are left out: hundreds of them)
+// The versions by kind, newest first, each with what it does here; the releases too new for iOS 6 at the end, and
+// the snapshots of that time after them when snapshots are shown and so are the versions that do not run yet
+// (hundreds of them)
 - (void)arrange
 {
-    BOOL snapshots = [[NSUserDefaults standardUserDefaults] boolForKey:@"KOShowSnapshots"];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL snapshots = [defaults boolForKey:@"KOShowSnapshots"];
+    BOOL all = snapshots && [defaults boolForKey:@"KOTryAll"];
     NSMutableArray *releases = [NSMutableArray array], *betas = [NSMutableArray array], *alphas = [NSMutableArray array],
-                   *snaps = [NSMutableArray array], *tooNew = [NSMutableArray array];
+                   *snaps = [NSMutableArray array], *tooNew = [NSMutableArray array], *tooNewSnaps = [NSMutableArray array];
     for (KOVersion *v in self.versions) {
         BOOL snapshot = ![v.type isEqualToString:@"release"] && ![v.type isEqualToString:@"old_beta"] &&
                         ![v.type isEqualToString:@"old_alpha"];
         if (v.support == KOSupportNever) {
             if (!snapshot) [tooNew addObject:v];
+            else if (all) [tooNewSnaps addObject:v];
         } else if ([v.type isEqualToString:@"release"]) {
             [releases addObject:v];
         } else if ([v.type isEqualToString:@"old_beta"]) {
@@ -87,6 +91,7 @@
     if (alphas.count) [sections addObject:@{ @"title": L(@"Alpha, Infdev, Classic"), @"versions": alphas }];
     if (snaps.count) [sections addObject:@{ @"title": L(@"Snapshots"), @"versions": snaps }];
     if (tooNew.count) [sections addObject:@{ @"title": L(@"Too new for iOS 6"), @"versions": tooNew }];
+    if (tooNewSnaps.count) [sections addObject:@{ @"title": L(@"Snapshots too new for iOS 6"), @"versions": tooNewSnaps }];
     self.sections = sections;
     [self.tableView reloadData];
 }

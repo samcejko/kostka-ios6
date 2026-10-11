@@ -280,6 +280,10 @@ static void ko_set_inactive(int inactive)
     CGFloat moved, restX, restY;
     NSTimeInterval began;
     NSTimer *holdTimer;
+    UILabel *fpsLabel;          // the frame rate, upper left (the app's setting KOShowFPS)
+    NSTimer *fpsTimer;
+    int fpsFrames;
+    CFAbsoluteTime fpsTime;
 }
 @end
 
@@ -317,11 +321,13 @@ static void ko_set_inactive(int inactive)
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [holdTimer invalidate];
+    [fpsTimer invalidate];
     textInput.delegate = nil;
     [glView release];
     [controls release];
     [moveControls release];
     [textInput release];
+    [fpsLabel release];
     [super dealloc];
 }
 
@@ -381,6 +387,38 @@ static void ko_set_inactive(int inactive)
     textInput.text = @" ";   // (something to delete: a backspace on an empty field is not reported)
     textInput.delegate = self;
     [self addSubview:textInput];
+
+    // the frame rate, upper left: the frames the game finished in the last second
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"KOShowFPS"]) {
+        fpsLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 84, 26)];
+        fpsLabel.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
+        fpsLabel.backgroundColor = [UIColor colorWithWhite:0.1 alpha:0.5];
+        fpsLabel.layer.cornerRadius = 6;
+        fpsLabel.layer.borderWidth = 1;
+        fpsLabel.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.35].CGColor;
+        fpsLabel.textAlignment = NSTextAlignmentCenter;
+        fpsLabel.font = [UIFont boldSystemFontOfSize:15];
+        fpsLabel.textColor = [UIColor colorWithWhite:1 alpha:0.92];
+        fpsLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.6];
+        fpsLabel.shadowOffset = CGSizeMake(0, 1);
+        fpsLabel.userInteractionEnabled = NO;
+        fpsLabel.text = @"– FPS";
+        [controls addSubview:fpsLabel];
+        fpsFrames = ko_game_frames;
+        fpsTime = CFAbsoluteTimeGetCurrent();
+        fpsTimer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(updateFPS) userInfo:nil repeats:YES];
+    }
+}
+
+- (void)updateFPS
+{
+    int frames = ko_game_frames;
+    CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+    double fps = now > fpsTime ? (frames - fpsFrames) / (now - fpsTime) : 0;
+    fpsFrames = frames;
+    fpsTime = now;
+    // (below 10 with a tenth: a heavy shader's 0.3)
+    fpsLabel.text = fps < 9.95 ? [NSString stringWithFormat:@"%.1f FPS", fps] : [NSString stringWithFormat:@"%.0f FPS", fps];
 }
 
 - (void)layoutGame
@@ -409,6 +447,9 @@ static void ko_set_inactive(int inactive)
     if (!newSuperview) {
         [holdTimer invalidate];
         holdTimer = nil;
+        // (the timer holds the view: it lets go of it here, when the game's window closes)
+        [fpsTimer invalidate];
+        fpsTimer = nil;
         [textInput resignFirstResponder];
     }
 }

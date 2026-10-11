@@ -45,7 +45,11 @@
 "The game has stopped" = "The game has stopped";
 "The name the old versions show for the player." = "The name the old versions show for the player.";
 "The server answered %ld." = "The server answered %ld.";
-"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another." = "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another.";
+"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too." = "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.";
+"In the game" = "In the game";
+"Show the frame rate (FPS)" = "Show the frame rate (FPS)";
+"The frames the game draws in a second, in its upper left corner." = "The frames the game draws in a second, in its upper left corner.";
+"Snapshots too new for iOS 6" = "Snapshots too new for iOS 6";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.";
 "Too new for iOS 6" = "Too new for iOS 6";
 "Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12)." = "Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12).";

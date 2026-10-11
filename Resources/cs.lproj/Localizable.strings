@@ -45,7 +45,11 @@
 "The game has stopped" = "Hra skončila";
 "The name the old versions show for the player." = "Jméno, které staré verze ukazují u hráče.";
 "The server answered %ld." = "Server odpověděl %ld.";
-"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another." = "Verze, které zatím nejdou, se nemusí spustit, nebo brzy skončí: Kostka se k nim dostává krok za krokem.";
+"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too." = "Verze, které zatím nejdou, se nemusí spustit, nebo brzy skončí: Kostka se k nim dostává krok za krokem. Se zapnutými snapshoty se ukážou i snapshoty, které jsou na iOS 6 příliš nové.";
+"In the game" = "Ve hře";
+"Show the frame rate (FPS)" = "Ukazovat snímky za sekundu (FPS)";
+"The frames the game draws in a second, in its upper left corner." = "Kolik snímků za sekundu hra kreslí, ukazuje se vlevo nahoře.";
+"Snapshots too new for iOS 6" = "Snapshoty na iOS 6 příliš nové";
 "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "Tahle verze potřebuje LWJGL 3 a novější OpenGL i Javu, než Kostka má: víc, než iOS 6 a tento iPad dokážou dát.";
 "Too new for iOS 6" = "Na iOS 6 příliš nová";
 "Tried on an iPad 2: this version starts, makes a new world and plays in it. A new world takes from half a minute (Alpha) to three (1.12)." = "Vyzkoušeno na iPadu 2: tahle verze se spustí, vytvoří nový svět a dá se v něm hrát. Nový svět trvá od půl minuty (Alfa) po tři minuty (1.12).";
