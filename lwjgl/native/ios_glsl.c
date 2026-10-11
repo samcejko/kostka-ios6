@@ -8,6 +8,13 @@
 // views of the mobs a spectator enters, Super Secret Settings, the April 2015 snapshot, which stops when its shader
 // does not compile). Here the initial values are taken out of the source given to glShaderSource and set with
 // glUniform once the program is linked. All of it runs on the game's thread, the one with the OpenGL context.
+//
+// And a fragment shader's loop that runs as many times as a uniform says - Minecraft's blur reads 41 texels a pixel
+// at the radius of 20 its Super Secret Settings give it, blobs2 loops over a square, 256 of them - is more than the
+// iPad 2's graphics can do for a whole screen: such a frame takes seconds, and a Minecraft frame of more than a
+// second stops the game's clock (the game stands still for good, clicks and keys included). Such a uniform is used
+// as min(uniform, cap): 8 for one loop over it, 3 for loops in loops. The effect keeps its kind, with a smaller
+// radius. (KOSTKA_LOOP_CAPS=one,nested sets the caps for a test; 0 leaves the loops as they are.)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,6 +108,129 @@ static int ko_numbers(const char *from, const char *to, float *out, int max)
     return n;
 }
 
+static int ko_ident(char c)
+{
+    return isalnum((unsigned char)c) || c == '_';
+}
+
+#define KO_MAX_LOOP_UNIFORMS 16
+
+typedef struct {
+    char name[64];
+    size_t declared;   // where its declaration ends: the uses come after it
+    int loops;         // the loop headers that name it
+    int cap;           // 0: left as it is
+} ko_loop_uniform;
+
+// A fragment shader whose loops are bound by float uniforms, rewritten with each of them as min(name, cap) after its
+// declaration; NULL when there is nothing to do (a vertex shader, no such loop, the caps set to 0)
+static char *ko_cap_loops(const char *src)
+{
+    static int one = -1, nested = -1;
+    if (one < 0) {
+        int a = 8, b = 3;
+        const char *env = getenv("KOSTKA_LOOP_CAPS");
+        if (env && sscanf(env, "%d,%d", &a, &b) == 1) b = a;
+        one = a < 0 ? 0 : a > 999 ? 999 : a;
+        nested = b < 0 ? 0 : b > 999 ? 999 : b;
+    }
+    if ((!one && !nested) || (!strstr(src, "gl_FragColor") && !strstr(src, "gl_FragData"))) return NULL;
+
+    // the float uniforms
+    ko_loop_uniform u[KO_MAX_LOOP_UNIFORMS];
+    int count = 0;
+    for (const char *p = src; (p = strstr(p, "uniform")) != NULL; p += 7) {
+        if ((p > src && ko_ident(p[-1])) || !isspace((unsigned char)p[7])) continue;
+        const char *q = p + 7;
+        while (isspace((unsigned char)*q)) q++;
+        if (!strncmp(q, "lowp", 4) || !strncmp(q, "mediump", 7) || !strncmp(q, "highp", 5)) {
+            while (*q && !isspace((unsigned char)*q)) q++;
+            while (isspace((unsigned char)*q)) q++;
+        }
+        if (strncmp(q, "float", 5) || ko_ident(q[5])) continue;
+        q += 5;
+        while (isspace((unsigned char)*q)) q++;
+        size_t n = 0;
+        while (ko_ident(q[n])) n++;
+        const char *semicolon = strchr(q + n, ';');
+        if (!semicolon) break;
+        if (!n || n >= sizeof u[0].name || count == KO_MAX_LOOP_UNIFORMS) continue;
+        memcpy(u[count].name, q, n);
+        u[count].name[n] = 0;
+        u[count].declared = (size_t)(semicolon + 1 - src);
+        u[count].loops = u[count].cap = 0;
+        count++;
+    }
+
+    // the loops' headers, "for (...)", that name them
+    for (const char *p = src; (p = strstr(p, "for")) != NULL; p += 3) {
+        if ((p > src && ko_ident(p[-1])) || ko_ident(p[3])) continue;
+        const char *open = p + 3;
+        while (isspace((unsigned char)*open)) open++;
+        if (*open != '(') continue;
+        const char *close = open;
+        int depth = 0;
+        for (; *close; close++) {
+            if (*close == '(') depth++;
+            else if (*close == ')' && --depth == 0) break;
+        }
+        if (!*close) break;
+        for (int i = 0; i < count; i++) {
+            size_t n = strlen(u[i].name);
+            for (const char *t = open; (t = strstr(t, u[i].name)) != NULL && t < close; t += n) {
+                if (!ko_ident(t[-1]) && !ko_ident(t[n])) {
+                    u[i].loops++;
+                    break;
+                }
+            }
+        }
+    }
+    int any = 0;
+    for (int i = 0; i < count; i++) {
+        if (u[i].loops) u[i].cap = u[i].loops > 1 ? nested : one;
+        if (u[i].cap) any = 1;
+    }
+    if (!any) return NULL;
+
+    // each use after the declaration becomes min(name, cap)
+    size_t size = strlen(src) + 1;
+    for (const char *p = src; *p; p++) {
+        if (!(isalpha((unsigned char)*p) || *p == '_') || (p > src && ko_ident(p[-1]))) continue;
+        size_t n = 0;
+        while (ko_ident(p[n])) n++;
+        for (int i = 0; i < count; i++)
+            if (u[i].cap && (size_t)(p - src) >= u[i].declared && n == strlen(u[i].name) && !strncmp(p, u[i].name, n))
+                size += 16;   // ("min(" "," "999" ".0)")
+        p += n - 1;
+    }
+    char *out = malloc(size);
+    if (!out) return NULL;
+    char *o = out;
+    for (const char *p = src; *p;) {
+        if ((isalpha((unsigned char)*p) || *p == '_') && !(p > src && ko_ident(p[-1]))) {
+            size_t n = 0;
+            while (ko_ident(p[n])) n++;
+            int capped = -1;
+            for (int i = 0; i < count && capped < 0; i++)
+                if (u[i].cap && (size_t)(p - src) >= u[i].declared && n == strlen(u[i].name) && !strncmp(p, u[i].name, n))
+                    capped = i;
+            if (capped >= 0) {
+                o += sprintf(o, "min(%s,%d.0)", u[capped].name, u[capped].cap);
+            } else {
+                memcpy(o, p, n);
+                o += n;
+            }
+            p += n;
+        } else {
+            *o++ = *p++;
+        }
+    }
+    *o = 0;
+    for (int i = 0; i < count; i++)
+        if (u[i].cap) fprintf(stderr, "Kostka: a fragment shader's loops over %s go to at most %d\n", u[i].name, u[i].cap);
+    return out;
+}
+
 static ko_shader_inits *ko_shader_entry(ko_uint shader, int create)
 {
     ko_shader_inits *free_slot = NULL;
@@ -180,6 +310,12 @@ static void ko_glShaderSource(ko_uint shader, int count, const char *const *stri
         memset(q, ' ', (size_t)(semicolon - q));
         found = 1;
         p = semicolon;
+    }
+    char *capped = ko_cap_loops(src);
+    if (capped) {
+        free(src);
+        src = capped;
+        found = 1;
     }
     if (found) {
         const char *one = src;
