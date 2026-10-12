@@ -261,6 +261,8 @@ static NSString *KOOptiFineText(NSString *raw)
     });
     NSMutableArray *lines = [NSMutableArray array];
     BOOL empty = YES;
+    // (its lines end in CR LF)
+    raw = [raw stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\n"];
     for (NSString *r in [raw componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]]) {
         NSString *line = [r stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         line = [issues stringByReplacingMatchesInString:line options:0 range:NSMakeRange(0, line.length) withTemplate:@""];
@@ -716,7 +718,7 @@ static BOOL KOIsHeading(NSString *line)
 
 + (void)loadOptiFine:(NSString *)file done:(void (^)(NSString *, NSError *))done
 {
-    NSString *cache = [self pathOf:[file stringByAppendingString:@".1.txt"]];
+    NSString *cache = [self pathOf:[file stringByAppendingString:@".2.txt"]];
     NSString *kept = [NSString stringWithContentsOfFile:cache encoding:NSUTF8StringEncoding error:NULL];
     if (kept.length) {
         done(kept, nil);

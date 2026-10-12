@@ -121,6 +121,13 @@
         }];
         return YES;
     }
+    // kostka:scroll?y=1400: the list on the screen scrolled to there (tests)
+    if ([target isEqualToString:@"scroll"]) {
+        UIViewController *top = [(UINavigationController *)self.window.rootViewController topViewController];
+        if ([top isKindOfClass:[UITableViewController class]])
+            [[(UITableViewController *)top tableView] setContentOffset:CGPointMake(0, [p[@"y"] floatValue]) animated:NO];
+        return YES;
+    }
     // kostka:fetch?url=https%3A%2F%2F...: whether this iOS reaches a site (its TLS, its certificates): the log says
     if ([target isEqualToString:@"fetch"] && p[@"url"]) {
         NSString *address = p[@"url"];
