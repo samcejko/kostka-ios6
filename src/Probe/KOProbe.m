@@ -35,7 +35,7 @@ static double KOResidentMB(void)
 static void KOInfo(KOOut out)
 {
     UIDevice *d = [UIDevice currentDevice];
-    out([NSString stringWithFormat:@"device %@, iOS %@, %lu cores, %.0f MB RAM", KOSysctl("hw.machine"), d.systemVersion,
+    out([NSString stringWithFormat:L(@"device %@, iOS %@, %lu cores, %.0f MB RAM"), KOSysctl("hw.machine"), d.systemVersion,
          (unsigned long)[NSProcessInfo processInfo].processorCount, [NSProcessInfo processInfo].physicalMemory / 1048576.0]);
     vm_size_t page = 0;
     host_page_size(mach_host_self(), &page);
@@ -43,15 +43,15 @@ static void KOInfo(KOOut out)
     mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
     if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vm, &count) == KERN_SUCCESS) {
         double mb = page / 1048576.0;
-        out([NSString stringWithFormat:@"memory now: free %.0f MB, active %.0f, inactive %.0f, wired %.0f (page %lu)",
+        out([NSString stringWithFormat:L(@"memory now: free %.0f MB, active %.0f, inactive %.0f, wired %.0f (page %lu)"),
              vm.free_count * mb, vm.active_count * mb, vm.inactive_count * mb, vm.wire_count * mb, (unsigned long)page]);
     }
-    out([NSString stringWithFormat:@"this app: resident %.0f MB, home %@", KOResidentMB(), NSHomeDirectory()]);
+    out([NSString stringWithFormat:L(@"this app: resident %.0f MB, home %@"), KOResidentMB(), NSHomeDirectory()]);
     struct rlimit rl;
-    if (getrlimit(RLIMIT_STACK, &rl) == 0) out([NSString stringWithFormat:@"stack limit %llu KB", (unsigned long long)rl.rlim_cur / 1024]);
+    if (getrlimit(RLIMIT_STACK, &rl) == 0) out([NSString stringWithFormat:L(@"stack limit %llu KB"), (unsigned long long)rl.rlim_cur / 1024]);
     NSDictionary *fs = [[NSFileManager defaultManager] attributesOfFileSystemForPath:NSHomeDirectory() error:NULL];
-    out([NSString stringWithFormat:@"free storage %.0f MB", [fs[NSFileSystemFreeSize] doubleValue] / 1048576.0]);
-    out([NSString stringWithFormat:@"bundle %@", [NSBundle mainBundle].bundlePath]);
+    out([NSString stringWithFormat:L(@"free storage %.0f MB"), [fs[NSFileSystemFreeSize] doubleValue] / 1048576.0]);
+    out([NSString stringWithFormat:L(@"app bundle %@"), [NSBundle mainBundle].bundlePath]);
 }
 
 #pragma mark - Generated code
@@ -80,14 +80,14 @@ static void KOJit(BOOL writeThenExecute, KOOut out)
     int prot = writeThenExecute ? (PROT_READ | PROT_WRITE) : (PROT_READ | PROT_WRITE | PROT_EXEC);
     uint32_t *code = mmap(NULL, len, prot, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (code == MAP_FAILED) {
-        out([NSString stringWithFormat:@"jit: mmap(%@) failed: %s", writeThenExecute ? @"RW" : @"RWX", strerror(errno)]);
+        out([NSString stringWithFormat:L(@"jit: mmap(%@) failed: %s"), writeThenExecute ? @"RW" : @"RWX", strerror(errno)]);
         return;
     }
-    out([NSString stringWithFormat:@"jit: mmap(%@) ok at %p", writeThenExecute ? @"RW" : @"RWX", code]);
+    out([NSString stringWithFormat:L(@"jit: mmap(%@) works, at %p"), writeThenExecute ? @"RW" : @"RWX", code]);
     code[0] = 0xe3a0002a;   // mov r0, #42
     code[1] = 0xe12fff1e;   // bx lr
     if (writeThenExecute && mprotect(code, len, PROT_READ | PROT_EXEC) != 0) {
-        out([NSString stringWithFormat:@"jit: mprotect(RX) failed: %s", strerror(errno)]);
+        out([NSString stringWithFormat:L(@"jit: mprotect(RX) failed: %s"), strerror(errno)]);
         munmap(code, len);
         return;
     }
@@ -96,7 +96,7 @@ static void KOJit(BOOL writeThenExecute, KOOut out)
     int first = ((int (*)(void))code)();
     // (a JIT patches its code after it has run)
     if (writeThenExecute && mprotect(code, len, PROT_READ | PROT_WRITE) != 0) {
-        out([NSString stringWithFormat:@"jit: ran (%d), but mprotect(RW) back failed: %s", first, strerror(errno)]);
+        out([NSString stringWithFormat:L(@"jit: ran (%d), but mprotect(RW) back failed: %s"), first, strerror(errno)]);
         munmap(code, len);
         return;
     }
@@ -104,8 +104,8 @@ static void KOJit(BOOL writeThenExecute, KOOut out)
     if (writeThenExecute) mprotect(code, len, PROT_READ | PROT_EXEC);
     sys_icache_invalidate(code, 8);
     int patched = ((int (*)(void))code)();
-    out([NSString stringWithFormat:@"jit: generated code ran: %d, after patching: %d %@", first, patched,
-         (first == 42 && patched == 7) ? @"OK" : @"WRONG"]);
+    out([NSString stringWithFormat:L(@"jit: generated code ran: %d, after patching: %d %@"), first, patched,
+         (first == 42 && patched == 7) ? L(@"OK") : L(@"WRONG")]);
 
     // A load from a guarded page in generated code, the fault taken over by a signal handler
     void *guard = mmap(NULL, 4096, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
@@ -127,8 +127,8 @@ static void KOJit(BOOL writeThenExecute, KOOut out)
     int recovered = ((int (*)(uintptr_t))code)((uintptr_t)guard);
     sigaction(SIGSEGV, &oldSegv, NULL);
     sigaction(SIGBUS, &oldBus, NULL);
-    out([NSString stringWithFormat:@"jit: fault in generated code handled: returned %d, %d fault(s) %@", recovered, g_faultsCaught,
-         (recovered == 99 && g_faultsCaught == 1) ? @"OK" : @"WRONG"]);
+    out([NSString stringWithFormat:L(@"jit: fault in generated code handled: returned %d, %d fault(s) %@"), recovered, g_faultsCaught,
+         (recovered == 99 && g_faultsCaught == 1) ? L(@"OK") : L(@"WRONG")]);
     munmap(guard, 4096);
     munmap(code, len);
 }
@@ -144,16 +144,16 @@ static void KOAddressSpace(KOOut out)
         best = mb;
         munmap(p, mb << 20);
     }
-    out([NSString stringWithFormat:@"vm: largest single reservation %lu MB", (unsigned long)best]);
+    out([NSString stringWithFormat:L(@"vm: largest single reservation %lu MB"), (unsigned long)best]);
     // (the Java heap is reserved whole, then committed as it grows)
     size_t reserve = 512u << 20, commit = 64u << 20;
     char *p = mmap(NULL, reserve, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
-    if (p == MAP_FAILED) { out(@"vm: reserving 512 MB failed"); return; }
+    if (p == MAP_FAILED) { out(L(@"vm: reserving 512 MB failed")); return; }
     if (mprotect(p, commit, PROT_READ | PROT_WRITE) != 0) {
-        out([NSString stringWithFormat:@"vm: committing in a reservation failed: %s", strerror(errno)]);
+        out([NSString stringWithFormat:L(@"vm: committing in a reservation failed: %s"), strerror(errno)]);
     } else {
         memset(p, 1, commit);
-        out([NSString stringWithFormat:@"vm: 64 MB committed inside a 512 MB reservation, resident %.0f MB", KOResidentMB()]);
+        out([NSString stringWithFormat:L(@"vm: 64 MB committed inside a 512 MB reservation, resident %.0f MB"), KOResidentMB()]);
     }
     munmap(p, reserve);
 }
@@ -165,13 +165,13 @@ static void KOMemory(KOOut out)
     int n = 0;
     for (; n < kMaxSteps; n++) {
         void *b = mmap(NULL, kStepMB << 20, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
-        if (b == MAP_FAILED) { out([NSString stringWithFormat:@"mem: mmap failed after %d MB", n * kStepMB]); break; }
+        if (b == MAP_FAILED) { out([NSString stringWithFormat:L(@"mem: mmap failed after %d MB"), n * kStepMB]); break; }
         memset(b, n + 1, kStepMB << 20);
         chunks[n] = b;
         KOLog(@"probe mem: %d MB touched, resident %.0f MB", (n + 1) * kStepMB, KOResidentMB());
         usleep(40000);
     }
-    out([NSString stringWithFormat:@"mem: survived %d MB", n * kStepMB]);
+    out([NSString stringWithFormat:L(@"mem: survived %d MB"), n * kStepMB]);
     for (int i = 0; i < n; i++) munmap(chunks[i], kStepMB << 20);
 }
 
@@ -186,7 +186,7 @@ static NSString *KOGLString(GLenum e)
 static void KOGL(KOOut out)
 {
     EAGLContext *ctx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-    if (!ctx || ![EAGLContext setCurrentContext:ctx]) { out(@"gl: no OpenGL ES 2.0 context"); return; }
+    if (!ctx || ![EAGLContext setCurrentContext:ctx]) { out(L(@"gl: no OpenGL ES 2.0 context")); return; }
     out([NSString stringWithFormat:@"gl: %@ | %@ | %@ | GLSL %@", KOGLString(GL_VENDOR), KOGLString(GL_RENDERER),
          KOGLString(GL_VERSION), KOGLString(GL_SHADING_LANGUAGE_VERSION)]);
     struct { GLenum e; const char *name; } ints[] = {
@@ -235,7 +235,7 @@ static void KOCPU(KOOut out)
     g_sink = dst[size / 2];
     free(src);
     free(dst);
-    out([NSString stringWithFormat:@"cpu: 50M integer steps %.0f ms, 20M double steps %.0f ms, memcpy %.0f MB/s",
+    out([NSString stringWithFormat:L(@"cpu: 50M integer steps %.0f ms, 20M double steps %.0f ms, memcpy %.0f MB/s"),
          (t1 - t0) * 1000, (t2 - t1) * 1000, 128.0 / (t4 - t3)]);
 }
 
@@ -265,7 +265,7 @@ static void KOCPU(KOOut out)
             else if ([test isEqualToString:@"vm"]) KOAddressSpace(out);
             else if ([test isEqualToString:@"mem"]) KOMemory(out);
             else if ([test isEqualToString:@"cpu"]) KOCPU(out);
-            else out([NSString stringWithFormat:@"unknown test %@", test]);
+            else out([NSString stringWithFormat:L(@"unknown test %@"), test]);
             finish();
         }
     });

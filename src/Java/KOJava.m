@@ -283,9 +283,9 @@ static void *KOJavaThread(void *arg)
         chdir([(l.workingDirectory ?: [KOJava dataPath]) fileSystemRepresentation]);
         KOLog(@"java: loading %@", l.libjvm);
         void *h = dlopen([l.libjvm fileSystemRepresentation], RTLD_NOW | RTLD_GLOBAL);
-        if (!h) { KOFinish(l, -1, [NSString stringWithFormat:@"dlopen failed: %s", dlerror()]); return NULL; }
+        if (!h) { KOFinish(l, -1, [NSString stringWithFormat:L(@"Java could not be loaded: %s"), dlerror()]); return NULL; }
         KOCreateJavaVM create = (KOCreateJavaVM)dlsym(h, "JNI_CreateJavaVM");
-        if (!create) { KOFinish(l, -1, @"JNI_CreateJavaVM not found"); return NULL; }
+        if (!create) { KOFinish(l, -1, L(@"Kostka's Java has no JNI_CreateJavaVM.")); return NULL; }
 
         NSUInteger n = l.options.count;
         JavaVMOption *opts = calloc(n + 1, sizeof(JavaVMOption));
@@ -309,7 +309,7 @@ static void *KOJavaThread(void *arg)
         CFTimeInterval t0 = CFAbsoluteTimeGetCurrent();
         jint rc = create(&vm, (void **)&env, &vmArgs);
         free(opts);
-        if (rc != JNI_OK) { KOFinish(l, -1, [NSString stringWithFormat:@"JNI_CreateJavaVM failed: %d", rc]); return NULL; }
+        if (rc != JNI_OK) { KOFinish(l, -1, [NSString stringWithFormat:L(@"Java could not start (JNI_CreateJavaVM: %d)."), rc]); return NULL; }
         KOLog(@"java: VM started in %.0f ms", (CFAbsoluteTimeGetCurrent() - t0) * 1000);
         [KOJava note:@"java started %@", l.mainClass];
 
@@ -318,7 +318,7 @@ static void *KOJavaThread(void *arg)
         jmethodID main = cls ? (*env)->GetStaticMethodID(env, cls, "main", "([Ljava/lang/String;)V") : NULL;
         if (!main) {
             if ((*env)->ExceptionCheck(env)) (*env)->ExceptionDescribe(env);
-            KOFinish(l, -1, [NSString stringWithFormat:@"no main in %@", l.mainClass]);
+            KOFinish(l, -1, [NSString stringWithFormat:L(@"%@ has no main method."), l.mainClass]);
             return NULL;
         }
         jclass stringClass = (*env)->FindClass(env, "java/lang/String");
@@ -388,7 +388,7 @@ static void *KOJavaThread(void *arg)
     pthread_t t;
     if (pthread_create(&t, &attr, KOJavaThread, (__bridge_retained void *)l) != 0) {
         g_started = NO;
-        if (done) done(-1, @"pthread_create failed");
+        if (done) done(-1, L(@"Java's thread could not be started."));
     } else {
         KOWatchMemory();
     }
