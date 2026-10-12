@@ -158,8 +158,9 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         BOOL ok = code == 0 && !error;
         KOLog(@"optifine: says %@", ok ? @"installed" : @"not installed");
         NSString *closing = L(@"Kostka closes: open it again to play.");
+        s.note.text = ok ? L(@"OptiFine is installed") : L(@"OptiFine could not be installed");
         UIAlertView *end = [[UIAlertView alloc]
-            initWithTitle:ok ? L(@"OptiFine is installed") : L(@"OptiFine could not be installed")
+            initWithTitle:s.note.text
                   message:ok ? closing : [NSString stringWithFormat:@"%@\n\n%@", error ?: [KOJava stopReason] ?: @"", closing]
                  delegate:s cancelButtonTitle:L(@"OK") otherButtonTitles:nil];
         end.tag = 2;

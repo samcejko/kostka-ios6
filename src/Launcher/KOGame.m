@@ -418,10 +418,11 @@ static NSString *g_gameDirName;
                           @"renderClouds:false\nparticles:2\nmipmapLevels:0\nuseVbo:true\nlang:%@\n", lang];
         [text writeToFile:optionsFile atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     }
-    // (OptiFine's first start: its own settings at their fastest - on an iPad 2, in one world, 1.7.10 and 1.8.9 drew
-    // 1.7 to 1.9 times vanilla's frames with them, 1.12.2 a little more; with OptiFine's defaults all three drew
-    // fewer than vanilla. Render Regions stay off: as fast, and 13 to 15 MB less memory - 1.8.9 came to 302 MB with
-    // them, close to the 320 where iOS ends the app. The player changes them in Options, Video Settings.)
+    // (OptiFine's first start: its own settings at their fastest - on an iPad 2, in one world per version with the
+    // player in the same place, 1.7.10 to 1.12.2 drew 1.3 to 1.8 times vanilla's frames turning round with them, and
+    // with OptiFine's defaults about as many as vanilla or fewer. Render Regions stay off: with them 4 to 6 % more
+    // frames, but 6 to 10 MB more memory, which the iPad 2 runs out of first (iOS ends the app at about 320 MB). The
+    // player changes them in Options, Video Settings.)
     NSString *optiFineFile = [gameDir stringByAppendingPathComponent:@"optionsof.txt"];
     if (version.optiFineEdition && ![[NSFileManager defaultManager] fileExistsAtPath:optiFineFile]) {
         NSArray *fastest = @[ @"ofFogType:3", @"ofMipmapType:0", @"ofSmoothFps:false", @"ofSmoothWorld:false", @"ofAoLevel:0.0",

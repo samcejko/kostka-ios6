@@ -49,20 +49,26 @@ For 1.7.2 to 1.12.2 the list has an OptiFine section. Add OptiFine shows what op
 for each version), opens OptiFine's own download page in Kostka - with its advertisement; you tap Download there -
 and runs OptiFine's installer in Kostka's Java. Kostka does not hand OptiFine out: it comes from optifine.net only.
 An OptiFine version plays in its version's folder (the same worlds and options), and its first start sets OptiFine's
-own settings to their fastest (Render Regions off: as fast, less memory).
+own settings to their fastest, Render Regions off.
 
-On an iPad 2, frames a second in one Creative world per version, render distance 2 (30 s standing, 30 s turning
-round; the app's memory at its highest):
+On an iPad 2, frames a second standing (30 s) / turning round (30 looks), and the app's memory at its highest: one
+Creative world per version, render distance 2, the player in the same place for every column. 60 is the screen's
+most.
 
-| | vanilla | OptiFine, its defaults | OptiFine, fastest | fastest, Render Regions off (Kostka's) |
-| --- | --- | --- | --- | --- |
-| 1.7.10 | 33 / 29, 228 MB | 26 / 28, 247 MB | **57 / 50**, 230 MB | |
-| 1.8.9 | 31 / 27, 274 MB | 25 / 27, 279 MB | 58 / 46, 302 MB | **58 / 48**, 289 MB |
-| 1.12.2 | 56 / 36, 231 MB | 39 / 32, 270 MB | 58 / 41, 291 MB | **44 / 51**, 276 MB |
+| | vanilla | OptiFine, its defaults | OptiFine at its fastest (Kostka's) |
+| --- | --- | --- | --- |
+| 1.7.10 | 33 / 29, 234 MB | 29 / 28, 232 MB | **49 / 41**, 242 MB |
+| 1.8.9 | 40 / 35, 232 MB | 34 / 33, 256 MB | **59 / 52**, 257 MB |
+| 1.9.4 | 58 / 35, 203 MB | 40 / 38, 238 MB | **59 / 50**, 237 MB |
+| 1.10.2 | 30 / 26, 207 MB | 39 / 25, 246 MB | **59 / 46**, 245 MB |
+| 1.11.2 | 43 / 40, 213 MB | 51 / 32, 249 MB | **58 / 51**, 255 MB |
+| 1.12.2 | 40 / 35, 221 MB | 34 / 31, 255 MB | **58 / 48**, 257 MB |
 
-OptiFine's defaults draw fewer frames than vanilla here; at its fastest 1.7.10 and 1.8.9 draw almost twice as many.
-It takes more memory in 1.8.9 and 1.12.2 (the iPad 2 ends an app at about 320 MB). Shader packs need OpenGL 3: not
-on the iPad 2.
+At its fastest OptiFine draws 1.3 to 1.8 times vanilla's frames turning round, and standing comes to the screen's 60;
+with its defaults it draws about as many as vanilla, or fewer. It takes 8 to 42 MB more memory (the iPad 2 warns
+from about 250 MB and ends an app at about 320). Render Regions on: 1.8.9 59 / 54, 263 MB, 1.12.2 60 / 51, 267 MB - 4
+to 6 % more frames turning round for 6 to 10 MB more memory, which is what the iPad 2 runs out of first. Shader packs
+need OpenGL 3: not on the iPad 2.
 
 ## What is new
 
