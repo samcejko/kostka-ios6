@@ -17,7 +17,7 @@
 {
     if ((self = [super initWithNibName:nil bundle:nil])) {
         self.version = version;
-        self.title = version.identifier;
+        self.title = version.parent ? [NSString stringWithFormat:@"%@ OptiFine", version.parent.identifier] : version.identifier;
     }
     return self;
 }
