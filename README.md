@@ -43,6 +43,33 @@ the game goes on and the next click moves past it.
 
 Mojang's jars are not patched: the pieces under them are made to do what each era of the game expects.
 
+## OptiFine
+
+For 1.7.2 to 1.12.2 the list has an OptiFine section. Add OptiFine shows what optifine.net offers (its newest edition
+for each version), opens OptiFine's own download page in Kostka - with its advertisement; you tap Download there -
+and runs OptiFine's installer in Kostka's Java. Kostka does not hand OptiFine out: it comes from optifine.net only.
+An OptiFine version plays in its version's folder (the same worlds and options), and its first start sets OptiFine's
+own settings to their fastest (Render Regions off: as fast, less memory).
+
+On an iPad 2, frames a second in one Creative world per version, render distance 2 (30 s standing, 30 s turning
+round; the app's memory at its highest):
+
+| | vanilla | OptiFine, its defaults | OptiFine, fastest | fastest, Render Regions off (Kostka's) |
+| --- | --- | --- | --- | --- |
+| 1.7.10 | 33 / 29, 228 MB | 26 / 28, 247 MB | **57 / 50**, 230 MB | |
+| 1.8.9 | 31 / 27, 274 MB | 25 / 27, 279 MB | 58 / 46, 302 MB | **58 / 48**, 289 MB |
+| 1.12.2 | 56 / 36, 231 MB | 39 / 32, 270 MB | 58 / 41, 291 MB | **44 / 51**, 276 MB |
+
+OptiFine's defaults draw fewer frames than vanilla here; at its fastest 1.7.10 and 1.8.9 draw almost twice as many.
+It takes more memory in 1.8.9 and 1.12.2 (the iPad 2 ends an app at about 320 MB). Shader packs need OpenGL 3: not
+on the iPad 2.
+
+## What is new
+
+A version's page shows what is new in it: the Minecraft Wiki's page about the version (minecraft.wiki, its text
+under CC BY-NC-SA 3.0), fetched when the page is opened and kept for later, as plain text - its lead, Additions,
+Changes, Fixes.
+
 ## How
 
 - **Java** (`jvm/`): HotSpot from the AArch32 port of OpenJDK 8 (client VM: template interpreter + C1 JIT, serial

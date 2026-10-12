@@ -35,6 +35,9 @@ static NSString *KOTemplateText(NSString *inner)
     NSArray *parts = KOParts(inner);
     NSString *name = [[parts[0] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] lowercaseString];
     NSString *first = parts.count > 1 ? KOTemplatesOut(parts[1]) : @"";
+    // ("a minor update for {{JE}} that was released ...")
+    NSDictionary *words = @{ @"je": @"Java Edition", @"be": @"Bedrock Edition", @"mc": @"Minecraft" };
+    if (words[name]) return words[name];
     if ([name isEqualToString:@"cmd"]) return [@"/" stringByAppendingString:first];
     if ([@[ @"key", @"keys", @"code", @"tc", @"mono", @"nowrap", @"w", @"tooltip", @"lang" ] containsObject:name]) return first;
     return @"";
@@ -208,6 +211,9 @@ static NSString *KOReplace(NSString *s, NSString *pattern, NSString *with)
     }
     NSString *text = [kept componentsJoinedByString:@"\n"];
     text = KOReplace(text, @"\n{3,}", @"\n\n");
+    // (two spaces where a template was taken out of a sentence: one; a list's indent is left as it is)
+    text = KOReplace(text, @"(?<=\\S) {2,}", @" ");
+    text = KOReplace(text, @" +([.,;:])", @"$1");
     return [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
@@ -215,7 +221,8 @@ static NSString *KOReplace(NSString *s, NSString *pattern, NSString *with)
 {
     NSString *dir = [[KOJava dataPath] stringByAppendingPathComponent:@"changelogs"];
     [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:NULL];
-    return [dir stringByAppendingPathComponent:[identifier stringByAppendingPathExtension:@"txt"]];
+    // (".2": the text as this Kostka makes it - one kept by an earlier one is made anew)
+    return [dir stringByAppendingPathComponent:[identifier stringByAppendingString:@".2.txt"]];
 }
 
 + (void)load:(NSString *)identifier done:(void (^)(NSString *, NSError *))done
