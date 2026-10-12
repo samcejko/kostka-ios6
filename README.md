@@ -1,10 +1,11 @@
-# Kostka - Minecraft: Java Edition on iOS 6
+# MC6 - Minecraft: Java Edition on iOS 6
 
-A launcher of **Minecraft: Java Edition** for jailbroken iOS 6.x (iPad 2 / iPhone 4S era, armv7): the game's own
+MC6 (the project's own name: Kostka - the repo, the code, `com.samcejko.kostka`, the `kostka:` links) is a launcher of
+**Minecraft: Java Edition** for jailbroken iOS 6.x (iPad 2 / iPhone 4S era, armv7): the game's own
 files, downloaded from Mojang's servers, run unchanged by a **Java VM ported to 32-bit iOS**. In English and Czech.
 
 Unofficial; not affiliated with, endorsed by or associated with Mojang AB or Microsoft. "Minecraft" is a trademark
-of Mojang Synergies AB. Kostka ships nothing of Mojang's: the game is downloaded from Mojang's servers by the
+of Mojang Synergies AB. MC6 ships nothing of Mojang's: the game is downloaded from Mojang's servers by the
 player, who must own it.
 
 ## What plays (iPad 2, iOS 6.1.3, 512 MB)
@@ -46,8 +47,8 @@ Mojang's jars are not patched: the pieces under them are made to do what each er
 ## OptiFine
 
 For 1.7.2 to 1.12.2 the list has an OptiFine section. Add OptiFine shows what optifine.net offers (its newest edition
-for each version), opens OptiFine's own download page in Kostka - with its advertisement; you tap Download there -
-and runs OptiFine's installer in Kostka's Java. Kostka does not hand OptiFine out: it comes from optifine.net only.
+for each version), opens OptiFine's own download page in MC6 - with its advertisement; you tap Download there -
+and runs OptiFine's installer in MC6's Java. MC6 does not hand OptiFine out: it comes from optifine.net only.
 An OptiFine version plays in its version's folder (the same worlds and options), and its first start sets OptiFine's
 own settings to their fastest, Render Regions off.
 
@@ -55,7 +56,7 @@ On an iPad 2, frames a second standing (30 s) / turning round (30 looks), and th
 Creative world per version, render distance 2, the player in the same place for every column. 60 is the screen's
 most.
 
-| | vanilla | OptiFine, its defaults | OptiFine at its fastest (Kostka's) |
+| | vanilla | OptiFine, its defaults | OptiFine at its fastest (MC6's) |
 | --- | --- | --- | --- |
 | 1.7.10 | 33 / 29, 234 MB | 29 / 28, 232 MB | **49 / 41**, 242 MB |
 | 1.8.9 | 40 / 35, 232 MB | 34 / 33, 256 MB | **59 / 52**, 257 MB |
@@ -101,7 +102,7 @@ wiki are in English.
   (Classic to 1.5.2 through Mojang's launchwrapper), and pictures drawn in Java.
 - **The launcher** (`src/`): every version from Mojang's list, marked by what it does here; downloads the version,
   its libraries and assets (checked against their SHA-1) and starts it. One Java VM per process: when the game
-  ends, Kostka closes.
+  ends, MC6 closes.
 
 ## Touch controls
 
@@ -125,8 +126,8 @@ uiopen 'kostka:probe?test=info|jit|vm|gl|cpu'   # the device test
 
 ## Building
 
-GitHub Actions: `jre.yml` builds the Java runtime, `lwjgl.yml` LWJGL with gl4es and Kostka's AWT, `build.yml` the
-app (IPA and DEB) with the latest of both. Kostka is installed from the **DEB** (into `/Applications`, outside the
+GitHub Actions: `jre.yml` builds the Java runtime, `lwjgl.yml` LWJGL with gl4es and MC6's AWT, `build.yml` the
+app (IPA and DEB) with the latest of both. MC6 is installed from the **DEB** (into `/Applications`, outside the
 container sandbox), which a JIT needs.
 
 ## License

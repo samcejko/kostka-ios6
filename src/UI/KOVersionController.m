@@ -28,7 +28,7 @@
 {
     KOVersion *v = self.version;
     if ([v.identifier hasPrefix:@"rd-"])
-        return L(@"RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes Kostka: open it again to play once more).");
+        return L(@"RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes MC6: open it again to play once more).");
     if (v.parent)
         return [NSString stringWithFormat:L(@"OptiFine %@ for Minecraft %@: faster, with more settings (Options, Video Settings). It plays in the same worlds as %@."),
                 v.optiFineEdition, v.parent.identifier, v.parent.identifier];
@@ -36,11 +36,11 @@
         case KOSupportPlays:
             return nil;
         case KOSupportTry:
-            return L(@"Not tried on an iPad yet: the versions of its time play on Kostka, so this one most likely does too.");
+            return L(@"Not tried on an iPad yet: the versions of its time play on MC6, so this one most likely does too.");
         case KOSupportSoon:
-            return [NSString stringWithFormat:L(@"Kostka does not run this version yet: %@"), v.problem];
+            return [NSString stringWithFormat:L(@"MC6 does not run this version yet: %@"), v.problem];
         default:
-            return L(@"This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.");
+            return L(@"This version needs LWJGL 3 and newer OpenGL and Java than MC6 has: more than iOS 6 and this iPad can give.");
     }
 }
 

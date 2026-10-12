@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generates the app icon and launch images for iOS 6 (run in CI, needs Pillow and rsvg-convert).
 
-The icon is tools/icon.svg: a cube of blocks on a dark tile, with
+The icon is tools/icon.svg: a creeper's face in pixels on its green, with
 its own gloss (UIPrerenderedIcon is on, like Surfari's icon).
 
 Usage: python3 tools/gen_assets.py Resources
@@ -14,7 +14,7 @@ import tempfile
 from PIL import Image, ImageDraw, ImageFont
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "Resources"
-APP_NAME = "Kostka"
+APP_NAME = "MC6"
 os.makedirs(OUT, exist_ok=True)
 
 FONT_CANDIDATES = [

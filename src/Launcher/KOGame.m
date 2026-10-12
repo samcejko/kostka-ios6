@@ -463,7 +463,7 @@ static NSString *g_gameDirName;
         @"-Xss1m",
         @"-XX:MaxDirectMemorySize=256m",
         [@"-Dorg.lwjgl.librarypath=" stringByAppendingString:lwjgl],
-        @"-Dminecraft.launcher.brand=Kostka",
+        @"-Dminecraft.launcher.brand=MC6",
         [@"-Xbootclasspath/a:" stringByAppendingString:[lwjgl stringByAppendingPathComponent:@"kostka-awt.jar"]],
         @"-Djava.awt.headless=false",
         @"-Dawt.toolkit=kostka.awt.KToolkit",

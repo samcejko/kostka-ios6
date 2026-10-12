@@ -42,3 +42,5 @@
   1.11.2, the launcher's patch notes from 1.13 on), and the Minecraft Wiki's page about it as text (for the rest and
   for more); OptiFine's own changelog for OptiFine's versions and editions; fetched for the rows on the screen, kept
   for offline
+- The app is called MC6, with a creeper's face for its icon (inside it is still Kostka: com.samcejko.kostka, the
+  kostka: links, Library/Kostka - the worlds and settings stay where they are)

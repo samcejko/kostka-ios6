@@ -56,8 +56,8 @@
 {
     NSString *text = section == 0 ? L(@"The name the old versions show for the player.")
                    : section == 1 ? L(@"The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint.")
-                   : section == 2 ? L(@"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.")
-                   : section == 3 ? L(@"Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).")
+                   : section == 2 ? L(@"The versions that do not run yet may not start, or end soon after: MC6 gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.")
+                   : section == 3 ? L(@"MC6 downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; MC6 is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).")
                                   : nil;
     if (!text) return nil;
     UILabel *l = [KOStyle labelWithFont:[UIFont systemFontOfSize:14]];

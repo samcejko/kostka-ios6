@@ -55,7 +55,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
     self.note = [KOStyle labelWithFont:[UIFont boldSystemFontOfSize:17]];
     self.note.frame = CGRectMake(20, 10, w - 40, 24);
     self.note.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    self.note.text = L(@"Tap Download on OptiFine's page: Kostka takes the file.");
+    self.note.text = L(@"Tap Download on OptiFine's page: MC6 takes the file.");
     [v addSubview:self.note];
     self.progress = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
     self.progress.frame = CGRectMake(20, 40, w - 40, 10);
@@ -113,7 +113,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         if (error) {
             s.busy = NO;
             s.navigationItem.hidesBackButton = NO;
-            s.note.text = L(@"Tap Download on OptiFine's page: Kostka takes the file.");
+            s.note.text = L(@"Tap Download on OptiFine's page: MC6 takes the file.");
             [[[UIAlertView alloc] initWithTitle:L(@"OptiFine could not be downloaded") message:error.localizedDescription
                                        delegate:nil cancelButtonTitle:L(@"OK") otherButtonTitles:nil] show];
             return;
@@ -122,7 +122,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         s.note.text = nil;
         NSString *title = [NSString stringWithFormat:L(@"Install OptiFine %@ for %@?"), s.edition.edition, s.edition.version.identifier];
         UIAlertView *ask = [[UIAlertView alloc] initWithTitle:title
-            message:L(@"Kostka installs it - a minute or two - and then closes: open it again and OptiFine is in the list.")
+            message:L(@"MC6 installs it - a minute or two - and then closes: open it again and OptiFine is in the list.")
             delegate:s cancelButtonTitle:L(@"Cancel") otherButtonTitles:L(@"Install"), nil];
         ask.tag = 1;
         [ask show];
@@ -143,7 +143,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
     if (index == alert.cancelButtonIndex) {
         self.busy = NO;
         self.navigationItem.hidesBackButton = NO;
-        self.note.text = L(@"Tap Download on OptiFine's page: Kostka takes the file.");
+        self.note.text = L(@"Tap Download on OptiFine's page: MC6 takes the file.");
         return;
     }
     self.web.userInteractionEnabled = NO;
@@ -159,7 +159,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         s.progress.hidden = YES;
         BOOL ok = code == 0 && !error;
         KOLog(@"optifine: says %@", ok ? @"installed" : @"not installed");
-        NSString *closing = L(@"Kostka closes: open it again to play.");
+        NSString *closing = L(@"MC6 closes: open it again to play.");
         s.note.text = ok ? L(@"OptiFine is installed") : L(@"OptiFine could not be installed");
         UIAlertView *end = [[UIAlertView alloc]
             initWithTitle:s.note.text
@@ -288,7 +288,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
-    NSString *text = L(@"OptiFine, by sp614x, makes Minecraft faster and gives it more settings. Kostka does not hand it out: it opens OptiFine's own download page (with its advertisement), where you tap Download, then installs it. The worlds are the version's own.");
+    NSString *text = L(@"OptiFine, by sp614x, makes Minecraft faster and gives it more settings. MC6 does not hand it out: it opens OptiFine's own download page (with its advertisement), where you tap Download, then installs it. The worlds are the version's own.");
     UILabel *l = [KOStyle labelWithFont:[UIFont systemFontOfSize:14]];
     l.numberOfLines = 0;
     l.textColor = [UIColor colorWithWhite:0.85 alpha:1];

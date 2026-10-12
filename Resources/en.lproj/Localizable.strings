@@ -1,4 +1,4 @@
-/* Kostka - English (the keys are the English texts) */
+/* MC6 (MC6) - English (the keys are the English texts) */
 "About" = "About";
 "Alpha, Infdev, Classic" = "Alpha, Infdev, Classic";
 "Asking Mojang about the version" = "Asking Mojang about the version";
@@ -15,15 +15,15 @@
 "it will not start without Twitch's streaming library, which there is none of for iOS (the next snapshots go on without it)." = "it will not start without Twitch's streaming library, which there is none of for iOS (the next snapshots go on without it).";
 "Java has already run since the app was opened: close the app and open it again." ="Java has already run since the app was opened: close the app and open it again.";
 "Jump" = "Jump";
-"Kostka closes: open it again to play." = "Kostka closes: open it again to play.";
-"Kostka does not run this version yet: %@" = "Kostka does not run this version yet: %@";
-"Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license)." = "Kostka downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; Kostka is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).";
+"MC6 closes: open it again to play." = "MC6 closes: open it again to play.";
+"MC6 does not run this version yet: %@" = "MC6 does not run this version yet: %@";
+"MC6 downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; MC6 is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license)." = "MC6 downloads Minecraft's files from Mojang. Minecraft is a game by Mojang Studios; MC6 is not an official product. Inside: OpenJDK 8 (GPL v2 with the Classpath exception), LWJGL 2 (BSD license), gl4es (MIT license).";
 "Loading Mojang's list of versions…" ="Loading Mojang's list of versions…";
 "Mojang's description of the version is not readable." = "Mojang's description of the version is not readable.";
 "Mojang's list of versions could not be loaded." = "Mojang's list of versions could not be loaded.";
 "Mojang's list of versions is not readable." = "Mojang's list of versions is not readable.";
 "Name" = "Name";
-"Not tried on an iPad yet: the versions of its time play on Kostka, so this one most likely does too." = "Not tried on an iPad yet: the versions of its time play on Kostka, so this one most likely does too.";
+"Not tried on an iPad yet: the versions of its time play on MC6, so this one most likely does too." = "Not tried on an iPad yet: the versions of its time play on MC6, so this one most likely does too.";
 "Not tried yet" = "Not tried yet";
 "Not yet" = "Not yet";
 "OK" = "OK";
@@ -32,7 +32,7 @@
 "Plays" = "Plays";
 "Released %@" = "Released %@";
 "Releases" = "Releases";
-"RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes Kostka: open it again to play once more)." = "RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes Kostka: open it again to play once more).";
+"RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes MC6: open it again to play once more)." = "RubyDung: the very first Minecraft, from May 2009. One world of grass and stone to build in. Move a finger to look around, tap to take a block away, hold a finger down to put one. The arrows walk, Jump jumps, Esc ends the game (and closes MC6: open it again to play once more).";
 "Run the tests" = "Run the tests";
 "Settings" = "Settings";
 "Show snapshots" = "Show snapshots";
@@ -44,7 +44,7 @@
 "The game has stopped" = "The game has stopped";
 "The name the old versions show for the player." = "The name the old versions show for the player.";
 "The server answered %ld." = "The server answered %ld.";
-"The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too." = "The versions that do not run yet may not start, or end soon after: Kostka gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.";
+"The versions that do not run yet may not start, or end soon after: MC6 gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too." = "The versions that do not run yet may not start, or end soon after: MC6 gets there one step after another. With snapshots shown, the ones too new for iOS 6 are listed too.";
 "In the game" = "In the game";
 "Show the frame rate (FPS)" = "Show the frame rate (FPS)";
 "The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint." = "The frame rate shows in the game's upper left corner. With the joystick you walk every way; pushed to its edge, forwards, you sprint.";
@@ -55,12 +55,12 @@
 "Loading what optifine.net offers…" = "Loading what optifine.net offers…";
 "optifine.net could not be reached." = "optifine.net could not be reached.";
 "Installed" = "Installed";
-"OptiFine, by sp614x, makes Minecraft faster and gives it more settings. Kostka does not hand it out: it opens OptiFine's own download page (with its advertisement), where you tap Download, then installs it. The worlds are the version's own." = "OptiFine, by sp614x, makes Minecraft faster and gives it more settings. Kostka does not hand it out: it opens OptiFine's own download page (with its advertisement), where you tap Download, then installs it. The worlds are the version's own.";
-"Tap Download on OptiFine's page: Kostka takes the file." = "Tap Download on OptiFine's page: Kostka takes the file.";
+"OptiFine, by sp614x, makes Minecraft faster and gives it more settings. MC6 does not hand it out: it opens OptiFine's own download page (with its advertisement), where you tap Download, then installs it. The worlds are the version's own." = "OptiFine, by sp614x, makes Minecraft faster and gives it more settings. MC6 does not hand it out: it opens OptiFine's own download page (with its advertisement), where you tap Download, then installs it. The worlds are the version's own.";
+"Tap Download on OptiFine's page: MC6 takes the file." = "Tap Download on OptiFine's page: MC6 takes the file.";
 "Downloading OptiFine" = "Downloading OptiFine";
 "OptiFine could not be downloaded" = "OptiFine could not be downloaded";
 "Install OptiFine %@ for %@?" = "Install OptiFine %@ for %@?";
-"Kostka installs it - a minute or two - and then closes: open it again and OptiFine is in the list." = "Kostka installs it - a minute or two - and then closes: open it again and OptiFine is in the list.";
+"MC6 installs it - a minute or two - and then closes: open it again and OptiFine is in the list." = "MC6 installs it - a minute or two - and then closes: open it again and OptiFine is in the list.";
 "Cancel" = "Cancel";
 "Install" = "Install";
 "Installing OptiFine" = "Installing OptiFine";
@@ -70,7 +70,7 @@
 "Arrows" = "Arrows";
 "Joystick" = "Joystick";
 "Snapshots too new for iOS 6" = "Snapshots too new for iOS 6";
-"This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give." = "This version needs LWJGL 3 and newer OpenGL and Java than Kostka has: more than iOS 6 and this iPad can give.";
+"This version needs LWJGL 3 and newer OpenGL and Java than MC6 has: more than iOS 6 and this iPad can give." = "This version needs LWJGL 3 and newer OpenGL and Java than MC6 has: more than iOS 6 and this iPad can give.";
 "Too new for iOS 6" = "Too new for iOS 6";
 "Try the versions that do not run yet" = "Try the versions that do not run yet";
 "Versions" = "Versions";
@@ -86,7 +86,7 @@
 "What is new in Minecraft %@" = "What is new in Minecraft %@";
 "OptiFine's changelog (optifine.net)" = "OptiFine's changelog (optifine.net)";
 "Java could not be loaded: %s" = "Java could not be loaded: %s";
-"Kostka's Java has no JNI_CreateJavaVM." = "Kostka's Java has no JNI_CreateJavaVM.";
+"MC6's Java has no JNI_CreateJavaVM." = "MC6's Java has no JNI_CreateJavaVM.";
 "Java could not start (JNI_CreateJavaVM: %d)." = "Java could not start (JNI_CreateJavaVM: %d).";
 "%@ has no main method." = "%@ has no main method.";
 "Java's thread could not be started." = "Java's thread could not be started.";

@@ -155,7 +155,7 @@ static void KOShowStopped(int code)
     KOLog(@"game stopped: %d %@", code, reason ?: @"");
     [KOJava note:@"stopped %d %@", code, reason ?: @""];
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *closing = L(@"Kostka closes: open it again to play.");
+        NSString *closing = L(@"MC6 closes: open it again to play.");
         NSString *message = reason.length ? [NSString stringWithFormat:@"%@\n\n%@", reason, closing] : closing;
         delegate = [[KOStoppedAlert alloc] init];
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:L(@"The game has stopped") message:message delegate:delegate
@@ -285,7 +285,7 @@ static void *KOJavaThread(void *arg)
         void *h = dlopen([l.libjvm fileSystemRepresentation], RTLD_NOW | RTLD_GLOBAL);
         if (!h) { KOFinish(l, -1, [NSString stringWithFormat:L(@"Java could not be loaded: %s"), dlerror()]); return NULL; }
         KOCreateJavaVM create = (KOCreateJavaVM)dlsym(h, "JNI_CreateJavaVM");
-        if (!create) { KOFinish(l, -1, L(@"Kostka's Java has no JNI_CreateJavaVM.")); return NULL; }
+        if (!create) { KOFinish(l, -1, L(@"MC6's Java has no JNI_CreateJavaVM.")); return NULL; }
 
         NSUInteger n = l.options.count;
         JavaVMOption *opts = calloc(n + 1, sizeof(JavaVMOption));

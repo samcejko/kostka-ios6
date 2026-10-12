@@ -63,7 +63,7 @@ function Install-IPadPackage {
     $out = Invoke-IPad -IPadHost $IPadHost -Command 'dpkg -i /tmp/Kostka.deb 2>&1; rm -f /tmp/Kostka.deb; su mobile -c uicache 2>/dev/null; echo DEB_OK' | Out-String
     Write-Host $out
     if ($out -notmatch 'DEB_OK') { throw "Nothing installed" }
-    Write-Host "Done. Tap the Kostka icon on the iPad."
+    Write-Host "Done. Tap the MC6 icon on the iPad."
 }
 
 function Get-IPadCrashLogs {

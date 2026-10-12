@@ -25,7 +25,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.title = @"Kostka";
+    self.title = @"MC6";
     UIView *back = [[UIView alloc] initWithFrame:self.tableView.bounds];
     back.backgroundColor = [KOStyle dirtColor];
     self.tableView.backgroundView = back;
