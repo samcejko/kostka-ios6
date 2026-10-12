@@ -28,10 +28,20 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
 @property (nonatomic, strong) UILabel *note;
 @property (nonatomic, strong) UIProgressView *progress;
 @property (nonatomic, copy) NSString *installer;
-@property (nonatomic) BOOL busy;
+@property (nonatomic) BOOL busy, tapForTest;
 @end
 
 @implementation KOOptiFinePageController
+
+- (void)webViewDidFinishLoad:(UIWebView *)webView
+{
+    // (tests: the page's Download link followed as a tap on it would be - once the page that has it has loaded)
+    if (!self.tapForTest || self.busy) return;
+    NSString *found = [webView stringByEvaluatingJavaScriptFromString:@"(function(){var a=document.getElementsByTagName('a');"
+        "for(var i=0;i<a.length;i++){if(a[i].href.indexOf('downloadx')>=0){window.location.href=a[i].href;return 'yes';}}"
+        "return '';})()"];
+    if (found.length) self.tapForTest = NO;
+}
 
 - (void)viewDidLoad
 {
@@ -169,6 +179,20 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         self.title = @"OptiFine";
     }
     return self;
+}
+
++ (UIViewController *)pageForFile:(NSString *)file version:(KOVersion *)version tap:(BOOL)tap
+{
+    KOOptiFineEdition *e = [[KOOptiFineEdition alloc] init];
+    e.file = file;
+    NSRange hd = [file rangeOfString:@"HD_"];
+    e.edition = hd.location != NSNotFound ? [[[file substringFromIndex:hd.location] stringByDeletingPathExtension]
+                                             stringByReplacingOccurrencesOfString:@"_" withString:@" "] : file;
+    e.version = version;
+    KOOptiFinePageController *page = [[KOOptiFinePageController alloc] initWithNibName:nil bundle:nil];
+    page.edition = e;
+    page.tapForTest = tap;
+    return page;
 }
 
 - (void)viewDidLoad

@@ -80,6 +80,16 @@
         UINavigationController *nav = (UINavigationController *)self.window.rootViewController;
         if (![nav isKindOfClass:[UINavigationController class]]) return YES;
         [KOVersions load:^(NSArray *versions, NSError *error) {
+            // (optifinepage=OptiFine_1.12.2_HD_U_G5.jar&version=1.12.2[&tap=1]: optifine.net's page for the file)
+            if (p[@"optifinepage"]) {
+                for (KOVersion *v in versions) {
+                    if (![v.identifier isEqualToString:p[@"version"]]) continue;
+                    [nav pushViewController:[KOOptiFineController pageForFile:p[@"optifinepage"] version:v
+                                                                          tap:[p[@"tap"] isEqualToString:@"1"]] animated:NO];
+                    return;
+                }
+                return;
+            }
             if (p[@"optifine"]) {
                 [nav pushViewController:[[KOOptiFineController alloc] initWithVersions:versions] animated:NO];
                 return;

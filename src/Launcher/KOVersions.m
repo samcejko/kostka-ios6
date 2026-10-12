@@ -131,7 +131,7 @@ static void KOLoadTested(void)
     if (!list) return nil;
     NSMutableDictionary *byId = [NSMutableDictionary dictionary];
     for (KOVersion *v in list) byId[v.identifier] = v;
-    NSMutableArray *all = [list mutableCopy];
+    NSMutableArray *all = [list mutableCopy], *installed = [NSMutableArray array];
     NSString *root = [self versionsPath];
     NSArray *names = [[[NSFileManager defaultManager] contentsOfDirectoryAtPath:root error:NULL] sortedArrayUsingSelector:@selector(compare:)];
     for (NSString *name in names.reverseObjectEnumerator) {
@@ -147,8 +147,14 @@ static void KOLoadTested(void)
         v.type = parent.type;
         v.released = parent.released;
         v.parent = parent;
-        [all addObject:v];
+        [installed addObject:v];
     }
+    // (newest first, as the list: by their versions' dates)
+    [installed sortUsingComparator:^NSComparisonResult(KOVersion *a, KOVersion *b) {
+        NSComparisonResult r = [b.released compare:a.released];
+        return r != NSOrderedSame ? r : [b.identifier compare:a.identifier];
+    }];
+    [all addObjectsFromArray:installed];
     return all;
 }
 
