@@ -418,6 +418,29 @@ static NSString *g_gameDirName;
                           @"renderClouds:false\nparticles:2\nmipmapLevels:0\nuseVbo:true\nlang:%@\n", lang];
         [text writeToFile:optionsFile atomically:YES encoding:NSUTF8StringEncoding error:NULL];
     }
+    // (OptiFine's first start: its own settings at their fastest - on an iPad 2, in one world, 1.7.10 and 1.8.9 drew
+    // 1.7 to 1.9 times vanilla's frames with them, 1.12.2 a little more; with OptiFine's defaults all three drew
+    // fewer than vanilla. Render Regions stay off: as fast, and 13 to 15 MB less memory - 1.8.9 came to 302 MB with
+    // them, close to the 320 where iOS ends the app. The player changes them in Options, Video Settings.)
+    NSString *optiFineFile = [gameDir stringByAppendingPathComponent:@"optionsof.txt"];
+    if (version.optiFineEdition && ![[NSFileManager defaultManager] fileExistsAtPath:optiFineFile]) {
+        NSArray *fastest = @[ @"ofFogType:3", @"ofMipmapType:0", @"ofSmoothFps:false", @"ofSmoothWorld:false", @"ofAoLevel:0.0",
+            @"ofClouds:3", @"ofTrees:1", @"ofDroppedItems:1", @"ofRain:3", @"ofAnimatedWater:2", @"ofAnimatedLava:2",
+            @"ofAnimatedFire:false", @"ofAnimatedPortal:false", @"ofAnimatedRedstone:false", @"ofAnimatedExplosion:false",
+            @"ofAnimatedFlame:false", @"ofAnimatedSmoke:false", @"ofVoidParticles:false", @"ofWaterParticles:false",
+            @"ofPortalParticles:false", @"ofPotionParticles:false", @"ofFireworkParticles:false", @"ofDrippingWaterLava:false",
+            @"ofAnimatedTerrain:false", @"ofAnimatedTextures:false", @"ofRainSplash:false", @"ofBetterGrass:3",
+            @"ofConnectedTextures:3", @"ofWeather:false", @"ofSky:false", @"ofStars:false", @"ofSunMoon:false", @"ofVignette:1",
+            @"ofChunkUpdates:1", @"ofChunkUpdatesDynamic:false", @"ofClearWater:false", @"ofAaLevel:0", @"ofAfLevel:1",
+            @"ofBetterSnow:false", @"ofSwampColors:false", @"ofRandomEntities:false", @"ofSmoothBiomes:false",
+            @"ofCustomFonts:false", @"ofCustomColors:false", @"ofCustomItems:false", @"ofCustomSky:false", @"ofShowCapes:false",
+            @"ofNaturalTextures:false", @"ofEmissiveTextures:false", @"ofLazyChunkLoading:true", @"ofRenderRegions:false",
+            @"ofSmartAnimations:true", @"ofDynamicFov:false", @"ofAlternateBlocks:false", @"ofDynamicLights:3",
+            @"ofCustomEntityModels:false", @"ofCustomGuis:false", @"ofFastMath:true", @"ofFastRender:true",
+            @"ofTranslucentBlocks:1" ];
+        [[[fastest componentsJoinedByString:@"\n"] stringByAppendingString:@"\n"] writeToFile:optiFineFile atomically:YES
+                                                                                    encoding:NSUTF8StringEncoding error:NULL];
+    }
     NSString *lwjgl = [[NSBundle mainBundle].bundlePath stringByAppendingPathComponent:@"lwjgl"];
     CGSize screen = [UIScreen mainScreen].bounds.size;
     CGFloat scale = [UIScreen mainScreen].scale;

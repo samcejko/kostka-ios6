@@ -33,3 +33,9 @@
 - A joystick in place of the arrows, as Minecraft on phones has it (Settings, In the game, Movement): eight ways,
   and forwards at its edge sprints
 - With snapshots shown and the versions that do not run yet tried, the snapshots too new for iOS 6 are listed too
+- OptiFine for 1.7.2 to 1.12.2: the list's OptiFine section shows what optifine.net offers, opens OptiFine's own
+  download page in the app (the player taps Download there; Kostka does not hand OptiFine out) and runs its installer
+  in Kostka's Java; an OptiFine version plays in its version's folder (the same worlds) and starts with OptiFine's
+  fastest settings. Versions made from others (inheritsFrom) play: their JSON over the parent's, their libraries first
+- What is new in a version, on its page: the Minecraft Wiki's page about it as text (its lead, Additions, Changes),
+  kept for offline; the list gives a playing version's date instead of "Plays"

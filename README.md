@@ -9,8 +9,6 @@ player, who must own it.
 
 ## What plays (iPad 2, iOS 6.1.3, 512 MB)
 
-| Version | |
-| --- | --- |
 Every version below was started on the iPad, made a new world and played in it (`Resources/Tested.json`, which the
 launcher shows):
 
