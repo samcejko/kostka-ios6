@@ -98,6 +98,8 @@ picks its slot.
 
 ```
 uiopen 'kostka:play?version=1.6.4'          # download and start a version (any)
+uiopen 'kostka:play?version=1.12.2&gamedir=test-1'  # its game in games/test-1, away from the player's worlds
+uiopen 'kostka:open?version=1.12.2'         # a version's page (optifine=1: the OptiFine list)
 uiopen 'kostka:mouse?x=512&y=400&button=0'  # a click (LWJGL's coordinates, from the bottom left)
 uiopen 'kostka:key?code=28&char=13'         # a key; kostka:text?s=... types
 uiopen 'kostka:stick?x=0&y=1'               # the joystick's knob (-1 to 1, up positive; 0,0 lets go)
