@@ -109,7 +109,8 @@
     [v addSubview:self.status];
     y += 56 + 24;
 
-    // what is new in the version (in its parent, for OptiFine's): Mojang's notes, the Minecraft Wiki's page
+    // what is new in the version: Mojang's notes, the Minecraft Wiki's page - for an OptiFine version OptiFine's
+    // changelog first, then what is new in its Minecraft
     UILabel *heading = [KOStyle labelWithFont:[UIFont boldSystemFontOfSize:20]];
     heading.frame = CGRectMake(m, y, w - 2 * m, 26);
     heading.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -117,12 +118,12 @@
     [v addSubview:heading];
     y += 32;
     UILabel *source = [KOStyle labelWithFont:[UIFont systemFontOfSize:13]];
-    source.frame = CGRectMake(m, h - 44, w - 2 * m, 36);
+    source.frame = CGRectMake(m, h - 56, w - 2 * m, 50);
     source.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
     source.textColor = [UIColor colorWithWhite:0.75 alpha:1];
-    source.numberOfLines = 2;
+    source.numberOfLines = 3;
     [v addSubview:source];
-    UITextView *changes = [[UITextView alloc] initWithFrame:CGRectMake(m - 8, y, w - 2 * m + 16, h - 48 - y)];
+    UITextView *changes = [[UITextView alloc] initWithFrame:CGRectMake(m - 8, y, w - 2 * m + 16, h - 60 - y)];
     changes.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     changes.editable = NO;
     changes.backgroundColor = [UIColor colorWithWhite:0 alpha:0.25];
@@ -130,30 +131,52 @@
     changes.font = [UIFont systemFontOfSize:16];
     changes.text = L(@"Loading what is new…");
     [v addSubview:changes];
-    [KOChangelog load:(version.parent ?: version).identifier done:^(NSDictionary *mojang, NSString *wiki, NSError *error) {
-        if (![mojang[@"text"] length] && !wiki.length) {
+    KOVersion *minecraft = version.parent ?: version;
+    void (^show)(NSString *, NSDictionary *, NSString *, NSError *) = ^(NSString *optiFine, NSDictionary *mojang, NSString *wiki, NSError *error) {
+        if (!optiFine.length && ![mojang[@"text"] length] && !wiki.length) {
             changes.text = [NSString stringWithFormat:L(@"What is new could not be loaded: %@"), error.localizedDescription ?: @""];
             return;
         }
-        changes.attributedText = [KOVersionController changes:mojang wiki:wiki];
+        changes.attributedText = [KOVersionController changesOf:version optiFine:optiFine mojang:mojang wiki:wiki];
         NSMutableArray *from = [NSMutableArray array];
+        if (optiFine.length) [from addObject:L(@"OptiFine's changelog (optifine.net)")];
         if ([mojang[@"from"] isEqualToString:@"news"])
             [from addObject:L(@"Mojang's notes: the launcher's news of the time (Minecraft Update News, mcupdate.tumblr.com)")];
         if ([mojang[@"from"] isEqualToString:@"patch"])
             [from addObject:L(@"Mojang's notes: the launcher's patch notes (launchercontent.mojang.com)")];
         if (wiki.length) [from addObject:L(@"From the Minecraft Wiki (minecraft.wiki), its text under the CC BY-NC-SA 3.0 license")];
         source.text = [from componentsJoinedByString:@"\n"];
+    };
+    if (!version.parent) {
+        [KOChangelog load:version.identifier done:^(NSDictionary *mojang, NSString *wiki, NSError *error) { show(nil, mojang, wiki, error); }];
+        return;
+    }
+    [KOChangelog loadOptiFine:[KOChangelog keyFor:version] done:^(NSString *optiFine, NSError *e) {
+        [KOChangelog load:minecraft.identifier done:^(NSDictionary *mojang, NSString *wiki, NSError *error) {
+            show(optiFine, mojang, wiki, error ?: e);
+        }];
     }];
 }
 
-// Mojang's notes under their title and date, then the wiki's text ("More on the Minecraft Wiki" when both are there)
-+ (NSAttributedString *)changes:(NSDictionary *)mojang wiki:(NSString *)wiki
+// OptiFine's changelog (an OptiFine version's), then Mojang's notes under their title and date, then the wiki's text
+// ("More on the Minecraft Wiki" when Mojang's are there too)
++ (NSAttributedString *)changesOf:(KOVersion *)version optiFine:(NSString *)optiFine mojang:(NSDictionary *)mojang wiki:(NSString *)wiki
 {
     NSDictionary *head = @{ NSFontAttributeName: [UIFont boldSystemFontOfSize:18],
                             NSForegroundColorAttributeName: [UIColor colorWithRed:0.65 green:0.9 blue:0.45 alpha:1] };
     NSDictionary *body = @{ NSFontAttributeName: [UIFont systemFontOfSize:16], NSForegroundColorAttributeName: [UIColor colorWithWhite:0.95 alpha:1] };
     NSMutableAttributedString *s = [[NSMutableAttributedString alloc] init];
     NSString *notes = mojang[@"text"];
+    if (optiFine.length) {
+        NSString *title = [NSString stringWithFormat:L(@"From OptiFine: OptiFine %@"), version.optiFineEdition ?: @""];
+        [s appendAttributedString:[[NSAttributedString alloc] initWithString:[title stringByAppendingString:@"\n"] attributes:head]];
+        [s appendAttributedString:[[NSAttributedString alloc] initWithString:optiFine attributes:body]];
+        if (notes.length || wiki.length) {
+            NSDictionary *big = @{ NSFontAttributeName: [UIFont boldSystemFontOfSize:20], NSForegroundColorAttributeName: [UIColor whiteColor] };
+            NSString *mc = [NSString stringWithFormat:@"\n\n%@\n", [NSString stringWithFormat:L(@"What is new in Minecraft %@"), version.parent.identifier]];
+            [s appendAttributedString:[[NSAttributedString alloc] initWithString:mc attributes:big]];
+        }
+    }
     if (notes.length) {
         static NSDateFormatter *in, *out;
         if (!in) {
@@ -170,7 +193,7 @@
         [s appendAttributedString:[[NSAttributedString alloc] initWithString:notes attributes:body]];
     }
     if (wiki.length) {
-        if (s.length) {
+        if (notes.length) {
             NSString *more = [NSString stringWithFormat:@"\n\n%@\n", L(@"More on the Minecraft Wiki")];
             [s appendAttributedString:[[NSAttributedString alloc] initWithString:more attributes:head]];
         }

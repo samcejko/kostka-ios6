@@ -250,6 +250,39 @@ static NSString *KOHTMLText(NSString *html)
     return [[lines componentsJoinedByString:@"\n"] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
+// OptiFine's changelog as Kostka's texts are: "OptiFine 1.12.2_HD_U_G5" and its previews' "(HD_U_G3)" as headings,
+// its "- " items as "• ", the numbers of its issues ("(#4706)") out
+static NSString *KOOptiFineText(NSString *raw)
+{
+    static NSRegularExpression *issues;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        issues = [NSRegularExpression regularExpressionWithPattern:@"\\s*\\((#[0-9]+[, ]*)+\\)" options:0 error:NULL];
+    });
+    NSMutableArray *lines = [NSMutableArray array];
+    BOOL empty = YES;
+    for (NSString *r in [raw componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]]) {
+        NSString *line = [r stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        line = [issues stringByReplacingMatchesInString:line options:0 range:NSMakeRange(0, line.length) withTemplate:@""];
+        if (!line.length) {
+            if (!empty) [lines addObject:@""];
+            empty = YES;
+            continue;
+        }
+        if ([line hasPrefix:@"OptiFine "]) {
+            if (!empty) [lines addObject:@""];
+            line = [[line stringByReplacingOccurrencesOfString:@"_" withString:@" "] uppercaseString];
+        } else if ([line hasPrefix:@"(HD"] && [line hasSuffix:@")"]) {
+            line = [[line substringWithRange:NSMakeRange(1, line.length - 2)] stringByReplacingOccurrencesOfString:@"_" withString:@" "];
+        } else if ([line hasPrefix:@"- "]) {
+            line = [@"• " stringByAppendingString:[line substringFromIndex:2]];
+        }
+        [lines addObject:line];
+        empty = NO;
+    }
+    return [[lines componentsJoinedByString:@"\n"] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
 // The news's API answers with JavaScript: "var tumblr_api_read = {...};"
 static NSDictionary *KONewsJSON(NSData *data)
 {
@@ -681,6 +714,44 @@ static BOOL KOIsHeading(NSString *line)
     }];
 }
 
++ (void)loadOptiFine:(NSString *)file done:(void (^)(NSString *, NSError *))done
+{
+    NSString *cache = [self pathOf:[file stringByAppendingString:@".1.txt"]];
+    NSString *kept = [NSString stringWithContentsOfFile:cache encoding:NSUTF8StringEncoding error:NULL];
+    if (kept.length) {
+        done(kept, nil);
+        return;
+    }
+    // (plain http, as the rest of optifine.net that Kostka reads)
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://optifine.net/changelog?f=%@",
+                                       [file stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
+    NSURLRequest *request = [NSURLRequest requestWithURL:url cachePolicy:NSURLRequestUseProtocolCachePolicy timeoutInterval:30];
+    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue]
+                           completionHandler:^(NSURLResponse *response, NSData *data, NSError *error) {
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            NSString *raw = data.length ? ([[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?:
+                                          [[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding]) : nil;
+            // (a page of the site in its place - an unknown file - is no changelog)
+            BOOL page = [raw rangeOfString:@"<html" options:NSCaseInsensitiveSearch].location != NSNotFound;
+            NSString *text = raw.length && !page && [raw rangeOfString:@"OptiFine"].location != NSNotFound ? KOOptiFineText(raw) : nil;
+            if (text.length) [text writeToFile:cache atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (text.length) done(text, nil);
+                else done(nil, error ?: [KONet errorWithText:L(@"optifine.net could not be reached.")]);
+            });
+        });
+    }];
+}
+
++ (NSString *)keyFor:(KOVersion *)version
+{
+    if (!version.parent || !version.optiFineEdition) return version.identifier;
+    // (OptiFine calls 1.8 and 1.9 "1.8.0" and "1.9.0")
+    NSString *mc = version.parent.identifier;
+    if ([mc isEqualToString:@"1.8"] || [mc isEqualToString:@"1.9"]) mc = [mc stringByAppendingString:@".0"];
+    return [NSString stringWithFormat:@"OptiFine_%@_%@.jar", mc, [version.optiFineEdition stringByReplacingOccurrencesOfString:@" " withString:@"_"]];
+}
+
 + (void)load:(NSString *)identifier done:(void (^)(NSDictionary *, NSString *, NSError *))done
 {
     [self mojang:^(NSDictionary *notes) {
@@ -732,6 +803,8 @@ static BOOL KOIsHeading(NSString *line)
         unichar mark = [line characterAtIndex:0];
         BOOL item = line.length > 2 && [line characterAtIndex:1] == ' ' && (mark == 0x2022 || mark == '+' || mark == '-' || mark == '*');
         if (item) {
+            // (the wiki's Bugs: what was wrong in the version, not what is new)
+            if ([section isEqualToString:@"BUGS"] || [section hasPrefix:@"KNOWN"]) continue;
             NSUInteger spaces = 0;
             while (spaces < raw.length && [raw characterAtIndex:spaces] == ' ') spaces++;
             [lines addObject:@[ @(spaces / 4), [line substringFromIndex:2], section ]];
@@ -841,9 +914,7 @@ static BOOL KOIsHeading(NSString *line)
             continue;
         }
         [g_fetching addObject:name];
-        [self load:name done:^(NSDictionary *mojang, NSString *wiki, NSError *error) {
-            NSString *s = mojang[@"text"] ? [self summaryOf:mojang[@"text"] mojang:YES] : nil;
-            if (!s.length && wiki.length) s = [self summaryOf:wiki mojang:NO];
+        void (^got)(NSString *) = ^(NSString *s) {
             if (s.length) {
                 [self summaries][name] = s;
                 [self keepSummaries];
@@ -853,6 +924,15 @@ static BOOL KOIsHeading(NSString *line)
             [g_fetching removeObject:name];
             [self finish:name summary:s.length ? s : nil];
             dispatch_async(dispatch_get_main_queue(), ^{ [self work]; });
+        };
+        if ([name hasPrefix:@"OptiFine_"]) {
+            [self loadOptiFine:name done:^(NSString *text, NSError *error) { got([self summaryOf:text mojang:YES]); }];
+            continue;
+        }
+        [self load:name done:^(NSDictionary *mojang, NSString *wiki, NSError *error) {
+            NSString *s = mojang[@"text"] ? [self summaryOf:mojang[@"text"] mojang:YES] : nil;
+            if (!s.length && wiki.length) s = [self summaryOf:wiki mojang:NO];
+            got(s);
         }];
     }
 }

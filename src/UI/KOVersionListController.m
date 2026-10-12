@@ -4,42 +4,9 @@
 #import "KOOptiFineController.h"
 #import "KOVersions.h"
 #import "KOChangelog.h"
+#import "KOVersionCell.h"
 #import "KOStyle.h"
 #import "KOCommon.h"
-
-// A row of the list: the version's name, and under it what is new in it - two lines at most
-@interface KOVersionCell : UITableViewCell
-@property (nonatomic, strong) UILabel *summary;
-@end
-
-@implementation KOVersionCell
-
-- (id)initWithReuseIdentifier:(NSString *)reuse
-{
-    if ((self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuse])) {
-        self.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-        self.summary = [[UILabel alloc] init];
-        self.summary.font = [UIFont systemFontOfSize:14];
-        self.summary.textColor = [UIColor grayColor];
-        self.summary.highlightedTextColor = [UIColor whiteColor];
-        self.summary.backgroundColor = [UIColor clearColor];
-        self.summary.numberOfLines = 2;
-        [self.contentView addSubview:self.summary];
-    }
-    return self;
-}
-
-- (void)layoutSubviews
-{
-    [super layoutSubviews];
-    CGRect b = self.contentView.bounds;
-    CGFloat x = 10, w = b.size.width - 2 * x;
-    self.textLabel.frame = CGRectMake(x, 7, w, 22);
-    CGSize size = [self.summary sizeThatFits:CGSizeMake(w, 40)];
-    self.summary.frame = CGRectMake(x, 30, w, MIN(size.height, b.size.height - 32));
-}
-
-@end
 
 @interface KOVersionListController ()
 @property (nonatomic, strong) NSArray *versions;
@@ -106,7 +73,7 @@
     for (NSIndexPath *p in self.tableView.indexPathsForVisibleRows) {
         if (p.section >= (NSInteger)self.sections.count || p.row >= (NSInteger)[self.sections[p.section][@"versions"] count]) continue;
         KOVersion *v = self.sections[p.section][@"versions"][p.row];
-        if ([v isKindOfClass:[KOVersion class]] && [(v.parent ?: v).identifier isEqualToString:name]) [rows addObject:p];
+        if ([v isKindOfClass:[KOVersion class]] && [[KOChangelog keyFor:v] isEqualToString:name]) [rows addObject:p];
     }
     if (rows.count) [self.tableView reloadRowsAtIndexPaths:rows withRowAnimation:UITableViewRowAnimationNone];
 }
@@ -196,11 +163,9 @@
     }
     KOVersionCell *cell = (KOVersionCell *)[tableView dequeueReusableCellWithIdentifier:@"v"];
     if (!cell) cell = [[KOVersionCell alloc] initWithReuseIdentifier:@"v"];
-    cell.textLabel.font = [UIFont boldSystemFontOfSize:18];
-    cell.textLabel.textColor = [UIColor blackColor];
     id item = self.sections[indexPath.section][@"versions"][indexPath.row];
     if (![item isKindOfClass:[KOVersion class]]) {
-        cell.textLabel.text = L(@"Add OptiFine…");
+        [cell setName:L(@"Add OptiFine…") tag:nil color:nil];
         cell.summary.text = @"1.7.2 – 1.12.2";
         return cell;
     }
@@ -208,19 +173,11 @@
     NSString *name = v.parent ? [NSString stringWithFormat:@"%@  OptiFine %@", v.parent.identifier, v.optiFineEdition] : v.identifier;
     // (what plays, and the versions too new for iOS 6 in their own section: the name; a version of the LWJGL 2 era
     // that was not tried yet or did not play yet: that too, in its colour)
-    if (v.support == KOSupportTry || v.support == KOSupportSoon) {
-        NSMutableAttributedString *t = [[NSMutableAttributedString alloc] initWithString:name
-            attributes:@{ NSFontAttributeName: [UIFont boldSystemFontOfSize:18], NSForegroundColorAttributeName: [UIColor blackColor] }];
-        [t appendAttributedString:[[NSAttributedString alloc] initWithString:[@"   " stringByAppendingString:v.localizedSupport]
-            attributes:@{ NSFontAttributeName: [UIFont boldSystemFontOfSize:14],
-                          NSForegroundColorAttributeName: v.support == KOSupportTry ? [KOStyle tryColor] : [KOStyle soonColor] }]];
-        cell.textLabel.attributedText = t;
-    } else {
-        cell.textLabel.text = name;
-    }
-    // under it what is new in it (in the parent, for OptiFine's): Mojang's notes or the wiki's, fetched for the rows on
-    // the screen and kept - till then its date
-    NSString *key = (v.parent ?: v).identifier;
+    BOOL odd = v.support == KOSupportTry || v.support == KOSupportSoon;
+    [cell setName:name tag:odd ? v.localizedSupport : nil color:v.support == KOSupportTry ? [KOStyle tryColor] : [KOStyle soonColor]];
+    // under it what is new in it - Mojang's notes or the wiki's, OptiFine's changelog for OptiFine's - fetched for the
+    // rows on the screen and kept; till then its date
+    NSString *key = [KOChangelog keyFor:v];
     NSString *summary = [KOChangelog summaryFor:key];
     cell.summary.text = summary ?: (v.parent ?: v).localizedReleased;
     if (!summary) {

@@ -1,4 +1,6 @@
 #import "KOOptiFineController.h"
+#import "KOVersionCell.h"
+#import "KOChangelog.h"
 #import "KOVersions.h"
 #import "KOGame.h"
 #import "KONet.h"
@@ -307,23 +309,43 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
     if (!self.editions.count) {
+        UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
         cell.textLabel.numberOfLines = 0;
         cell.textLabel.font = [UIFont systemFontOfSize:16];
         cell.textLabel.text = self.problem ?: L(@"Loading what optifine.net offers…");
         cell.selectionStyle = self.problem ? UITableViewCellSelectionStyleBlue : UITableViewCellSelectionStyleNone;
         return cell;
     }
+    KOVersionCell *cell = (KOVersionCell *)[tableView dequeueReusableCellWithIdentifier:@"e"];
+    if (!cell) cell = [[KOVersionCell alloc] initWithReuseIdentifier:@"e"];
     KOOptiFineEdition *e = self.editions[indexPath.row];
-    cell.textLabel.font = [UIFont boldSystemFontOfSize:18];
-    cell.textLabel.text = [NSString stringWithFormat:@"%@  OptiFine %@", e.version.identifier, e.edition];
     BOOL installed = [self installed:e];
-    cell.detailTextLabel.text = installed ? L(@"Installed") : e.date;
-    cell.detailTextLabel.textColor = installed ? [KOStyle playsColor] : [UIColor grayColor];
+    [cell setName:[NSString stringWithFormat:@"%@  OptiFine %@", e.version.identifier, e.edition]
+              tag:installed ? L(@"Installed") : nil color:[KOStyle playsColor]];
     cell.accessoryType = installed ? UITableViewCellAccessoryNone : UITableViewCellAccessoryDisclosureIndicator;
     cell.selectionStyle = installed ? UITableViewCellSelectionStyleNone : UITableViewCellSelectionStyleBlue;
+    // under it what is new in the edition: OptiFine's own changelog (till it comes, its date)
+    NSString *summary = [KOChangelog summaryFor:e.file];
+    cell.summary.text = summary ?: e.date;
+    if (!summary) {
+        __weak KOOptiFineController *weakSelf = self;
+        NSString *file = e.file;
+        [KOChangelog want:file done:^(NSString *s) {
+            KOOptiFineController *me = weakSelf;
+            if (!s || !me) return;
+            for (NSIndexPath *p in me.tableView.indexPathsForVisibleRows) {
+                if (p.row < (NSInteger)me.editions.count && [[me.editions[p.row] file] isEqualToString:file])
+                    [me.tableView reloadRowsAtIndexPaths:@[ p ] withRowAnimation:UITableViewRowAnimationNone];
+            }
+        }];
+    }
     return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 70;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath

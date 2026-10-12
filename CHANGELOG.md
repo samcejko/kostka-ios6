@@ -40,4 +40,5 @@
 - What is new in each version: in the list under its name (its first items, in place of "Plays"), on its page the
   whole - Mojang's own notes where there are any (the launcher's news of 2011 to 2016 for 48 releases from Beta 1.3 to
   1.11.2, the launcher's patch notes from 1.13 on), and the Minecraft Wiki's page about it as text (for the rest and
-  for more); fetched for the rows on the screen, kept for offline
+  for more); OptiFine's own changelog for OptiFine's versions and editions; fetched for the rows on the screen, kept
+  for offline

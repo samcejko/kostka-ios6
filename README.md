@@ -80,6 +80,8 @@ The list shows under each version what is new in it (its first items), and the v
 - **The Minecraft Wiki's page** about the version (minecraft.wiki, its text under CC BY-NC-SA 3.0): for the versions
   Mojang's notes miss - 1.12, the other minor releases, the snapshots up to 2017, Alpha, Infdev, Classic - and for
   more than the news's few lines (its lead, Additions, Changes, Fixes).
+- **OptiFine's own changelog** (optifine.net) for an OptiFine version and in Add OptiFine's list, above what is new in
+  its Minecraft.
 
 Fetched for the rows on the screen and when a page is opened, kept for later, as plain text. Mojang's notes and the
 wiki are in English.

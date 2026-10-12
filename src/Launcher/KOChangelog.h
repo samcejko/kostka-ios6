@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 
+@class KOVersion;
+
 // What is new in a version. Mojang's own notes where it wrote any that can be read: the launcher's news of 2011 to
 // 2016 (Minecraft Update News, mcupdate.tumblr.com: the releases from Beta 1.3 to 1.11.2) and the launcher's patch
 // notes from 1.13 on (launchercontent.mojang.com). Then the Minecraft Wiki's page about the version (minecraft.wiki,
@@ -21,6 +23,14 @@
 // capitals, list items start with "• " (Mojang's news keeps its own marks: + added, * changed, - removed or fixed).
 + (void)load:(NSString *)identifier done:(void (^)(NSDictionary *mojang, NSString *wiki, NSError *error))done;
 
+// OptiFine's own changelog for one of its files (optifine.net/changelog?f=OptiFine_1.12.2_HD_U_G5.jar): the file's
+// edition and the ones before it, newest first, as plain text (main thread)
++ (void)loadOptiFine:(NSString *)file done:(void (^)(NSString *text, NSError *error))done;
+
+// The name the line of what is new in a version goes by: the version's own, or for an OptiFine version OptiFine's file
+// ("OptiFine_1.12.2_HD_U_G5.jar": its changelog says what is new in it)
++ (NSString *)keyFor:(KOVersion *)version;
+
 // A line of what is new in the version, for the list: its first items ("New mobs and new places to put your precious
 // items! · Added cursed enchantments · Added the Observer block · ..."), Mojang's when there are, else the wiki's.
 // What is known already, or nil - and then `want:` brings it.
@@ -28,7 +38,8 @@
 // Mojang's notes fetched (when they are older than a week) and their summaries known: `done` on the main thread
 + (void)prepare:(void (^)(void))done;
 // The summary fetched in the background, a few at a time, the last asked for first (the rows on the screen); `done` on
-// the main thread, with nil when there is none (no network: asked again a minute later)
+// the main thread, with nil when there is none (no network: asked again a minute later). A name of keyFor:, or an
+// OptiFine file.
 + (void)want:(NSString *)identifier done:(void (^)(NSString *summary))done;
 
 // (tests) the wiki's markup as plain text; a text's summary
