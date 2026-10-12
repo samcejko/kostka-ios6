@@ -485,6 +485,14 @@ static BOOL KOIsHeading(NSString *line)
     s = KOReplace(s, @"\\[https?://[^\\s\\]]+\\s+([^\\]]+)\\]", @"$1");
     s = KOReplace(s, @"\\[https?://[^\\s\\]]+\\]", @"");
     s = KOReplace(s, @"</?[a-z][^>]*>", @"");
+    // (a line all in bold - "'''[[Concrete]]'''", the name of what the lines under it are about - a term of a
+    // definition list)
+    static NSRegularExpression *bold;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        bold = [NSRegularExpression regularExpressionWithPattern:@"^[ \\t]*'''([^'\\n]+?)'''[ \\t]*$" options:NSRegularExpressionAnchorsMatchLines error:NULL];
+    });
+    s = [bold stringByReplacingMatchesInString:s options:0 range:NSMakeRange(0, s.length) withTemplate:@";$1"];
     s = [s stringByReplacingOccurrencesOfString:@"'''" withString:@""];
     s = [s stringByReplacingOccurrencesOfString:@"''" withString:@""];
     NSDictionary *entities = @{ @"&nbsp;": @" ", @"&amp;": @"&", @"&lt;": @"<", @"&gt;": @">", @"&quot;": @"\"",
@@ -497,6 +505,7 @@ static BOOL KOIsHeading(NSString *line)
     NSSet *after = [NSSet setWithArray:@[ @"videos", @"trivia", @"gallery", @"references", @"navigation", @"external links",
                                           @"see also", @"notes", @"screenshots", @"video" ]];
     NSMutableArray *lines = [NSMutableArray array];   // { text, level } - level 0 for text
+    NSUInteger term = 0;   // (under a term the list's items go one level deeper: they are about it)
     for (NSString *raw in [s componentsSeparatedByString:@"\n"]) {
         NSString *line = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         NSTextCheckingResult *h = [heading firstMatchInString:line options:0 range:NSMakeRange(0, line.length)];
@@ -505,6 +514,7 @@ static BOOL KOIsHeading(NSString *line)
             NSString *name = [[line substringWithRange:[h rangeAtIndex:2]] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
             if (level <= 2 && [after containsObject:[name lowercaseString]]) break;
             [lines addObject:@[ level <= 2 ? [name uppercaseString] : name, @(level) ]];
+            term = 0;
             continue;
         }
         NSTextCheckingResult *m = [item firstMatchInString:line options:0 range:NSMakeRange(0, line.length)];
@@ -512,9 +522,17 @@ static BOOL KOIsHeading(NSString *line)
             NSString *marks = [line substringWithRange:[m rangeAtIndex:1]];
             NSString *text = [line substringWithRange:[m rangeAtIndex:2]];
             if (!text.length) continue;
-            NSString *indent = [@"" stringByPaddingToLength:(marks.length - 1) * 4 withString:@" " startingAtIndex:0];
             unichar kind = [marks characterAtIndex:marks.length - 1];
-            line = kind == '*' || kind == '#' ? [NSString stringWithFormat:@"%@• %@", indent, text] : [indent stringByAppendingString:text];
+            if ([marks characterAtIndex:0] == ';') {
+                // a term ("; Concrete", a line in bold): an item
+                line = [NSString stringWithFormat:@"%@• %@", [@"" stringByPaddingToLength:(marks.length - 1) * 4 withString:@" " startingAtIndex:0], text];
+                term = 1;
+            } else {
+                NSString *indent = [@"" stringByPaddingToLength:(marks.length - 1 + term) * 4 withString:@" " startingAtIndex:0];
+                line = kind == '*' || kind == '#' ? [NSString stringWithFormat:@"%@• %@", indent, text] : [indent stringByAppendingString:text];
+            }
+        } else {
+            term = 0;
         }
         [lines addObject:@[ line, @0 ]];
     }
@@ -549,10 +567,10 @@ static BOOL KOIsHeading(NSString *line)
     return [dir stringByAppendingPathComponent:file];
 }
 
-// (".2": the text as this Kostka makes it - one kept by an earlier one is made anew)
+// (".3": the text as this Kostka makes it - one kept by an earlier one is made anew)
 + (NSString *)cachePath:(NSString *)identifier
 {
-    return [self pathOf:[identifier stringByAppendingString:@".2.txt"]];
+    return [self pathOf:[identifier stringByAppendingString:@".3.txt"]];
 }
 
 // The wiki's text (main thread); the work on it in the background - a page of a large update is some 100 KB
@@ -688,40 +706,65 @@ static BOOL KOIsHeading(NSString *line)
 
 #pragma mark Summaries
 
+// The items of the text's first level, each - the wiki's are about a thing, its items under it:
+// - with nothing under it, or Mojang's: itself ("Added cursed enchantments")
+// - a group's word ("General", "Blocks"): its first item
+// - under Additions: the thing's name ("Concrete")
+// - else the thing and the first word on it ("Trapped chests: Now change their texture to suit Christmas ...")
+// Mojang's first line goes first ("New mobs and new places to put your precious items!"); the wiki's ("1.12.2 is a minor
+// update for Java Edition that was released on ...") only when there are no items
 + (NSString *)summaryOf:(NSString *)text mojang:(BOOL)mojang
 {
     if (![text isKindOfClass:[NSString class]]) return nil;
-    NSMutableArray *parts = [NSMutableArray array];
-    NSString *lead = nil;
-    BOOL items = NO;
-    NSUInteger length = 0;
+    static NSSet *groups;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        groups = [NSSet setWithArray:@[ @"general", @"gameplay", @"world generation", @"world", @"blocks", @"items", @"blocks and items",
+                                        @"mobs", @"entities", @"non-mob entities", @"biomes", @"structures", @"commands",
+                                        @"command format", @"other", @"miscellaneous", @"sounds", @"options", @"menu screens",
+                                        @"graphics", @"technical", @"user interface", @"multiplayer" ]];
+    });
+    NSMutableArray *lines = [NSMutableArray array];   // { depth, words, the section (the heading in capitals above) }
+    NSString *section = @"", *lead = nil;
     for (NSString *raw in [text componentsSeparatedByString:@"\n"]) {
         NSString *line = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        if (line.length < 3) continue;
+        if (line.length < 2) continue;
         unichar mark = [line characterAtIndex:0];
-        BOOL item = [line characterAtIndex:1] == ' ' && (mark == 0x2022 || mark == '+' || mark == '-' || mark == '*');
-        if (!item) {
-            if (!items && !lead && !KOIsHeading(line)) lead = line;
-            continue;
+        BOOL item = line.length > 2 && [line characterAtIndex:1] == ' ' && (mark == 0x2022 || mark == '+' || mark == '-' || mark == '*');
+        if (item) {
+            NSUInteger spaces = 0;
+            while (spaces < raw.length && [raw characterAtIndex:spaces] == ' ') spaces++;
+            [lines addObject:@[ @(spaces / 4), [line substringFromIndex:2], section ]];
+        } else if (KOIsHeading(line)) {
+            section = line;
+        } else if (!lines.count && !lead) {
+            lead = line;
         }
-        items = YES;
-        if ([raw hasPrefix:@" "]) continue;   // (an item's own items)
-        NSString *part = KOShort([line substringFromIndex:2], 80);
-        if (!part.length) continue;
+    }
+    NSMutableArray *parts = [NSMutableArray array];
+    NSUInteger length = 0;
+    for (NSUInteger i = 0; i < lines.count && parts.count < 6 && length <= 200; i++) {
+        if ([lines[i][0] integerValue] != 0) continue;
+        NSString *thing = lines[i][1];
+        NSString *first = i + 1 < lines.count && [lines[i + 1][0] integerValue] == 1 ? lines[i + 1][1] : nil;
+        NSString *part;
+        if (!first || mojang) part = KOShort(thing, 80);
+        else if ([groups containsObject:[thing lowercaseString]]) part = KOShort(first, 80);
+        else if ([lines[i][2] hasPrefix:@"ADDITION"]) part = KOShort(thing, 60);
+        else part = [NSString stringWithFormat:@"%@: %@", KOShort(thing, 40), KOShort(first, 70)];
+        if (!part.length || [parts containsObject:part]) continue;
         [parts addObject:part];
         length += part.length + 3;
-        if (parts.count >= 6 || length > 200) break;
     }
-    // Mojang's first line goes first ("New mobs and new places to put your precious items!"); the wiki's ("1.12.2 is a
-    // minor update for Java Edition that was released on ...") only when there are no items
     if (lead && (mojang ? lead.length <= 120 : !parts.count)) [parts insertObject:KOShort(lead, mojang ? 120 : 180) atIndex:0];
     return parts.count ? [parts componentsJoinedByString:@" · "] : nil;
 }
 
+// (".2": made as this Kostka makes them)
 + (NSMutableDictionary *)summaries
 {
     if (!g_summaries)
-        g_summaries = [NSMutableDictionary dictionaryWithContentsOfFile:[self pathOf:@"summaries.1.plist"]] ?: [NSMutableDictionary dictionary];
+        g_summaries = [NSMutableDictionary dictionaryWithContentsOfFile:[self pathOf:@"summaries.2.plist"]] ?: [NSMutableDictionary dictionary];
     return g_summaries;
 }
 
@@ -733,7 +776,7 @@ static BOOL KOIsHeading(NSString *line)
     planned = YES;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
         planned = NO;
-        [[g_summaries copy] writeToFile:[self pathOf:@"summaries.1.plist"] atomically:YES];
+        [[g_summaries copy] writeToFile:[self pathOf:@"summaries.2.plist"] atomically:YES];
     });
 }
 
