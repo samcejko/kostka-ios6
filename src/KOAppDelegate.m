@@ -104,12 +104,20 @@
         }];
         return YES;
     }
-    // kostka:changelog?version=1.12.2: what is new in a version (the Minecraft Wiki's page as text), into
-    // Library/Kostka/changelogs/<version>.txt - the page's text as Kostka shows it (tests)
+    // kostka:changelog?version=1.12.2[,1.11,...]: what is new in versions - Mojang's notes and the wiki's text, into
+    // Library/Kostka/changelogs - and their lines for the list, in the log (tests)
     if ([target isEqualToString:@"changelog"] && p[@"version"]) {
-        NSString *version = p[@"version"];
-        [KOChangelog load:version done:^(NSString *text, NSError *error) {
-            KOLog(@"changelog %@: %lu characters %@", version, (unsigned long)text.length, error.localizedDescription ?: @"");
+        NSArray *names = [p[@"version"] componentsSeparatedByString:@","];
+        [KOVersions load:^(NSArray *versions, NSError *error) {
+            for (NSString *version in names) {
+                [KOChangelog load:version done:^(NSDictionary *mojang, NSString *wiki, NSError *e) {
+                    NSString *notes = mojang[@"text"];
+                    NSString *line = notes ? [KOChangelog summaryOf:notes mojang:YES] : [KOChangelog summaryOf:wiki mojang:NO];
+                    KOLog(@"changelog %@: Mojang (%@) %lu characters, wiki %lu characters %@| %@", version, mojang[@"from"] ?: @"none",
+                          (unsigned long)notes.length, (unsigned long)wiki.length, e ? [e.localizedDescription stringByAppendingString:@" "] : @"",
+                          line ?: @"(no line)");
+                }];
+            }
         }];
         return YES;
     }

@@ -1,4 +1,5 @@
 #import "KOVersions.h"
+#import "KOChangelog.h"
 #import "KONet.h"
 #import "KOJava.h"
 #import "KOCommon.h"
@@ -164,6 +165,7 @@ static void KOLoadTested(void)
         NSArray *list = [self parse:json];
         if (list) {
             [data writeToFile:[self manifestPath] atomically:YES];
+            [KOChangelog setVersions:list];
             done([self withInstalled:list], nil);
             return;
         }
@@ -171,6 +173,7 @@ static void KOLoadTested(void)
         NSData *cached = [NSData dataWithContentsOfFile:[self manifestPath]];
         id old = cached ? [NSJSONSerialization JSONObjectWithData:cached options:0 error:NULL] : nil;
         list = [self withInstalled:[self parse:old]];
+        if (list) [KOChangelog setVersions:list];
         done(list, list ? nil : (error ?: [KONet errorWithText:L(@"Mojang's list of versions is not readable.")]));
     }];
 }

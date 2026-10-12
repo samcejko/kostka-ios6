@@ -72,9 +72,17 @@ need OpenGL 3: not on the iPad 2.
 
 ## What is new
 
-A version's page shows what is new in it: the Minecraft Wiki's page about the version (minecraft.wiki, its text
-under CC BY-NC-SA 3.0), fetched when the page is opened and kept for later, as plain text - its lead, Additions,
-Changes, Fixes.
+The list shows under each version what is new in it (its first items), and the version's page all of it:
+
+- **Mojang's own notes** where Mojang wrote any that can still be read: the launcher's news of 2011 to 2016 (Minecraft
+  Update News, mcupdate.tumblr.com - 48 releases from Beta 1.3 to 1.11.2) and the launcher's patch notes from 1.13 on
+  (launchercontent.mojang.com).
+- **The Minecraft Wiki's page** about the version (minecraft.wiki, its text under CC BY-NC-SA 3.0): for the versions
+  Mojang's notes miss - 1.12, the other minor releases, the snapshots up to 2017, Alpha, Infdev, Classic - and for
+  more than the news's few lines (its lead, Additions, Changes, Fixes).
+
+Fetched for the rows on the screen and when a page is opened, kept for later, as plain text. Mojang's notes and the
+wiki are in English.
 
 ## How
 

@@ -37,5 +37,7 @@
   download page in the app (the player taps Download there; Kostka does not hand OptiFine out) and runs its installer
   in Kostka's Java; an OptiFine version plays in its version's folder (the same worlds) and starts with OptiFine's
   fastest settings. Versions made from others (inheritsFrom) play: their JSON over the parent's, their libraries first
-- What is new in a version, on its page: the Minecraft Wiki's page about it as text (its lead, Additions, Changes),
-  kept for offline; the list gives a playing version's date instead of "Plays"
+- What is new in each version: in the list under its name (its first items, in place of "Plays"), on its page the
+  whole - Mojang's own notes where there are any (the launcher's news of 2011 to 2016 for 48 releases from Beta 1.3 to
+  1.11.2, the launcher's patch notes from 1.13 on), and the Minecraft Wiki's page about it as text (for the rest and
+  for more); fetched for the rows on the screen, kept for offline

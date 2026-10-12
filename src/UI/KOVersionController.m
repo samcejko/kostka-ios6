@@ -109,7 +109,7 @@
     [v addSubview:self.status];
     y += 56 + 24;
 
-    // what is new in the version (in its parent, for OptiFine's): the Minecraft Wiki's page
+    // what is new in the version (in its parent, for OptiFine's): Mojang's notes, the Minecraft Wiki's page
     UILabel *heading = [KOStyle labelWithFont:[UIFont boldSystemFontOfSize:20]];
     heading.frame = CGRectMake(m, y, w - 2 * m, 26);
     heading.autoresizingMask = UIViewAutoresizingFlexibleWidth;
@@ -117,12 +117,12 @@
     [v addSubview:heading];
     y += 32;
     UILabel *source = [KOStyle labelWithFont:[UIFont systemFontOfSize:13]];
-    source.frame = CGRectMake(m, h - 30, w - 2 * m, 20);
+    source.frame = CGRectMake(m, h - 44, w - 2 * m, 36);
     source.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
     source.textColor = [UIColor colorWithWhite:0.75 alpha:1];
-    source.text = L(@"From the Minecraft Wiki (minecraft.wiki), its text under the CC BY-NC-SA 3.0 license");
+    source.numberOfLines = 2;
     [v addSubview:source];
-    UITextView *changes = [[UITextView alloc] initWithFrame:CGRectMake(m - 8, y, w - 2 * m + 16, h - 34 - y)];
+    UITextView *changes = [[UITextView alloc] initWithFrame:CGRectMake(m - 8, y, w - 2 * m + 16, h - 48 - y)];
     changes.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     changes.editable = NO;
     changes.backgroundColor = [UIColor colorWithWhite:0 alpha:0.25];
@@ -130,9 +130,53 @@
     changes.font = [UIFont systemFontOfSize:16];
     changes.text = L(@"Loading what is new…");
     [v addSubview:changes];
-    [KOChangelog load:(version.parent ?: version).identifier done:^(NSString *text, NSError *error) {
-        changes.text = text.length ? text : [NSString stringWithFormat:L(@"What is new could not be loaded: %@"), error.localizedDescription ?: @""];
+    [KOChangelog load:(version.parent ?: version).identifier done:^(NSDictionary *mojang, NSString *wiki, NSError *error) {
+        if (![mojang[@"text"] length] && !wiki.length) {
+            changes.text = [NSString stringWithFormat:L(@"What is new could not be loaded: %@"), error.localizedDescription ?: @""];
+            return;
+        }
+        changes.attributedText = [KOVersionController changes:mojang wiki:wiki];
+        NSMutableArray *from = [NSMutableArray array];
+        if ([mojang[@"from"] isEqualToString:@"news"])
+            [from addObject:L(@"Mojang's notes: the launcher's news of the time (Minecraft Update News, mcupdate.tumblr.com)")];
+        if ([mojang[@"from"] isEqualToString:@"patch"])
+            [from addObject:L(@"Mojang's notes: the launcher's patch notes (launchercontent.mojang.com)")];
+        if (wiki.length) [from addObject:L(@"From the Minecraft Wiki (minecraft.wiki), its text under the CC BY-NC-SA 3.0 license")];
+        source.text = [from componentsJoinedByString:@"\n"];
     }];
+}
+
+// Mojang's notes under their title and date, then the wiki's text ("More on the Minecraft Wiki" when both are there)
++ (NSAttributedString *)changes:(NSDictionary *)mojang wiki:(NSString *)wiki
+{
+    NSDictionary *head = @{ NSFontAttributeName: [UIFont boldSystemFontOfSize:18],
+                            NSForegroundColorAttributeName: [UIColor colorWithRed:0.65 green:0.9 blue:0.45 alpha:1] };
+    NSDictionary *body = @{ NSFontAttributeName: [UIFont systemFontOfSize:16], NSForegroundColorAttributeName: [UIColor colorWithWhite:0.95 alpha:1] };
+    NSMutableAttributedString *s = [[NSMutableAttributedString alloc] init];
+    NSString *notes = mojang[@"text"];
+    if (notes.length) {
+        static NSDateFormatter *in, *out;
+        if (!in) {
+            in = [[NSDateFormatter alloc] init];
+            in.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+            in.dateFormat = @"yyyy-MM-dd";
+            out = [[NSDateFormatter alloc] init];
+            out.dateStyle = NSDateFormatterMediumStyle;
+            out.timeStyle = NSDateFormatterNoStyle;
+        }
+        NSDate *d = [in dateFromString:mojang[@"date"] ?: @""];
+        NSString *title = [NSString stringWithFormat:L(@"From Mojang: %@ (%@)"), mojang[@"title"] ?: @"", d ? [out stringFromDate:d] : mojang[@"date"] ?: @""];
+        [s appendAttributedString:[[NSAttributedString alloc] initWithString:[title stringByAppendingString:@"\n"] attributes:head]];
+        [s appendAttributedString:[[NSAttributedString alloc] initWithString:notes attributes:body]];
+    }
+    if (wiki.length) {
+        if (s.length) {
+            NSString *more = [NSString stringWithFormat:@"\n\n%@\n", L(@"More on the Minecraft Wiki")];
+            [s appendAttributedString:[[NSAttributedString alloc] initWithString:more attributes:head]];
+        }
+        [s appendAttributedString:[[NSAttributedString alloc] initWithString:wiki attributes:body]];
+    }
+    return s;
 }
 
 - (void)playTapped
