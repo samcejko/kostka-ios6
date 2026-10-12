@@ -8,6 +8,7 @@
 
 @interface KOOptiFineController : UITableViewController
 - (id)initWithVersions:(NSArray *)versions;   // KOVersions' list (Mojang's, with what is installed here)
-// (tests: optifine.net's page for one file - "OptiFine_1.12.2_HD_U_G5.jar" - its Download link followed when `tap`)
-+ (UIViewController *)pageForFile:(NSString *)file version:(KOVersion *)version tap:(BOOL)tap;
+// (tests: optifine.net's page for one file - "OptiFine_1.12.2_HD_U_G5.jar" - its Download link followed when `tap`,
+// the question to install it answered Install when `install`)
++ (UIViewController *)pageForFile:(NSString *)file version:(KOVersion *)version tap:(BOOL)tap install:(BOOL)install;
 @end

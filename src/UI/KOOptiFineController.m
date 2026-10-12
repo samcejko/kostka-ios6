@@ -28,7 +28,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
 @property (nonatomic, strong) UILabel *note;
 @property (nonatomic, strong) UIProgressView *progress;
 @property (nonatomic, copy) NSString *installer;
-@property (nonatomic) BOOL busy, tapForTest;
+@property (nonatomic) BOOL busy, tapForTest, installForTest;
 @end
 
 @implementation KOOptiFinePageController
@@ -125,6 +125,10 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         ask.tag = 1;
         [ask show];
         KOLog(@"optifine: asks \"%@\"", title);
+        if (s.installForTest) {
+            [ask dismissWithClickedButtonIndex:ask.firstOtherButtonIndex animated:NO];
+            [s alertView:ask clickedButtonAtIndex:ask.firstOtherButtonIndex];
+        }
     }];
 }
 
@@ -152,7 +156,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         if (!s) return;
         s.progress.hidden = YES;
         BOOL ok = code == 0 && !error;
-        KOLog(@"optifine: installer finished with %d %@", code, error ?: @"");
+        KOLog(@"optifine: says %@", ok ? @"installed" : @"not installed");
         NSString *closing = L(@"Kostka closes: open it again to play.");
         UIAlertView *end = [[UIAlertView alloc]
             initWithTitle:ok ? L(@"OptiFine is installed") : L(@"OptiFine could not be installed")
@@ -184,7 +188,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
     return self;
 }
 
-+ (UIViewController *)pageForFile:(NSString *)file version:(KOVersion *)version tap:(BOOL)tap
++ (UIViewController *)pageForFile:(NSString *)file version:(KOVersion *)version tap:(BOOL)tap install:(BOOL)install
 {
     KOOptiFineEdition *e = [[KOOptiFineEdition alloc] init];
     e.file = file;
@@ -195,6 +199,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
     KOOptiFinePageController *page = [[KOOptiFinePageController alloc] initWithNibName:nil bundle:nil];
     page.edition = e;
     page.tapForTest = tap;
+    page.installForTest = install;
     return page;
 }
 
