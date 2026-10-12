@@ -107,6 +107,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         KOOptiFinePageController *s = weakSelf;
         if (!s) return;
         s.progress.hidden = YES;
+        KOLog(@"optifine: %@ %@", s.edition.file, error ? error.localizedDescription : @"downloaded");
         if (error) {
             s.busy = NO;
             s.navigationItem.hidesBackButton = NO;
@@ -123,6 +124,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
             delegate:s cancelButtonTitle:L(@"Cancel") otherButtonTitles:L(@"Install"), nil];
         ask.tag = 1;
         [ask show];
+        KOLog(@"optifine: asks \"%@\"", title);
     }];
 }
 
@@ -150,6 +152,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
         if (!s) return;
         s.progress.hidden = YES;
         BOOL ok = code == 0 && !error;
+        KOLog(@"optifine: installer finished with %d %@", code, error ?: @"");
         NSString *closing = L(@"Kostka closes: open it again to play.");
         UIAlertView *end = [[UIAlertView alloc]
             initWithTitle:ok ? L(@"OptiFine is installed") : L(@"OptiFine could not be installed")
