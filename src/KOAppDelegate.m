@@ -1,5 +1,7 @@
 #import "KOAppDelegate.h"
 #import "KOVersionListController.h"
+#import "KOVersionController.h"
+#import "KOOptiFineController.h"
 #import "KOProbeController.h"
 #import "KOVersions.h"
 #import "KOGame.h"
@@ -69,6 +71,24 @@
         [KOJava runMainClass:p[@"main"] ?: @"Hello" classPath:cp options:options args:args
                         done:^(int code, NSString *error) {
             [weakSelf.probe append:[NSString stringWithFormat:@"java: exit %d %@", code, error ?: @""]];
+        }];
+        return YES;
+    }
+    // kostka:open?version=1.12.2 / kostka:open?optifine=1: a version's page, or OptiFine's list, as a tap on it in the
+    // list would open it (tests: screenshots of the launcher's pages)
+    if ([target isEqualToString:@"open"]) {
+        UINavigationController *nav = (UINavigationController *)self.window.rootViewController;
+        if (![nav isKindOfClass:[UINavigationController class]]) return YES;
+        [KOVersions load:^(NSArray *versions, NSError *error) {
+            if (p[@"optifine"]) {
+                [nav pushViewController:[[KOOptiFineController alloc] initWithVersions:versions] animated:NO];
+                return;
+            }
+            for (KOVersion *v in versions) {
+                if (![v.identifier isEqualToString:p[@"version"]]) continue;
+                [nav pushViewController:[[KOVersionController alloc] initWithVersion:v] animated:NO];
+                return;
+            }
         }];
         return YES;
     }
