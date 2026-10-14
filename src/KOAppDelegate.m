@@ -80,10 +80,14 @@
     }
     // kostka:link?url=<percent-encoded url>: what a tapped web link does (the browser chooser on iOS 6), for the tests
     if ([target isEqualToString:@"link"] && [p[@"url"] length]) {
-        UIViewController *top = self.window.rootViewController;
-        while (top.presentedViewController) top = top.presentedViewController;
-        if ([top isKindOfClass:[UINavigationController class]]) top = [(UINavigationController *)top topViewController] ?: top;
-        [KOExternalOpen presentOpenInForURL:[NSURL URLWithString:p[@"url"]] from:top anchor:nil];
+        // (a moment later: the URL arrives before the app is active again, and newer iOS ignore openURL: and sheets then)
+        NSString *link = p[@"url"];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.7 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            UIViewController *top = self.window.rootViewController;
+            while (top.presentedViewController) top = top.presentedViewController;
+            if ([top isKindOfClass:[UINavigationController class]]) top = [(UINavigationController *)top topViewController] ?: top;
+            [KOExternalOpen presentOpenInForURL:[NSURL URLWithString:link] from:top anchor:nil];
+        });
         return YES;
     }
     // kostka:open?version=1.12.2 / kostka:open?optifine=1: a version's page, or OptiFine's list, as a tap on it in the

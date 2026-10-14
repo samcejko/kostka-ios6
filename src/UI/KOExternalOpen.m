@@ -135,6 +135,8 @@ static BOOL KOHostMatches(NSString *host, NSArray *hosts)
     if (!url || ![[url.scheme lowercaseString] hasPrefix:@"http"]) return;
     NSArray *sisters = [self sisterAppsForURL:url];
     BOOL modern = KOModernOS();
+    NSLog(@"[MC6] link %@: %@, %lu sister app(s)%@", copy ? @"share" : @"open", url.absoluteString, (unsigned long)sisters.count,
+          modern ? @"" : ([self surfariAvailable] ? @", Surfari" : @", no Surfari"));
     if (modern && copy) { [self presentActivitySheetForURL:url from:controller anchor:anchor]; return; }
     if (modern && sisters.count == 0) { [[UIApplication sharedApplication] openURL:url]; return; }
 
