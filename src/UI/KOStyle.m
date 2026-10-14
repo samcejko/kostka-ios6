@@ -1,4 +1,5 @@
 #import "KOStyle.h"
+#import "KOModern.h"
 
 @implementation KOStyle
 
@@ -56,6 +57,8 @@
 + (void)styleNavigationBar:(UINavigationBar *)bar
 {
     bar.tintColor = [self barColor];
+    // iOS 7+: tintColor colours the buttons, not the bar; the glossy iOS 6 bar is drawn by the app instead
+    KOModernStyleNavigationBar(bar);
 }
 
 + (UIImage *)buttonImageTop:(UIColor *)top bottom:(UIColor *)bottom

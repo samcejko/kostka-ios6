@@ -7,6 +7,7 @@
 #import "KOGame.h"
 #import "KOChangelog.h"
 #import "KOStyle.h"
+#import "KOModern.h"
 #import "KOJava.h"
 #import "KOCommon.h"
 #include <dlfcn.h>
@@ -32,6 +33,8 @@
     KOLog(@"Kostka %@ starting", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"]);
     // (the frame rate in the game's corner: on until switched off in the settings; LWJGL reads it too)
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"KOShowFPS": @YES }];
+    // iOS 7 and newer (the arm64 build): the iOS 6 look of the bars, rounded grouped tables; nothing on iOS 6
+    KOModernSetUp(UIBarStyleDefault);
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.probe = [[KOProbeController alloc] init];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:[[KOVersionListController alloc] init]];

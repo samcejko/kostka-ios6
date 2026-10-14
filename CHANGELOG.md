@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.0.3 (2026-10-14)
+
+- The launcher also builds as arm64 for iOS 14–17 (the `iphoneos-arm64` `.deb` for rootless jailbreaks and the
+  `-arm64.ipa` for TrollStore), from the same sources, with the glossy iOS 6 bars drawn by the app on iOS 7 and
+  newer. It is a launcher without anything to launch for now: the Java VM and LWJGL that CI ships are 32-bit
+  (`jre.yml`, `lwjgl.yml` build armv7 only), so the 64-bit package shows the version list but cannot start a game.
+  A 64-bit port of the runtime is a project of its own; the arm64 package is not published in the repository.
+- The hardware probe's JIT test has arm64 code too.
+
 ## 0.0.2 (2026-10-14)
 
 - Settings → About has a "Support the development" row that opens the author's Ko-fi page. The app stays free.

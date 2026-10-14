@@ -68,11 +68,31 @@ static void KOFaultHandler(int sig, siginfo_t *info, void *context)
         return;
     }
     g_faultsCaught++;
+#if defined(__arm64__)
+    // (the 64-bit registers: the return value in x0, back to the caller; no Thumb bit)
+    uint64_t lr = uc->uc_mcontext->__ss.__lr;
+    uc->uc_mcontext->__ss.__x[0] = 99;
+    uc->uc_mcontext->__ss.__pc = lr;
+#else
     uint32_t lr = uc->uc_mcontext->__ss.__lr;
     uc->uc_mcontext->__ss.__r[0] = 99;
     uc->uc_mcontext->__ss.__pc = lr & ~1u;
     if (lr & 1) uc->uc_mcontext->__ss.__cpsr |= 0x20; else uc->uc_mcontext->__ss.__cpsr &= ~0x20u;
+#endif
 }
+
+// The generated code of the probe, for the processor the app runs on
+#if defined(__arm64__)
+#define KO_CODE_MOV_R0_42   0x52800540u   // mov w0, #42
+#define KO_CODE_MOV_R0_7    0x528000e0u   // mov w0, #7
+#define KO_CODE_LDR_R0_R0   0xb9400000u   // ldr w0, [x0]
+#define KO_CODE_RETURN      0xd65f03c0u   // ret
+#else
+#define KO_CODE_MOV_R0_42   0xe3a0002au   // mov r0, #42
+#define KO_CODE_MOV_R0_7    0xe3a00007u   // mov r0, #7
+#define KO_CODE_LDR_R0_R0   0xe5900000u   // ldr r0, [r0]
+#define KO_CODE_RETURN      0xe12fff1eu   // bx lr
+#endif
 
 static void KOJit(BOOL writeThenExecute, KOOut out)
 {
@@ -84,8 +104,8 @@ static void KOJit(BOOL writeThenExecute, KOOut out)
         return;
     }
     out([NSString stringWithFormat:L(@"jit: mmap(%@) works, at %p"), writeThenExecute ? @"RW" : @"RWX", code]);
-    code[0] = 0xe3a0002a;   // mov r0, #42
-    code[1] = 0xe12fff1e;   // bx lr
+    code[0] = KO_CODE_MOV_R0_42;
+    code[1] = KO_CODE_RETURN;
     if (writeThenExecute && mprotect(code, len, PROT_READ | PROT_EXEC) != 0) {
         out([NSString stringWithFormat:L(@"jit: mprotect(RX) failed: %s"), strerror(errno)]);
         munmap(code, len);
@@ -100,7 +120,7 @@ static void KOJit(BOOL writeThenExecute, KOOut out)
         munmap(code, len);
         return;
     }
-    code[0] = 0xe3a00007;   // mov r0, #7
+    code[0] = KO_CODE_MOV_R0_7;
     if (writeThenExecute) mprotect(code, len, PROT_READ | PROT_EXEC);
     sys_icache_invalidate(code, 8);
     int patched = ((int (*)(void))code)();
@@ -110,8 +130,8 @@ static void KOJit(BOOL writeThenExecute, KOOut out)
     // A load from a guarded page in generated code, the fault taken over by a signal handler
     void *guard = mmap(NULL, 4096, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (writeThenExecute) mprotect(code, len, PROT_READ | PROT_WRITE);
-    code[0] = 0xe5900000;   // ldr r0, [r0]
-    code[1] = 0xe12fff1e;   // bx lr
+    code[0] = KO_CODE_LDR_R0_R0;
+    code[1] = KO_CODE_RETURN;
     if (writeThenExecute) mprotect(code, len, PROT_READ | PROT_EXEC);
     sys_icache_invalidate(code, 8);
     struct sigaction sa, oldSegv, oldBus;

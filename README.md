@@ -130,11 +130,17 @@ Add the repository `http://repo.samcejko.eu/` in Cydia (Sources → Edit → Add
 from there; updates then come through the package manager. By hand: install the **DEB** of the latest release (`dpkg -i`, then `su mobile -c uicache`).
 The app is free; if it is useful to you, you can support the development at [ko-fi.com/samcejko](https://ko-fi.com/samcejko).
 
+64-bit devices with iOS 14–17: `build.yml` also makes an arm64 launcher (the `iphoneos-arm64` `.deb` for rootless
+jailbreaks, the `-arm64.ipa` for TrollStore), but the Java runtime and LWJGL exist for armv7 only, so that package
+shows the version list and cannot start a game. It is not published in the repository; a 64-bit port of the runtime
+is a project of its own.
+
 ## Building
 
 GitHub Actions: `jre.yml` builds the Java runtime, `lwjgl.yml` LWJGL with gl4es and MC6's AWT, `build.yml` the
-app (IPA and DEB) with the latest of both. MC6 is installed from the **DEB** (into `/Applications`, outside the
-container sandbox), which a JIT needs.
+app (IPA and DEB) with the latest of both - twice from one source tree: armv7 for iOS 6 (the iOS 9.3 SDK) and, with
+`make package THEOS_PACKAGE_SCHEME=rootless`, arm64 for iOS 14–17 (the iOS 16.5 SDK; see above). MC6 is installed
+from the **DEB** (into `/Applications`, outside the container sandbox), which a JIT needs.
 
 ## License
 
