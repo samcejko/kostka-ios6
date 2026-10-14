@@ -3,6 +3,7 @@
 #import "KOVersionController.h"
 #import "KOOptiFineController.h"
 #import "KOProbeController.h"
+#import "KOExternalOpen.h"
 #import "KOVersions.h"
 #import "KOGame.h"
 #import "KOChangelog.h"
@@ -75,6 +76,14 @@
                         done:^(int code, NSString *error) {
             [weakSelf.probe append:[NSString stringWithFormat:@"java: exit %d %@", code, error ?: @""]];
         }];
+        return YES;
+    }
+    // kostka:link?url=<percent-encoded url>: what a tapped web link does (the browser chooser on iOS 6), for the tests
+    if ([target isEqualToString:@"link"] && [p[@"url"] length]) {
+        UIViewController *top = self.window.rootViewController;
+        while (top.presentedViewController) top = top.presentedViewController;
+        if ([top isKindOfClass:[UINavigationController class]]) top = [(UINavigationController *)top topViewController] ?: top;
+        [KOExternalOpen presentOpenInForURL:[NSURL URLWithString:p[@"url"]] from:top anchor:nil];
         return YES;
     }
     // kostka:open?version=1.12.2 / kostka:open?optifine=1: a version's page, or OptiFine's list, as a tap on it in the
