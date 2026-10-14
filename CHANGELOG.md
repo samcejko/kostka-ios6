@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.0.1 (in progress)
+## 0.0.2 (2026-10-14)
+
+- Settings → About has a "Support the development" row that opens the author's Ko-fi page. The app stays free.
+- MC6 is in the Cydia repository `http://samcejko.eu/repo/` now: add it as a source in Cydia to get updates.
+
+## 0.0.1 (2026-10-12)
 
 - The device test: generated code (JIT), faults in it, address space, memory, OpenGL ES 2.0, CPU speed
 - Java 8 on iOS 6: HotSpot (client VM with the C1 JIT) ported to Darwin/armv7, the JDK's native libraries

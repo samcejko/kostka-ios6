@@ -34,7 +34,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return section == 1 ? 2 : section == 2 ? 3 : 1;
+    return section == 1 ? 2 : section == 2 ? 3 : section == 3 ? 2 : 1;
 }
 
 - (NSString *)titleFor:(NSInteger)section
@@ -117,8 +117,13 @@
         s.tag = tag;
         [s addTarget:self action:@selector(switchChanged:) forControlEvents:UIControlEventValueChanged];
         cell.accessoryView = s;
-    } else {
+    } else if (indexPath.row == 0) {
         cell.textLabel.text = L(@"Device test");
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+    } else {
+        // (the author's Ko-fi page; the app is free, the coffee keeps it going)
+        cell.textLabel.text = L(@"Support the development");
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         cell.selectionStyle = UITableViewCellSelectionStyleBlue;
     }
@@ -128,9 +133,11 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    if (indexPath.section == 3) {
+    if (indexPath.section == 3 && indexPath.row == 0) {
         KOAppDelegate *app = (KOAppDelegate *)[UIApplication sharedApplication].delegate;
         [self.navigationController pushViewController:app.probe animated:YES];
+    } else if (indexPath.section == 3) {
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://ko-fi.com/samcejko"]];
     }
 }
 

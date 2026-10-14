@@ -124,6 +124,12 @@ uiopen 'kostka:screenshot'                  # the screen into Library/Kostka/scr
 uiopen 'kostka:probe?test=info|jit|vm|gl|cpu'   # the device test
 ```
 
+## Installing on the device
+
+Add the Cydia repository `http://samcejko.eu/repo/` (Cydia → Sources → Edit → Add) and install MC6 from there; updates
+then come through Cydia. By hand: install the **DEB** of the latest release (`dpkg -i`, then `su mobile -c uicache`).
+The app is free; if it is useful to you, you can support the development at [ko-fi.com/samcejko](https://ko-fi.com/samcejko).
+
 ## Building
 
 GitHub Actions: `jre.yml` builds the Java runtime, `lwjgl.yml` LWJGL with gl4es and MC6's AWT, `build.yml` the
