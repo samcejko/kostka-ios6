@@ -3,6 +3,7 @@
 #import "KOProbeController.h"
 #import "KOGame.h"
 #import "KOStyle.h"
+#import "KOExternalOpen.h"
 #import "KOCommon.h"
 
 @interface KOSettingsController () <UITextFieldDelegate>
@@ -137,7 +138,7 @@
         KOAppDelegate *app = (KOAppDelegate *)[UIApplication sharedApplication].delegate;
         [self.navigationController pushViewController:app.probe animated:YES];
     } else if (indexPath.section == 3) {
-        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://ko-fi.com/samcejko"]];
+        [KOExternalOpen presentOpenInForURL:[NSURL URLWithString:@"https://ko-fi.com/samcejko"] from:self anchor:[tableView cellForRowAtIndexPath:indexPath]];
     }
 }
 

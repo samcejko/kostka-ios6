@@ -6,6 +6,7 @@
 #import "KONet.h"
 #import "KOJava.h"
 #import "KOStyle.h"
+#import "KOExternalOpen.h"
 #import "KOCommon.h"
 
 static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
@@ -86,7 +87,7 @@ static NSString *const KOOptiFineDownloads = @"http://optifine.net/downloads";
     }
     BOOL top = [request.mainDocumentURL isEqual:url];
     if (top && type == UIWebViewNavigationTypeLinkClicked && ![url.host hasSuffix:@"optifine.net"]) {
-        [[UIApplication sharedApplication] openURL:url];
+        [KOExternalOpen presentOpenInForURL:url from:self anchor:nil];
         return NO;
     }
     return YES;

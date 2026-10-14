@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.4 (2026-10-14)
+
+- Links that leave the OptiFine page and the Ko-fi link open through the browser chooser on iOS 6 (Safari or
+  Surfari) and straight in Safari on newer iOS.
+- The iOS 6 package declares iOS 6.0 to 10.x (the 32-bit Java runtime cannot run on 64-bit devices anyway).
+
 ## 0.0.3 (2026-10-14)
 
 - The launcher also builds as arm64 for iOS 14–17 (the `iphoneos-arm64` `.deb` for rootless jailbreaks and the
